@@ -1,27 +1,21 @@
-"use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function useAuth() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const login = async (username: string, password: string) => {
-    setLoading(true);
-    setError(null);
 
     const res = await fetch("/services/account/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ username, password }),
     });
 
-    setLoading(false);
 
     if (!res.ok) {
-      setError("LOGIN_FAILED");
       return false;
     }
 
@@ -30,14 +24,9 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await fetch("/services/account/actions/logout", { method: "POST" });
+    await fetch("/services/account/logout", { method: "POST" });
     router.push("/login");
   };
 
-  return {
-    login,
-    logout,
-    loading,
-    error,
-  };
+  return { login, logout};
 }
