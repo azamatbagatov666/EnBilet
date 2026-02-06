@@ -39,12 +39,20 @@ export default function List() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={(e) => {
+        if (e.key === "Enter")
+            handleLogin();
+        }}
               className="h-14 border-t-0 border-x-0 rounded-none outline-none transition-colors duration-300 focus:border-black bg-white px-2  text-black border-2 border-[rgb(128,128,128)]"
               placeholder="Kullanıcı Adı"
             />
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={(e) => {
+        if (e.key === "Enter")
+            handleLogin();
+        }}
               className="h-14 border-t-0 border-x-0 rounded-none outline-none transition-colors duration-300 focus:border-black bg-white px-2  text-black border-2 border-[rgb(128,128,128)] "
               type="password"
               placeholder="Parola"

@@ -83,6 +83,9 @@ export default function List() {
   useEffect(() => {
     (async () => {
       const res = await fetch("/services/account/get/getCities");
+      if (!res.ok) {
+        return
+      }
       const data = await res.json();
       setCities(data);
       getEvents();
@@ -91,6 +94,9 @@ export default function List() {
 
   const getEvents = async () => {
     const res = await fetch("/services/account/get/getEvents");
+          if (!res.ok) {
+        return
+      }
     const data = await res.json();
     setEvents(data);
   };

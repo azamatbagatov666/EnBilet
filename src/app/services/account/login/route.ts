@@ -35,6 +35,8 @@ const cookieStore = await cookies();
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    maxAge: 155520000,
+
   });
 
   return NextResponse.json({
