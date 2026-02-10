@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { cookies } from "next/headers";
+import { error } from "console";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const token = cookieStore.get("access_token")?.value;
 
   const res = await fetch("http://localhost:5000/getCities", {
     headers: {
@@ -15,7 +16,7 @@ export async function GET() {
   if (!res.ok) {
     return NextResponse.json(
       { error: "Failed to fetch cities" },
-      { status: 500 },
+      { status: res.status },
     );
   }
 

@@ -1,10 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/src/hooks/useAuth";
 
-import { useState, useEffect } from "react";
+
+
 
 export default function NavBar() {
+    const { logout } = useAuth();
+  
 
     const router = useRouter();
 
@@ -27,6 +31,7 @@ export default function NavBar() {
           <ul className="bg-base-100 rounded-t-none p-2">
             <li onClick={() => router.push("/account/events")}><a>Etkinlikler</a></li>
             <li><a>Link 2</a></li>
+            <li onClick={logout}><a>Çıkış Yap</a></li>
           </ul>
         </details>
       </li>

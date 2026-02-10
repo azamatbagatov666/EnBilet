@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { EventType } from "@/src/models/EventType";
+import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
+
 
 export default function List() {
   const [events, setEvents] = useState<EventType[]>([]);
@@ -26,7 +28,7 @@ export default function List() {
   const createEvent = async () => {
     if (selectedVenue != "" && time != "") {
       try {
-        const res = await fetch("/services/account/actions/addEvent", {
+        const res = await fetchWithAuth("/services/account/actions/addEvent", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -58,7 +60,7 @@ export default function List() {
     if (!selectedCity) return;
     const fetchData = async () => {
       try {
-        const res = await fetch(`/services/account/get/getVenues?city=${selectedCity}`);
+        const res = await fetchWithAuth(`/services/account/get/getVenues?city=${selectedCity}`);
         const data: { id: number; venue: string }[] = await res.json();
 
         const venuesObject = Object.fromEntries(
@@ -82,7 +84,7 @@ export default function List() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/services/account/get/getCities");
+      const res = await fetchWithAuth("/services/account/get/getCities");
       if (!res.ok) {
         return
       }
@@ -93,7 +95,7 @@ export default function List() {
   }, []);
 
   const getEvents = async () => {
-    const res = await fetch("/services/account/get/getEvents");
+    const res = await fetchWithAuth("/services/account/get/getEvents");
           if (!res.ok) {
         return
       }
@@ -108,7 +110,7 @@ export default function List() {
       } else {
         setUpdatingIsPublic((prev) => new Set(prev).add(eventID));
       }
-        const response = await fetch("/services/account/actions/updateBool", {
+        const response = await fetchWithAuth("/services/account/actions/updateBool", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eventID, info, value }),

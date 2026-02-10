@@ -25,7 +25,7 @@ export function useAuth() {
 
   const logout = async () => {
     await fetch("/services/account/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/");
   };
 
   return { login, logout};

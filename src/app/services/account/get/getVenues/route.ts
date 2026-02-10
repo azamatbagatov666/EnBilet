@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+    const token = cookieStore.get("access_token")?.value;
   
   const { searchParams } = new URL(request.url);
   const city = searchParams.get("city");
@@ -14,6 +14,12 @@ export async function GET(request: Request) {
     },
   });
 
-console.log(city)
+    if (!res.ok) {
+    return NextResponse.json(
+      { error: "Failed to fetch venues" },
+      { status: res.status }
+    );
+  }
+
   return NextResponse.json(await res.json());
 }

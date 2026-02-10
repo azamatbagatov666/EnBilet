@@ -6,8 +6,6 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { username, password } = body;
 
-
-
   const backendRes = await fetch(
     "http://localhost:5000/Authentication/Login",
     {
@@ -21,22 +19,25 @@ export async function POST(request: Request) {
   );
 
   if (!backendRes.ok) {
-    return NextResponse.json(
-      { error: "Invalid credentials" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
   const data: AuthenticateResponse = await backendRes.json();
 
-const cookieStore = await cookies();
+  const cookieStore = await cookies();
 
-  cookieStore.set("token", data.token, {
+  cookieStore.set("access_token", data.accessToken, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    maxAge: 155520000,
+    maxAge: 60 * 15,
+  });
 
+  cookieStore.set("refresh_token", data.refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json({
