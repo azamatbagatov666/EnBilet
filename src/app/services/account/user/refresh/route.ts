@@ -25,13 +25,18 @@ export async function POST() {
     maxAge: 60 * 15,
   });
 
-  cookieStore.set("refresh_token", data.refreshToken, {
-    httpOnly: true,
-    sameSite: "lax",
+  cookieStore.set("session", "1", {
     path: "/",
+    sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
   });
 
-    return new Response(null, { status: 200 });
+  cookieStore.set("refresh_token", data.refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/services/account/user",
+    maxAge: 60 * 60 * 24 * 7,
+  });
 
+  return new Response(null, { status: 200 });
 }

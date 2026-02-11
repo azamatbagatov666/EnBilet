@@ -10,7 +10,7 @@ export async function fetchWithAuth(
   });
 
   if (res.status === 401) {
-    const refresh = await fetch("/services/account/refresh", {
+    const refresh = await fetch("/services/account/user/refresh", {
       method: "POST",
       credentials: "include",
     });

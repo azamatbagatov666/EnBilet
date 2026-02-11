@@ -6,7 +6,7 @@ export function useAuth() {
 
   const login = async (username: string, password: string) => {
 
-    const res = await fetch("/services/account/login", {
+    const res = await fetch("/services/account/user/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,7 +24,7 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await fetch("/services/account/logout", { method: "POST" });
+    await fetch("/services/account/user/logout", { method: "POST" });
     router.push("/");
   };
 
