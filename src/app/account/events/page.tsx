@@ -38,7 +38,11 @@ export default function List() {
         date: time,
       }),
     });
-        if (!res.ok) {
+        if (res.status === 409) {
+      alert("Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.");
+      return
+    }
+        else if (!res.ok) {
           throw new Error("Failed to add event");
         }
 
