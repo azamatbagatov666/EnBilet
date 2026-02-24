@@ -218,7 +218,7 @@ export default function venues() {
                   <td>{venue.address}</td>
                   <td className="flex justify-center">
                     <button onClick={() => router.push(`/account/venues/designSeats/${venue.id}`)}>
-                      <img
+                      <img draggable={false}
                         src={`/account/images/edit.png`}
                         alt="Düzenle Butonu"
                         className="size-8"
