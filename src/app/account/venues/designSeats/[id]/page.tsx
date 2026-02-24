@@ -3,7 +3,8 @@
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import useSeatMapCreator from "@/src/hooks/useSeatMapCreator";
 import Row from "@/src/components/seatMap/Row";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { stageLocation } from "@/src/models/seatMap/SeatMap";
 
 export default function SeatMapCreatorPage() {
   const {
@@ -20,14 +21,47 @@ export default function SeatMapCreatorPage() {
     updateRowLabel,
     renumerateFromCell,
     addCellToLeft,
+    updateStageLocation,
   } = useSeatMapCreator();
 
   const [numberOfSeats, SetNumberOfSeats] = useState<number>(12);
+  const [stageLocation, setStageLocation] = useState<stageLocation>("up");
+
+    useEffect(() => {
+      updateStageLocation(stageLocation);
+    }, [stageLocation]);
 
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">Seat Map Creator</h1>
+<span className="font-bold text-lg">Sahne pozisyonu:</span>
+<div className="flex justify-left gap-2 mt-2">
+  <span>Yukarıda</span>
+<input
+  type="checkbox"
+  checked={stageLocation === "down"}
+  onChange={(e) =>
+    setStageLocation(e.target.checked ? "down" : "up")
+  }
+  className="toggle border-orange-500 bg-orange-400 hover:bg-orange-700"
+/>
+  <span>Aşağıda</span>
 
+</div>
+
+<div className="flex flex-col items-left my-2">
+
+
+
+<div data-theme="" className="px-2">
+<div className="min-w-max">
+  <div className="h-16 my-4  flex justify-center">
+{stageLocation == "up" && <div className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
+                [clip-path:polygon(0%_0%,100%_0%,80%_100%,20%_100%)]">
+  SAHNE
+</div>}
+
+</div>
       <DragDropContext onDragEnd={handleOnDragEnd}>
         <Droppable droppableId="rows" direction="vertical">
           {(provided) => (
@@ -69,10 +103,23 @@ export default function SeatMapCreatorPage() {
           )}
         </Droppable>
       </DragDropContext>
-      
+
+        <div className="h-16 my-4 flex justify-center">
+      {stageLocation == "down" && 
+<div className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
+                [clip-path:polygon(20%_0%,80%_0%,100%_100%,0%_100%)]">
+  SAHNE
+</div>}
+
+</div>
+      </div>
+      </div>
+
+
+</div>
 
       <div className="mt-4 flex gap-2">
-        <div className="flex group bg-[#4a00ff] hover:bg-[#3f00e7] duration-200 rounded-md">
+        <div className="flex group bg-[#4a00ff] hover:bg-[#3f00e7] dark:bg-[#7480ff] dark:hover:bg-[#646ee4] duration-200 rounded-md ">
           <div className=" px-2 rounded-l-md flex  items-center ">
             <input
               type="number"
@@ -80,14 +127,14 @@ export default function SeatMapCreatorPage() {
               onChange={(e) => SetNumberOfSeats(+e.target.value)}
               max={50}
               min={1}
-              className="w-10 h-6 text-black rounded-md px-1"
+              className="w-10 h-6  bg-white text-black rounded-md px-1"
               name=""
               id=""
             />
           </div>
           <button
             onClick={() => addSeatedRow(numberOfSeats)}
-            className="btn btn-primary rounded-l-none group-hover:bg-[#3f00e7] outline-none"
+            className="btn btn-primary rounded-l-none outline-none border-0"
           >
             + Koltuklu Sıra
           </button>

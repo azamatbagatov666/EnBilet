@@ -155,7 +155,7 @@ export default function List() {
             <div>Salon Seçiniz:</div>
             <div>Tarih ve Saat Seçiniz:</div>
             <select
-              className="border-solid border-2 border-grey-light w-56 "
+              className="select select-accent w-56 "
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
             >
@@ -171,7 +171,7 @@ export default function List() {
             </select>
 
             <select
-              className="border-solid border-2 border-grey-light w-5/6 "
+              className="select select-accent w-5/6 "
               value={selectedVenue}
               onChange={(e) => setSelectedVenue(Number(e.target.value))}
             >
@@ -183,7 +183,7 @@ export default function List() {
             </select>
 
             <input
-              className="border-solid border-2 border-grey-light w-40"
+              className="select select-accent w-48"
               value={time}
               type="datetime-local"
               min={today}
@@ -199,9 +199,9 @@ export default function List() {
       </div>
       <div>
         <div className=" flex justify-center my-10">
-          <table className="table table-auto w-6/12 table-zebra">
+          <table className="table table-auto w-6/12 table-zebra border-2 border-black dark:border-white">
             <thead>
-              <tr className="bg-[#F2F2F2] font-bold text-lg">
+              <tr className="bg-gray-300 font-bold text-lg text-black">
                 <th>Tarih</th>
                 <th>Şehir</th>
                 <th>Salon</th>

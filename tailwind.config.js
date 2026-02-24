@@ -9,6 +9,8 @@ module.exports = {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light"], // ✅ FORCE LIGHT MODE
+    themes: ["light", "dark"],
   },
+    darkMode: ['class', '[data-theme="dark"]'],
+
 };

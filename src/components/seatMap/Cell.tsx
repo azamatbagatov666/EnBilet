@@ -79,12 +79,27 @@ export function Cell({
           }}
           onClick={onToggle}
           className={`
-        ${menuOpen ? "!bg-red-500" : ""} 
-      
-        w-10 h-10 text-xs border-2 border-b-8 rounded border-black transition-colors 
-        flex items-center justify-center hover:bg-gray-500
-        ${isSeat ? "bg-gray-300 text-black duration-200" : "bg-transparent border-none"}
-      `}
+  w-10 h-10 text-xs rounded border-2 border-b-8
+  flex items-center justify-center
+  transition-colors duration-200
+
+  hover:bg-gray-500
+
+  ${menuOpen ? "bg-red-600 border-red-400 text-white" : ""}
+
+  ${
+    isSeat
+      ? `
+        bg-gray-300 text-black border-black
+        dark:bg-neutral-700 dark:text-neutral-100 dark:border-neutral-500
+        dark:hover:bg-neutral-400
+      `
+      : `
+        bg-transparent border-none
+        dark:border-neutral-700 dark:hover:bg-neutral-400
+      `
+  }
+`}
         >
           {isSeat ? ID + cell.label : ""}
         </button>
@@ -156,7 +171,7 @@ export function Cell({
                 <input
                   value={desiredLabel}
                   onChange={(e) => setDesiredLabel(e.target.value)}
-                  className="w-16 h-6 text-black rounded-md px-1 border border-gray-500"
+                  className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleSave();
@@ -232,7 +247,7 @@ export function Cell({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleNumarete();
                   }}
-                  className="w-12 h-8 text-black rounded-md px-1 border-2"
+                  className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
                   name=""
                   id=""
                 />

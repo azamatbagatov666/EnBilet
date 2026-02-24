@@ -156,7 +156,7 @@ export default function venues() {
             <div>Salon İsmi:</div>
             <div>Salonun Adresi:</div>
             <select
-              className="border-solid border-2 border-grey-light w-56 "
+              className="select select-accent w-56 "
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
             >
@@ -172,13 +172,13 @@ export default function venues() {
             </select>
 
             <input
-              className="border-solid border-2 border-grey-light w-5/6 "
+              className="input input-accent w-5/6 "
               value={venueName}
               onChange={(e) => setVenueName(e.target.value)}
             ></input>
 
             <input
-              className="border-solid border-2 border-grey-light w-5/6 "
+              className="input input-accent w-5/6 "
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             ></input>
@@ -192,7 +192,7 @@ export default function venues() {
       </div>
       <div>
         <div className=" flex justify-center my-10">
-          <table className="table table-auto w-6/12 table-zebra">
+          <table className="table table-auto w-6/12 table-zebra border-2 border-black dark:border-white">
             <colgroup>
               <col />
               <col />
@@ -200,7 +200,7 @@ export default function venues() {
               <col className="w-4" />
             </colgroup>
             <thead>
-              <tr className="bg-[#F2F2F2] font-bold text-lg">
+              <tr className="bg-gray-300 font-bold text-lg text-black">
                 <th>Şehir</th>
                 <th>Salon</th>
                 <th>Adres</th>
@@ -217,7 +217,7 @@ export default function venues() {
 
                   <td>{venue.address}</td>
                   <td className="flex justify-center">
-                    <button onClick={() => router.push(`/account/venues/designSeats/${venue.id}`)}>
+                    <button onClick={() => router.push(`/account/venues/designSeats/${venue.id}`)} className="bg-white p-1 rounded-md">
                       <img draggable={false}
                         src={`/account/images/edit.png`}
                         alt="Düzenle Butonu"

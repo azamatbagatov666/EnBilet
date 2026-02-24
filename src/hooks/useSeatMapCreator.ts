@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
-import type { SeatMap } from "@/src/models/seatMap/SeatMap";
+import type { SeatMap, stageLocation } from "@/src/models/seatMap/SeatMap";
 
 
 
@@ -22,9 +22,15 @@ export default function useSeatMapCreator() {
     blockId: 1,
     blockName: "General",
     rows: [],
+    stageLocation: "up",
   });
 
-
+function updateStageLocation(location: stageLocation) {
+  setSeatMap(prev => ({
+    ...prev,
+    stageLocation: location,
+  }));
+}
 
   /* ---------------- ROWS ---------------- */
 
@@ -278,5 +284,6 @@ function renumerateFromCell(cellId: string, step: number = 1) {
     updateRowLabel,
     renumerateFromCell,
     addCellToLeft,
+    updateStageLocation,
   };
 }

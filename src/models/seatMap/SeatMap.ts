@@ -1,5 +1,6 @@
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
 
+export type stageLocation = "up" | "down";
 
 export interface SeatMap {
   id: string;
@@ -11,6 +12,7 @@ export interface SeatMap {
   blockId: number;
   blockName: string;
 
+  stageLocation: stageLocation;
 
   rows: SeatRow[];
 }

@@ -47,10 +47,10 @@ if(desiredLabel!=""){
     
     className="flex items-center gap-2 mb-2 select-none">
 
-      <div className="tooltip" data-tip="Sırayı Sil">
+      <div className="tooltip inline-flex" data-tip="Sırayı Sil">
                     <button
         onClick={() => deleteRow(row.id)}
-        className=" hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 min-w-8 min-h-8"
+        className=" hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 min-w-8 min-h-10 bg-white"
       >
                              <img draggable={false}
                         src={`/account/images/trash.png`}
@@ -61,13 +61,13 @@ if(desiredLabel!=""){
 
 </div>
 
-      <div className="tooltip" data-tip="Sıra İsmini Düzenle">
+      <div className="tooltip inline-flex" data-tip="Sıra İsmini Düzenle">
                           <button
         onClick={() => {setRenameOpen(true)
           setDesiredLabel(row.label);
 
         }}
-        className="  hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 !min-w-8 !min-h-8"
+        className="  hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 min-w-8 min-h-10 bg-white"
       >
                              <img draggable={false}
                         src={`/account/images/edit2.png`}
@@ -77,8 +77,9 @@ if(desiredLabel!=""){
       </button>
 </div>
 
+      <div className="tooltip inline-flex" data-tip="Sırayı Taşı">
 
-      <div {...dragHandleProps} className="hover:bg-red-500  duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md !px-4">
+      <div {...dragHandleProps} className="hover:bg-red-500 text-black bg-white duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md !px-4">
 <div className="!min-w-8">        {row.label != "empty" && <span>{row.label}</span>}</div>
 
           <svg className="!min-w-8"
@@ -86,8 +87,9 @@ if(desiredLabel!=""){
     <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
   </svg>
       </div>
+      </div>
 
-      <div className="grid grid-flow-col gap-1">
+      <div className="grid grid-flow-col gap-1 shrink-0 auto-cols-max ">
         
         {row.cells.map((cell, i) => (
           <Cell
@@ -104,8 +106,8 @@ if(desiredLabel!=""){
           />
         ))}
         {row.label != "empty" && <>
-        <div className="tooltip" data-tip="Yeni Hücre">
-           <button onClick={() => addCellToEnd(row.id)} className="w-10 h-10 text-xs border rounded
+        <div className="tooltip inline-flex" data-tip="Yeni Hücre">
+           <button onClick={() => addCellToEnd(row.id)} className="w-10 h-10 text-lg border rounded
         flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white" >+</button>
 </div>
        </>}
@@ -169,6 +171,8 @@ if(desiredLabel!=""){
     />
   </dialog>
 )}
+
+
 
     </div>
   );

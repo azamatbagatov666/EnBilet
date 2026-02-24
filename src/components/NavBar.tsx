@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
+import ThemeToggle from "@/src/components/ThemeToggle"
 
 
 
@@ -18,25 +19,34 @@ export default function NavBar() {
 
   return (
     <>
-<div className="navbar bg-base-100 shadow-sm">
+<div className="navbar bg-base-100 shadow-sm dark:shadow-white">
   <div className="">
     <a className="btn btn-ghost text-xl" onClick={() => router.push("/")}>Çocuk Aklı</a>
   </div>
-  <div className="flex-none">
-    <ul className="menu menu-horizontal px-1">
-      <li><a>Link</a></li>
-      <li>
-        <details>
-          <summary>Menü</summary>
-          <ul className="bg-base-100 rounded-t-none p-2">
-            <li onClick={() => router.push("/account/events")}><a>Etkinlik Ekle/Düzenle</a></li>
-            <li onClick={() => router.push("/account/venues")}><a>Salonlar</a></li>
-            <li><a>Link 2</a></li>
-            <li onClick={logout}><a>Çıkış Yap</a></li>
-          </ul>
-        </details>
-      </li>
-    </ul>
+  <div className="w-full flex justify-between px-2">
+  <div className="dropdown dropdown-hover">
+  <div tabIndex={0} role="button" className="btn btn-ghost">
+    Menü {'\u25BC'}
+  </div>
+
+  <ul
+    tabIndex={0}
+    className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+  >
+    <li onClick={() => router.push("/account/events")}>
+      <a>Etkinlik Ekle/Düzenle</a>
+    </li>
+    <li onClick={() => router.push("/account/venues")}>
+      <a>Salonlar</a>
+    </li>
+    <li><a>Link 2</a></li>
+    <li onClick={logout}>
+      <a>Çıkış Yap</a>
+    </li>
+  </ul>
+</div>
+  <ThemeToggle></ThemeToggle>
+
   </div>
 </div>
     </>
