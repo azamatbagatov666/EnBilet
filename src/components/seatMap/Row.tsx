@@ -7,6 +7,7 @@ interface Props {
   index: number;
   dragHandleProps: any;
   toggleCell: (cellId: string) => void;
+  toggleHandicappedSeat: (cellId: string) => void;
   addCellToEnd: (rowId: string) => void;
   deleteRow: (id: string) => void;
     deleteTheCell: (cellId: string) => void;
@@ -28,6 +29,7 @@ export default function Row({
   updateRowLabel,
   renumerateFromCell,
   addCellToLeft,
+  toggleHandicappedSeat,
 }: Props) {
 
     const [renameOpen, setRenameOpen] = useState(false);
@@ -50,7 +52,7 @@ if(desiredLabel!=""){
       <div className="tooltip inline-flex" data-tip="Sırayı Sil">
                     <button
         onClick={() => deleteRow(row.id)}
-        className=" hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 min-w-8 min-h-10 bg-white"
+        className=" hover:bg-red-500 rounded-md duration-200 border-gray-500 hover:border-black border-2 min-w-8 min-h-10 bg-white"
       >
                              <img draggable={false}
                         src={`/account/images/trash.png`}
@@ -67,7 +69,7 @@ if(desiredLabel!=""){
           setDesiredLabel(row.label);
 
         }}
-        className="  hover:bg-red-500 rounded-md duration-200 hover:border-black border-2 min-w-8 min-h-10 bg-white"
+        className="  hover:bg-red-500 rounded-md duration-200 border-gray-500 hover:border-black border-2 min-w-8 min-h-10 bg-white"
       >
                              <img draggable={false}
                         src={`/account/images/edit2.png`}
@@ -80,7 +82,7 @@ if(desiredLabel!=""){
       <div className="tooltip inline-flex" data-tip="Sırayı Taşı">
 
       <div {...dragHandleProps} className="hover:bg-red-500 text-black bg-white duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md !px-4">
-<div className="!min-w-8">        {row.label != "empty" && <span>{row.label}</span>}</div>
+<div className="!min-w-8">        {row.type != "empty" && <span>{row.label}</span>}</div>
 
           <svg className="!min-w-8"
     viewBox="0 0 512 512">
@@ -101,11 +103,12 @@ if(desiredLabel!=""){
               updateSeatLabel={updateSeatLabel}
               renumerateFromCell={renumerateFromCell}
               addCellToLeft={addCellToLeft}
+              toggleHandicappedSeat={toggleHandicappedSeat}
 
 
           />
         ))}
-        {row.label != "empty" && <>
+        {row.type != "empty" && <>
         <div className="tooltip inline-flex" data-tip="Yeni Hücre">
            <button onClick={() => addCellToEnd(row.id)} className="w-10 h-10 text-lg border rounded
         flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white" >+</button>

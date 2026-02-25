@@ -22,6 +22,7 @@ export default function SeatMapCreatorPage() {
     renumerateFromCell,
     addCellToLeft,
     updateStageLocation,
+    toggleHandicappedSeat,
   } = useSeatMapCreator();
 
   const [numberOfSeats, SetNumberOfSeats] = useState<number>(12);
@@ -54,7 +55,7 @@ export default function SeatMapCreatorPage() {
 
 
 <div data-theme="" className="px-2">
-<div className="min-w-max">
+<div className="min-w-max select-none">
   <div className="h-16 my-4  flex justify-center">
 {stageLocation == "up" && <div className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(0%_0%,100%_0%,80%_100%,20%_100%)]">
@@ -92,6 +93,7 @@ export default function SeatMapCreatorPage() {
                         updateRowLabel={updateRowLabel}
                         renumerateFromCell={renumerateFromCell}
                         addCellToLeft={addCellToLeft}
+                        toggleHandicappedSeat={toggleHandicappedSeat}
                       />
                     </div>
                   )}
