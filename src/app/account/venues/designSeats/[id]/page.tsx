@@ -57,7 +57,11 @@ export default function SeatMapCreatorPage() {
 
 
 
-<div data-theme="" className="px-2 border-2 bg-[repeating-linear-gradient(45deg,_#e1e1e1_0,_#e1e1e1_1px,_transparent_0,_transparent_50%)] dark:bg-[repeating-linear-gradient(45deg,_#374151_0,_#374151_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed">
+<div data-theme="" className="px-2 border-2 bg-[repeating-linear-gradient(45deg,_#e1e1e1_0,_#e1e1e1_1px,_transparent_0,_transparent_50%)] dark:bg-[repeating-linear-gradient(45deg,_#374151_0,_#374151_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed"
+
+ onContextMenu={(e) => {
+                e.preventDefault();
+              }}>
 <div className="min-w-max select-none">
   <div className="h-16 my-4  flex justify-center">
 {stageLocation == "up" && <div className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
@@ -70,9 +74,7 @@ export default function SeatMapCreatorPage() {
         <Droppable droppableId="rows" direction="vertical">
           {(provided) => (
             <div
-              onContextMenu={(e) => {
-                e.preventDefault();
-              }}
+             
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
