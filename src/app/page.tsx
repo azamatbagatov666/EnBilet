@@ -8,10 +8,7 @@ export default function List() {
   
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch("/services/account/get/getCities");
-      const data = await res.json();
-    })();
+    ;
   }, []);
 
 
