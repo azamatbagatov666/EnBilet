@@ -130,7 +130,7 @@ if(desiredLabel!=""){
     }}
   >
     {/* MODAL BOX */}
-    <div className="modal-box max-w-48">
+    <div className="modal-box max-w-48 border">
       <button
         className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
         onClick={() => setRenameOpen(false)}
@@ -144,7 +144,7 @@ if(desiredLabel!=""){
           <input
             value={desiredLabel}
             onChange={(e) => setDesiredLabel(e.target.value)}
-            className="w-16 h-6 text-black rounded-md px-1 border border-gray-500"
+            className="w-16 h-6 input rounded-md px-1 border border-gray-500"
             autoFocus
 
             onKeyDown={(e) => {
