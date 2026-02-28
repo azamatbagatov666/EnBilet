@@ -1,6 +1,6 @@
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import { useState, useEffect, useRef } from "react";
-
+import { createPortal } from "react-dom";
 interface Props {
   cell: SeatCell;
   onToggle: () => void;
@@ -10,6 +10,9 @@ interface Props {
   renumerateFromCell: (cellId: string, step: number) => void;
   addCellToLeft: (cellId: string) => void;
   toggleHandicappedSeat: (cellId: string) => void;
+      menuVersion?: number; // ✅ new
+
+
 }
 
 export function Cell({
@@ -21,6 +24,7 @@ export function Cell({
   renumerateFromCell,
   addCellToLeft,
   toggleHandicappedSeat,
+  menuVersion,
 }: Props) {
   const isSeat = cell.type === "seat";
   const isHandicapped = cell.seatKind === "handicapped";
@@ -31,7 +35,16 @@ export function Cell({
   const [renumerateOpen, SetRenumerateOpen] = useState(false);
   const [renumerateError, SetRenumerateError] = useState(false);
 
+  const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+
   const ref = useRef<HTMLUListElement | null>(null);
+
+
+
+ useEffect(() => {
+    if (menuOpen) setMenuOpen(false); // close menu when version changes
+  }, [menuVersion]);
+
   useEffect(() => {
     const handleOutSideClick = (event: Event) => {
       if (
@@ -92,9 +105,12 @@ const bgClass =
               ? `Engelli koltuğu ${ID}${cell.label}`
               : `Koltuk ${ID}${cell.label}`
           }
-          onContextMenu={(e) => {
-            setMenuOpen(true);
-          }}
+onContextMenu={(e) => {
+  e.preventDefault();
+  setContextPos({ x: e.clientX, y: e.clientY });
+  setMenuOpen(true);
+}}
+
           onClick={onToggle}
           className={`
   w-10 h-10 text-xs rounded border-2
@@ -135,9 +151,13 @@ const bgClass =
     onClick={() => setMenuOpen(false)}
   />
 )}
-        {menuOpen && (
+        {menuOpen && createPortal(
           <ul
-            className="menu bg-base-200 rounded-box w-56 top-11  absolute z-50 border-2 border-black"
+          style={{
+  top: contextPos.y,
+  left: contextPos.x,
+}}
+            className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black"
             ref={ref}
           >
             <li onClick={() => deleteTheCell(cell.id)}>
@@ -188,11 +208,11 @@ const bgClass =
                 </li>
               </>
             )}
-          </ul>
+          </ul>, document.body
         )}
       </div>
 
-      {renameOpen && (
+      {renameOpen && createPortal(
         <dialog
           open
           className="modal modal-open"
@@ -242,10 +262,10 @@ const bgClass =
             className="modal-backdrop"
             onClick={() => setRenameOpen(false)}
           />
-        </dialog>
+        </dialog>, document.body
       )}
 
-      {renumerateOpen && (
+      {renumerateOpen && createPortal(
         <dialog
           open
           className="modal modal-open"
@@ -316,7 +336,7 @@ const bgClass =
             className="modal-backdrop"
             onClick={() => SetRenumerateOpen(false)}
           />
-        </dialog>
+        </dialog>, document.body
       )}
     </>
   );
