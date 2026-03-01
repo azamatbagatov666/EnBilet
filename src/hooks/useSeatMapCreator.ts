@@ -108,6 +108,38 @@ export default function useSeatMapCreator() {
     });
   }
 
+
+  /* ---------------- ROW MOVE ---------------- */
+
+function moveRowUp(rowId: string) {
+  setSeatMap(prev => {
+    const index = prev.rows.findIndex(r => r.id === rowId);
+    if (index <= 0) return prev; // already at top or not found
+
+    const rows = [...prev.rows];
+    [rows[index - 1], rows[index]] = [rows[index], rows[index - 1]];
+
+    return {
+      ...prev,
+      rows: rows.map((r, i) => ({ ...r, order: i })),
+    };
+  });
+}
+
+function moveRowDown(rowId: string) {
+  setSeatMap(prev => {
+    const index = prev.rows.findIndex(r => r.id === rowId);
+    if (index === -1 || index >= prev.rows.length - 1) return prev; // already at bottom or not found
+
+    const rows = [...prev.rows];
+    [rows[index], rows[index + 1]] = [rows[index + 1], rows[index]];
+
+    return {
+      ...prev,
+      rows: rows.map((r, i) => ({ ...r, order: i })),
+    };
+  });
+}
   /* ---------------- CELLS ---------------- */
 
   function getNextSeatLabel(cells: SeatCell[]): string {
@@ -299,6 +331,8 @@ export default function useSeatMapCreator() {
     renumerateFromCell,
     addCellToLeft,
     updateStageLocation,
+    moveRowDown,
+    moveRowUp,
     toggleHandicappedSeat,
   };
 }

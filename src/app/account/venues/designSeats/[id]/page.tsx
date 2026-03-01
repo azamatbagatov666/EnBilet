@@ -23,6 +23,8 @@ export default function SeatMapCreatorPage() {
     addCellToLeft,
     updateStageLocation,
     toggleHandicappedSeat,
+    moveRowDown,
+    moveRowUp,
   } = useSeatMapCreator();
 
   const [numberOfSeats, SetNumberOfSeats] = useState<number>(12);
@@ -65,7 +67,6 @@ export default function SeatMapCreatorPage() {
   function endPan() {
     setIsPanning(false);
   }
-  
 
   function zoomAtCursor(e: WheelEvent) {
     if (!wrapperRef.current) return;
@@ -73,7 +74,7 @@ export default function SeatMapCreatorPage() {
     const zoomIntensity = 0.0015;
     const scaleDelta = 1 - e.deltaY * zoomIntensity;
 
-    const newScale = clamp(scale * scaleDelta, 0.3, 6);
+    const newScale = clamp(scale * scaleDelta, 0.50, 2.66);
 
     const rect = wrapperRef.current.getBoundingClientRect();
 
@@ -91,9 +92,10 @@ export default function SeatMapCreatorPage() {
 
     setScale(newScale);
     setOffset({ x: newOffsetX, y: newOffsetY });
+    console.log(scale)
   }
   useEffect(() => {
-    closeAllMenus()
+    closeAllMenus();
     const el = wrapperRef.current;
     if (!el) return;
 
@@ -110,41 +112,39 @@ export default function SeatMapCreatorPage() {
     updateStageLocation(stageLocation);
   }, [stageLocation]);
 
+  function zoomToPoint(targetX: number, targetY: number, newScale: number) {
+    setOffset({
+      x: targetX - ((targetX - offset.x) / scale) * newScale,
+      y: targetY - ((targetY - offset.y) / scale) * newScale,
+    });
+    setScale(newScale);
+  }
 
+  function zoomIn() {
+    if (!wrapperRef.current) return;
 
-function zoomToPoint(targetX: number, targetY: number, newScale: number) {
-  setOffset({
-    x: targetX - ((targetX - offset.x) / scale) * newScale,
-    y: targetY - ((targetY - offset.y) / scale) * newScale,
-  });
-  setScale(newScale);
-}
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
 
-function zoomIn() {
-  if (!wrapperRef.current) return;
+    const newScale = clamp(scale + 0.1, 0.3, 6);
+    zoomToPoint(centerX, centerY, newScale);
+  }
 
-  const rect = wrapperRef.current.getBoundingClientRect();
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
+  function zoomOut() {
+    if (!wrapperRef.current) return;
 
-  const newScale = clamp(scale + 0.1, 0.3, 6);
-  zoomToPoint(centerX, centerY, newScale);
-}
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
 
-function zoomOut() {
-  if (!wrapperRef.current) return;
+    const newScale = clamp(scale - 0.1, 0.3, 6);
+    zoomToPoint(centerX, centerY, newScale);
+  }
 
-  const rect = wrapperRef.current.getBoundingClientRect();
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
+  const closeAllMenus = () => setMenuVersion((prev) => prev + 1);
 
-  const newScale = clamp(scale - 0.1, 0.3, 6);
-  zoomToPoint(centerX, centerY, newScale);
-}
-
-const closeAllMenus = () => setMenuVersion(prev => prev + 1);
-
-const [menuVersion, setMenuVersion] = useState(0);
+  const [menuVersion, setMenuVersion] = useState(0);
 
   return (
     <div className="p-6">
@@ -168,7 +168,7 @@ const [menuVersion, setMenuVersion] = useState(0);
           onMouseMove={onMouseMove}
           onMouseUp={endPan}
           onMouseLeave={endPan}
-          className="relative overflow-hidden border-2 bg-transparent cursor-grab over"
+          className="relative overflow-hidden border-2 bg-transparent cursor-grab"
         >
           <div
             data-theme=""
@@ -182,8 +182,6 @@ const [menuVersion, setMenuVersion] = useState(0);
               e.preventDefault();
             }}
           >
-
-            
             <div className="min-w-max select-none">
               <div className="h-16 my-4  flex justify-center">
                 {stageLocation == "up" && (
@@ -224,9 +222,10 @@ const [menuVersion, setMenuVersion] = useState(0);
                                 renumerateFromCell={renumerateFromCell}
                                 addCellToLeft={addCellToLeft}
                                 toggleHandicappedSeat={toggleHandicappedSeat}
-                                    menuVersion={menuVersion}
-
-
+                                menuVersion={menuVersion}
+                                moveRowDown={moveRowDown}
+                                moveRowUp={moveRowUp}
+                                totalRows={rows.length}
                               />
                             </div>
                           )}
@@ -253,15 +252,13 @@ const [menuVersion, setMenuVersion] = useState(0);
         </div>
       </div>
       <div className="join flex justify-center ">
-        <button className="join-item btn rounded-tl-none !border-r-black  dark:border-white"         onClick={(e) => {
-zoomOut()
-}}>
-          <svg
-            width="35px"
-            height="35px"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
+        <button
+          className="join-item btn rounded-tl-none !border-black  dark:!border-[#e5e7eb]"
+          onClick={(e) => {
+            zoomOut();
+          }}
+        >
+          <svg width="35px" height="35px" viewBox="0 0 24 24" fill="none">
             <path
               d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z"
               stroke="currentColor"
@@ -285,10 +282,13 @@ zoomOut()
             />
           </svg>
         </button>
-        <button className="join-item btn   !border-x-black dark:border-white"         onClick={(e) => {
+        <button
+          className="join-item btn   !border-black dark:!border-[#e5e7eb]"
+          onClick={(e) => {
             setScale(1);
             setOffset({ x: 0, y: 0 });
-          }}>
+          }}
+        >
           <svg
             fill="currentColor"
             width="35px"
@@ -296,22 +296,50 @@ zoomOut()
             viewBox="0 0 32 32"
             id="icon"
           >
-            <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="0.5" stroke="currentColor" d="M21.4479,20A10.856,10.856,0,0,0,24,13,11,11,0,1,0,13,24a10.856,10.856,0,0,0,7-2.5521L27.5859,29,29,27.5859ZM13,22a9,9,0,1,1,9-9A9.01,9.01,0,0,1,13,22Z" />
-            <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="0.5" stroke="currentColor" d="M10,12H8V10a2.0023,2.0023,0,0,1,2-2h2v2H10Z" />
-            <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="0.5" stroke="currentColor" d="M18,12H16V10H14V8h2a2.0023,2.0023,0,0,1,2,2Z" />
-            <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="0.5" stroke="currentColor" d="M12,18H10a2.0023,2.0023,0,0,1-2-2V14h2v2h2Z" />
-            <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="0.5" stroke="currentColor" d="M16,18H14V16h2V14h2v2A2.0023,2.0023,0,0,1,16,18Z" />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeWidth="0.5"
+              stroke="currentColor"
+              d="M21.4479,20A10.856,10.856,0,0,0,24,13,11,11,0,1,0,13,24a10.856,10.856,0,0,0,7-2.5521L27.5859,29,29,27.5859ZM13,22a9,9,0,1,1,9-9A9.01,9.01,0,0,1,13,22Z"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeWidth="0.5"
+              stroke="currentColor"
+              d="M10,12H8V10a2.0023,2.0023,0,0,1,2-2h2v2H10Z"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeWidth="0.5"
+              stroke="currentColor"
+              d="M18,12H16V10H14V8h2a2.0023,2.0023,0,0,1,2,2Z"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeWidth="0.5"
+              stroke="currentColor"
+              d="M12,18H10a2.0023,2.0023,0,0,1-2-2V14h2v2h2Z"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeWidth="0.5"
+              stroke="currentColor"
+              d="M16,18H14V16h2V14h2v2A2.0023,2.0023,0,0,1,16,18Z"
+            />
           </svg>
         </button>
-        <button className="join-item btn rounded-tr-none !border-l-black  dark:border-white"  onClick={(e) => {
+        <button
+          className="join-item btn rounded-tr-none !border-black  dark:!border-[#e5e7eb]"
+          onClick={(e) => {
             zoomIn();
-          }}>
-          <svg
-            width="35px"
-            height="35px"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
+          }}
+        >
+          <svg width="35px" height="35px" viewBox="0 0 24 24" fill="none">
             <path
               d="M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17Z"
               stroke="currentColor"
@@ -349,15 +377,14 @@ zoomOut()
           <div className=" px-2 rounded-l-md flex  items-center ">
             <input
               onKeyDown={(e) => {
-        if (e.key === "Enter")
-            addSeatedRow(numberOfSeats);
-        }}
+                if (e.key === "Enter") addSeatedRow(numberOfSeats);
+              }}
               type="number"
               value={numberOfSeats}
               onChange={(e) => SetNumberOfSeats(+e.target.value)}
               max={50}
               min={1}
-              className="w-10 h-6  bg-white text-black rounded-md px-1"
+              className="w-10 h-6  bg-white text-black rounded-md "
               name=""
               id=""
             />
@@ -375,7 +402,6 @@ zoomOut()
         <button onClick={saveMap} className="btn btn-success text-white">
           Kaydet
         </button>
-
       </div>
     </div>
   );
