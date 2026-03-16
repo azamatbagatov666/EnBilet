@@ -1,9 +1,13 @@
 "use client";
 
+import { useAuth } from "@/src/hooks/useAuth";
+
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ) {
+  const { logout } = useAuth();
+  
   let res = await fetch(url, {
     ...options,
     credentials: "include", 
@@ -16,6 +20,7 @@ export async function fetchWithAuth(
     });
 
     if (!refresh.ok) {
+      logout
       return res;
     }
 
