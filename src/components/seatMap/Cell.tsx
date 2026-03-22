@@ -10,7 +10,7 @@ interface Props {
   renumerateFromCell: (cellId: string, step: number) => void;
   addCellToLeft: (cellId: string) => void;
   toggleHandicappedSeat: (cellId: string) => void;
-      menuVersion?: number; // ✅ new
+
 
 
 }
@@ -24,16 +24,18 @@ export function Cell({
   renumerateFromCell,
   addCellToLeft,
   toggleHandicappedSeat,
-  menuVersion,
 }: Props) {
   const isSeat = cell.type === "seat";
   const isHandicapped = cell.seatKind === "handicapped";
   const [menuOpen, setMenuOpen] = useState(false);
   const [desiredLabel, setDesiredLabel] = useState("");
   const [steps, SetSteps] = useState<number>(1);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renumerateOpen, SetRenumerateOpen] = useState(false);
   const [renumerateError, SetRenumerateError] = useState(false);
+
+const [modalMode, setModalMode] = useState("");
+
+  const [dialogueOpen, setDialogueOpen] = useState(false);
+
 
   const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
 
@@ -41,9 +43,7 @@ export function Cell({
 
 
 
- useEffect(() => {
-    if (menuOpen) setMenuOpen(false); // close menu when version changes
-  }, [menuVersion]);
+
 
   useEffect(() => {
     const handleOutSideClick = (event: Event) => {
@@ -65,14 +65,14 @@ export function Cell({
   const handleSave = () => {
     if (desiredLabel != "") {
       updateSeatLabel(cell.id, desiredLabel);
-      setRenameOpen(false);
+      setDialogueOpen(false);
     }
   };
 
   const handleNumarete = () => {
     if (!renumerateError) {
       renumerateFromCell(cell.id, steps);
-      SetRenumerateOpen(false);
+      setDialogueOpen(false);
       SetSteps(1);
     }
   };
@@ -175,17 +175,19 @@ onContextMenu={(e) => {
               <>
                 <li
                   onClick={() => {
-                    setRenameOpen(true);
-                    setMenuOpen(false);
-                    setDesiredLabel(cell.label ?? "");
+    setModalMode("rename");
+    setDialogueOpen(true);
+    setMenuOpen(false);
+    setDesiredLabel(cell.label ?? "");
                   }}
                 >
                   <a>Yeniden İsimlendir</a>
                 </li>
                 <li
                   onClick={() => {
-                    SetRenumerateOpen(true);
-                    setMenuOpen(false);
+    setModalMode("renumerate");
+    setDialogueOpen(true);
+    setMenuOpen(false);
                   }}
                 >
                   <a>Sağa Doğru Numaralandır</a>
@@ -211,132 +213,79 @@ onContextMenu={(e) => {
         )}
       </div>
 
-      {renameOpen && createPortal(
-        <dialog
-          open
-          className="modal modal-open"
-          onClose={() => setRenameOpen(false)}
-          onKeyDown={(e) => {
+{dialogueOpen &&
+  <dialog open className="modal modal-open" onClose={() => setDialogueOpen(false)}
+  onKeyDown={(e) => {
             if (e.key === "Escape") {
-              setRenameOpen(false);
+              setDialogueOpen(false);
             }
           }}
-        >
-          {/* MODAL BOX */}
-          <div className="modal-box max-w-48 border">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setRenameOpen(false)}
-            >
-              ✕
-            </button>
+  >
+    <div className="modal-box max-w-56 border">
+      <button
+        className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        onClick={() => setDialogueOpen(false)}
+      >
+        ✕
+      </button>
 
-            <div className="grid gap-2 mt-5">
-              <div className="flex justify-between items-center">
-                <span>Yeni İsim:</span>
-                <input
-                  value={desiredLabel}
-                  onChange={(e) => setDesiredLabel(e.target.value)}
-                  className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSave();
-                  }}
-                />
-              </div>
-
-              <button
-                className="btn btn-accent h-8"
-                onClick={() => {
-                  handleSave();
-                }}
-              >
-                Değiştir
-              </button>
-            </div>
+      {modalMode === "rename" && (
+        <div className="grid gap-2 mt-5">
+          <div className="flex justify-between items-center">
+            <span>Yeni İsim:</span>
+            <input
+              value={desiredLabel}
+              onChange={(e) => setDesiredLabel(e.target.value)}
+              className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+              }}
+            />
           </div>
-
-          {/* DARK BACKDROP */}
-          <div
-            className="modal-backdrop"
-            onClick={() => setRenameOpen(false)}
-          />
-        </dialog>, document.body
+          <button className="btn btn-accent h-8" onClick={handleSave}>Değiştir</button>
+        </div>
       )}
 
-      {renumerateOpen && createPortal(
-        <dialog
-          open
-          className="modal modal-open"
-          onClose={() => SetRenumerateOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              SetRenumerateOpen(false);
-            }
-          }}
-        >
-          {/* MODAL BOX */}
-          <div className="modal-box max-w-56">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => SetRenumerateOpen(false)}
+      {modalMode === "renumerate" && (
+        <div className="grid gap-2 mt-5">
+          <div className="flex justify-between items-center">
+            <span>Başlangıç:</span>
+            <span
+              className={`w-12 ${renumerateError ? "border-red-500 border-2 text-red-500 px-1" : ""}`}
             >
-              ✕
-            </button>
-
-            <div className="grid gap-2 mt-5">
-              <div className="flex justify-between items-center">
-                <span>Başlangıç:</span>
-                <span
-                  className={`w-12
-              ${renumerateError ? "border-red-500 border-2 text-red-500 px-1  " : ""} 
-              `}
-                >
-                  {cell.label}
-                </span>
-              </div>
-              {renumerateError && (
-                <div className="text-red-500 font-bold text-xs">
-                  Numaralandırmaya başlayacağınız hücre, sadece sayılardan
-                  oluşmalıdır.
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <span>Artış Sayısı:</span>
-                <input
-                  type="number"
-                  value={steps}
-                  onChange={(e) => SetSteps(+e.target.value)}
-                  max={50}
-                  min={1}
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleNumarete();
-                  }}
-                  className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
-                  name=""
-                  id=""
-                />
-              </div>
-
-              <button
-                className="btn btn-accent h-8"
-                onClick={() => {
-                  handleNumarete();
-                }}
-              >
-                Numaralandır
-              </button>
-            </div>
+              {cell.label}
+            </span>
           </div>
-
-          {/* DARK BACKDROP */}
-          <div
-            className="modal-backdrop"
-            onClick={() => SetRenumerateOpen(false)}
-          />
-        </dialog>, document.body
+          {renumerateError && (
+            <div className="text-red-500 font-bold text-xs">
+              Numaralandırmaya başlayacağınız hücre, sadece sayılardan oluşmalıdır.
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <span>Artış Sayısı:</span>
+            <input
+              type="number"
+              value={steps}
+              onChange={(e) => SetSteps(+e.target.value)}
+              max={50}
+              min={1}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") handleNumarete(); }}
+              className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
+            />
+          </div>
+          <button className="btn btn-accent h-8" onClick={handleNumarete}>Numaralandır</button>
+        </div>
       )}
+
+    </div>
+
+    <div className="modal-backdrop" onClick={() => setDialogueOpen(false)} />
+  </dialog>
+}
+
+
     </>
   );
 }

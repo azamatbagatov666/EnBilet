@@ -48,15 +48,17 @@ export default function DialogModal({
       onClose={onClose}
     >
       {/* Modal Box */}
-      <div className="modal-box w-96 font-bold text-xl border">
+      <div className="modal-box w-96  border">
         <button
           className="outline-none btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
           onClick={onClose}
         >
           ✕
         </button>
+            <h3 className="font-extrabold text-2xl">Dikkat!</h3>
 
-        <div className="mt-5 flex justify-center text-center">
+
+        <div className="mt-5 flex font-bold text-lg  justify-center text-center">
           {children}
         </div>
       </div>
