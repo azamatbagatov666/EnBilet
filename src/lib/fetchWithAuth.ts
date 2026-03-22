@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuth } from "@/src/hooks/useAuth";
+import { redirect } from "next/navigation";
+
 
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ) {
-  const { logout } = useAuth();
   
   let res = await fetch(url, {
     ...options,
@@ -20,10 +20,14 @@ export async function fetchWithAuth(
     });
 
     if (!refresh.ok) {
-      logout
-      return res;
-    }
+      // hard logout 
+      await fetch("/services/account/user/logout", {
+        method: "POST",
+        credentials: "include",
+      });
 
+      window.location.replace("/");
+    }
     // retry original request
     res = await fetch(url, {
       ...options,

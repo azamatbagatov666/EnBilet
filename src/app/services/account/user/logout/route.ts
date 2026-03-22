@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 
 export async function POST() {
+
+
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refresh_token")?.value;
 
@@ -15,7 +17,7 @@ export async function POST() {
   catch (err){
           console.error("Backend logout failed:", err);
 
-  }
+  }}
 
   cookieStore.set("access_token", "", {
     path: "/",
@@ -31,4 +33,4 @@ export async function POST() {
 
 
   return new Response(null, { status: 200 });
-}}
+}
