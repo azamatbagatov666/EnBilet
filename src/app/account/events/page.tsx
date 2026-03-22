@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import type { EventType } from "@/src/models/EventType";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
+import DialogModal from "@/src/components/DialogModal";
+
 
 
 export default function List() {
@@ -18,6 +20,8 @@ export default function List() {
   const [updatingTicketSale, setUpdatingTicketSale] = useState<Set<number>>(
     new Set(),
   );
+  const [dialogueOpen, setDialogueOpen] = useState(false);
+  const [dialogueText, setDialogueText] = useState("");
 
   const [time, setTime] = useState("");
   const now = new Date();
@@ -39,7 +43,8 @@ export default function List() {
       }),
     });
         if (res.status === 409) {
-      alert("Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.");
+                    setDialogueText("Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.")
+          setDialogueOpen(true)
       return
     }
         else if (!res.ok) {
@@ -51,11 +56,13 @@ export default function List() {
         setSelectedVenue("");
         setVenues({});
         setTime("");
-        alert("Etkinlik başarıyla eklendi.");
+                            setDialogueText("Etkinlik başarıyla eklendi.")
+          setDialogueOpen(true)
 
         getEvents();
       } catch (err) {
-        alert("Bağlantı Sorunu.");
+                            setDialogueText("Bağlantı sorunu.")
+          setDialogueOpen(true)
       }
     }
   };
@@ -79,7 +86,8 @@ export default function List() {
           throw new Error("Failed to fetch venues");
         }
       } catch (err) {
-        alert("Bağlantı Sorunu.");
+                                    setDialogueText("Bağlantı sorunu.")
+          setDialogueOpen(true)
       }
     };
 
@@ -142,7 +150,8 @@ export default function List() {
 
       getEvents();
     } catch {
-      alert("Bağlantı sorunu.");
+                                  setDialogueText("Bağlantı sorunu.")
+          setDialogueOpen(true)
     }
   };
 
@@ -259,6 +268,13 @@ export default function List() {
           </table>
         </div>
       </div>
+
+      <DialogModal
+        open={dialogueOpen}
+        onClose={() => setDialogueOpen(false)}
+      >
+        {dialogueText}
+      </DialogModal>
     </>
   );
 }

@@ -1,0 +1,5 @@
+table td,
+tr,
+th {
+  @apply border border-black dark:border-white;
+}
