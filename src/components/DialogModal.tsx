@@ -44,11 +44,11 @@ export default function DialogModal({
   return (
     <dialog
       ref={dialogRef}
-      className="modal"
+      className="modal outline-none"
       onClose={onClose}
     >
       {/* Modal Box */}
-      <div className="modal-box w-96  border">
+      <div className="modal-box w-96   border">
         <button
           className="outline-none btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
           onClick={onClose}

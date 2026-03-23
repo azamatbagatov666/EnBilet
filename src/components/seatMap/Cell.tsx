@@ -6,13 +6,14 @@ interface Props {
   onToggle: () => void;
   ID: string;
   deleteTheCell: (cellId: string) => void;
-  updateSeatLabel: (cellId: string, newLabel: string) => void;
-  renumerateFromCell: (cellId: string, step: number) => void;
+  updateSeatLabel: (cellId: string, newLabel: string) => boolean;
+  renumerateFromCell: (
+    cellId: string,
+    step: number,
+    selectedIncrement: string,
+  ) => string;
   addCellToLeft: (cellId: string) => void;
   toggleHandicappedSeat: (cellId: string) => void;
-
-
-
 }
 
 export function Cell({
@@ -30,20 +31,19 @@ export function Cell({
   const [menuOpen, setMenuOpen] = useState(false);
   const [desiredLabel, setDesiredLabel] = useState("");
   const [steps, SetSteps] = useState<number>(1);
-  const [renumerateError, SetRenumerateError] = useState(false);
+  const [renumerateError, setRenumerateError] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [selectedIncrement, setSelectedIncrement] = useState<"up" | "down">(
+    "up",
+  );
 
-const [modalMode, setModalMode] = useState("");
+  const [modalMode, setModalMode] = useState("");
 
   const [dialogueOpen, setDialogueOpen] = useState(false);
-
 
   const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
 
   const ref = useRef<HTMLUListElement | null>(null);
-
-
-
-
 
   useEffect(() => {
     const handleOutSideClick = (event: Event) => {
@@ -62,31 +62,54 @@ const [modalMode, setModalMode] = useState("");
     };
   }, [ref]);
 
+  const openDialogue = (menuName: string) => {
+    setFormError("");
+    setModalMode(menuName);
+    setDialogueOpen(true);
+    setMenuOpen(false);
+  };
+
   const handleSave = () => {
     if (desiredLabel != "") {
-      updateSeatLabel(cell.id, desiredLabel);
-      setDialogueOpen(false);
+      const success = updateSeatLabel(cell.id, desiredLabel);
+      if (success) {
+        setDialogueOpen(false);
+      } else {
+        setFormError("Bu sırada aynı isimde başka bir koltuk bulunuyor.");
+      }
+    } else {
+      setFormError("Koltuk ismi boş olamaz.");
     }
   };
 
   const handleNumarete = () => {
     if (!renumerateError) {
-      renumerateFromCell(cell.id, steps);
-      setDialogueOpen(false);
-      SetSteps(1);
+      const success = renumerateFromCell(cell.id, steps, selectedIncrement);
+      console.log(success);
+      if (success == "") {
+        setDialogueOpen(false);
+        SetSteps(1);
+      } else if (success == "NUMBER_BELOW_ONE") {
+        setFormError(
+          "Hücre numarası eksiye düşüyor, lütfen sırada yeterli sayıda hücre olduğundan emin olun.",
+        );
+      } else if (success == "DUPLICATE_NUMBER") {
+        setFormError(
+          "Oluşturmaya çalıştığınız isimde bir hücre zaten bulunuyor.",
+        );
+      }
     }
   };
 
   useEffect(() => {
     if (typeof cell.label === "string" && !Number.isNaN(Number(cell.label))) {
-      SetRenumerateError(false);
+      setRenumerateError(false);
     } else {
-      SetRenumerateError(true);
+      setRenumerateError(true);
     }
   }, [cell.label]);
 
-const bgClass =
-  menuOpen
+  const bgClass = menuOpen
     ? isSeat
       ? "!bg-red-600 !dark:bg-red-600 !border-red-400 !text-white !border-b-8"
       : "!bg-red-600 !dark:bg-red-600 !text-white !border-none"
@@ -105,12 +128,11 @@ const bgClass =
               ? `Engelli koltuğu ${ID}${cell.label}`
               : `Koltuk ${ID}${cell.label}`
           }
-onContextMenu={(e) => {
-  e.preventDefault();
-  setContextPos({ x: e.clientX, y: e.clientY });
-  setMenuOpen(true);
-}}
-
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextPos({ x: e.clientX, y: e.clientY });
+            setMenuOpen(true);
+          }}
           onClick={onToggle}
           className={`
   w-10 h-10 text-xs rounded border-2
@@ -145,147 +167,184 @@ onContextMenu={(e) => {
           )}
         </button>
         {menuOpen && (
-  <div
-    className="fixed inset-0 z-40"
-    onClick={() => setMenuOpen(false)}
-  />
-)}
-        {menuOpen && createPortal(
-          <ul
-          style={{
-  top: contextPos.y,
-  left: contextPos.x,
-}}
-            className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black"
-            ref={ref}
-          >
-            <li onClick={() => deleteTheCell(cell.id)}>
-              <a>Hücreyi Sil</a>
-            </li>
-            <li
-              onClick={() => {
-                addCellToLeft(cell.id);
-                setMenuOpen(false);
-              }}
-            >
-              <a>Soluna Hücre Ekle</a>
-            </li>
-
-            {isSeat && (
-              <>
-                <li
-                  onClick={() => {
-    setModalMode("rename");
-    setDialogueOpen(true);
-    setMenuOpen(false);
-    setDesiredLabel(cell.label ?? "");
-                  }}
-                >
-                  <a>Yeniden İsimlendir</a>
-                </li>
-                <li
-                  onClick={() => {
-    setModalMode("renumerate");
-    setDialogueOpen(true);
-    setMenuOpen(false);
-                  }}
-                >
-                  <a>Sağa Doğru Numaralandır</a>
-                </li>
-                <li
-                  onClick={() => {
-                    toggleHandicappedSeat(cell.id);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <a className="flex justify-between">
-                    <span>Engelli Koltuğu</span>{" "}
-                    {isHandicapped && (
-                      <span className="font-bold text-[25px] text-green-500">
-                        {"\u2713"}
-                      </span>
-                    )}
-                  </a>
-                </li>
-              </>
-            )}
-          </ul>, document.body
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenuOpen(false)}
+          />
         )}
+        {menuOpen &&
+          createPortal(
+            <ul
+              style={{
+                top: contextPos.y,
+                left: contextPos.x,
+              }}
+              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black"
+              ref={ref}
+            >
+              <li onClick={() => deleteTheCell(cell.id)}>
+                <a>Hücreyi Sil</a>
+              </li>
+              <li
+                onClick={() => {
+                  addCellToLeft(cell.id);
+                  setMenuOpen(false);
+                }}
+              >
+                <a>Soluna Hücre Ekle</a>
+              </li>
+
+              {isSeat && (
+                <>
+                  <li
+                    onClick={() => {
+                      openDialogue("rename");
+
+                      setDesiredLabel(cell.label ?? "");
+                    }}
+                  >
+                    <a>Yeniden İsimlendir</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      openDialogue("renumerate");
+                    }}
+                  >
+                    <a>Sağa Doğru Numaralandır</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      toggleHandicappedSeat(cell.id);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <a className="flex justify-between">
+                      <span>Engelli Koltuğu</span>{" "}
+                      {isHandicapped && (
+                        <span className="font-bold text-[25px] text-green-500">
+                          {"\u2713"}
+                        </span>
+                      )}
+                    </a>
+                  </li>
+                </>
+              )}
+            </ul>,
+            document.body,
+          )}
       </div>
 
-{dialogueOpen &&
-  <dialog open className="modal modal-open" onClose={() => setDialogueOpen(false)}
-  onKeyDown={(e) => {
+      {dialogueOpen && (
+        <dialog
+          open
+          className="modal modal-open outline-none"
+          onClose={() => setDialogueOpen(false)}
+          onKeyDown={(e) => {
             if (e.key === "Escape") {
               setDialogueOpen(false);
             }
           }}
-  >
-    <div className="modal-box max-w-56 border">
-      <button
-        className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        onClick={() => setDialogueOpen(false)}
-      >
-        ✕
-      </button>
-
-      {modalMode === "rename" && (
-        <div className="grid gap-2 mt-5">
-          <div className="flex justify-between items-center">
-            <span>Yeni İsim:</span>
-            <input
-              value={desiredLabel}
-              onChange={(e) => setDesiredLabel(e.target.value)}
-              className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-              }}
-            />
-          </div>
-          <button className="btn btn-accent h-8" onClick={handleSave}>Değiştir</button>
-        </div>
-      )}
-
-      {modalMode === "renumerate" && (
-        <div className="grid gap-2 mt-5">
-          <div className="flex justify-between items-center">
-            <span>Başlangıç:</span>
-            <span
-              className={`w-12 ${renumerateError ? "border-red-500 border-2 text-red-500 px-1" : ""}`}
+        >
+          <div className="modal-box max-w-72 border">
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => setDialogueOpen(false)}
             >
-              {cell.label}
-            </span>
+              ✕
+            </button>
+
+            {modalMode === "rename" && (
+              <div className="grid gap-4 mt-9">
+                <div className="flex justify-between items-center">
+                  <span>Yeni İsim:</span>
+                  <input
+                    value={desiredLabel}
+                    onChange={(e) => setDesiredLabel(e.target.value)}
+                    className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSave();
+                    }}
+                  />
+                </div>
+
+                <button className="btn btn-accent h-8" onClick={handleSave}>
+                  Değiştir
+                </button>
+                <div className={" font-bold text-red-500 px-1"}>
+                  {formError}
+                </div>
+              </div>
+            )}
+
+            {modalMode === "renumerate" && (
+              <div className="grid gap-2 mt-5">
+                <div className="flex justify-between items-center">
+                  <span>Başlangıç:</span>
+                  <span
+                    className={`w-12 ${renumerateError ? "border-red-500 border-2 text-red-500 px-1" : ""}`}
+                  >
+                    {cell.label}
+                  </span>
+                </div>
+                {renumerateError && (
+                  <div className="text-red-500 font-bold text-xs">
+                    Numaralandırmaya başlayacağınız hücre, sadece rakamlardan
+                    oluşmalıdır.
+                  </div>
+                )}
+                <div>
+                  <label>
+                    <input
+                      type="radio"
+                      value="up"
+                      checked={selectedIncrement === "up"}
+                      onChange={(e) => setSelectedIncrement("up")}
+                    />{" "}
+                    Artarak
+                  </label>
+                  <br />
+                  <label>
+                    <input
+                      type="radio"
+                      value="down"
+                      checked={selectedIncrement === "down"}
+                      onChange={(e) => setSelectedIncrement("down")}
+                    />{" "}
+                    Azalarak
+                  </label>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Basamak:</span>
+                  <input
+                    type="number"
+                    value={steps}
+                    onChange={(e) => SetSteps(+e.target.value)}
+                    max={50}
+                    min={1}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleNumarete();
+                    }}
+                    className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
+                  />
+                </div>
+                <button className="btn btn-accent h-8" onClick={handleNumarete}>
+                  Numaralandır
+                </button>
+                <div className={" font-bold text-red-500 px-1"}>
+                  {formError}
+                </div>
+              </div>
+            )}
           </div>
-          {renumerateError && (
-            <div className="text-red-500 font-bold text-xs">
-              Numaralandırmaya başlayacağınız hücre, sadece sayılardan oluşmalıdır.
-            </div>
-          )}
-          <div className="flex justify-between items-center">
-            <span>Artış Sayısı:</span>
-            <input
-              type="number"
-              value={steps}
-              onChange={(e) => SetSteps(+e.target.value)}
-              max={50}
-              min={1}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter") handleNumarete(); }}
-              className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
-            />
-          </div>
-          <button className="btn btn-accent h-8" onClick={handleNumarete}>Numaralandır</button>
-        </div>
+
+          <div
+            className="modal-backdrop"
+            onClick={() => setDialogueOpen(false)}
+          />
+        </dialog>
       )}
-
-    </div>
-
-    <div className="modal-backdrop" onClick={() => setDialogueOpen(false)} />
-  </dialog>
-}
-
-
     </>
   );
 }

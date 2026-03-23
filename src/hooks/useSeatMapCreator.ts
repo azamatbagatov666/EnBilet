@@ -9,7 +9,6 @@ function createSeat(label: string): SeatCell {
     type: "seat",
     label,
     seatKind: "regular",
-
   };
 }
 
@@ -91,13 +90,17 @@ export default function useSeatMapCreator() {
     }));
   }
 
-  function updateRowLabel(rowId: string, newLabel: string) {
+  function updateRowLabel(rowId: string, newLabel: string): boolean {
+    let hasDuplicate = false;
+    newLabel = newLabel.replace(/\s+/g, ' ').trim();
     setSeatMap((prev) => {
       const exists = prev.rows.some(
-        (r) => r.label === newLabel && r.id !== rowId,
+        (r) => r.label.trim().toLowerCase() === newLabel.trim().toLowerCase() && r.id.trim().toLowerCase() !== rowId.trim().toLowerCase(),
       );
 
-      if (exists) return prev;
+      if (exists) {
+        hasDuplicate = true
+        return prev;}
 
       return {
         ...prev,
@@ -106,11 +109,9 @@ export default function useSeatMapCreator() {
         ),
       };
     });
+
+    return hasDuplicate;
   }
-
-
-  /* ---------------- ROW MOVE ---------------- */
-
 
   /* ---------------- CELLS ---------------- */
 
@@ -188,25 +189,23 @@ export default function useSeatMapCreator() {
   }
 
   function toggleHandicappedSeat(cellId: string) {
-  setSeatMap(prev => ({
-    ...prev,
-    rows: prev.rows.map(row => ({
-      ...row,
-      cells: row.cells.map(cell => {
-        if (cell.id !== cellId) return cell;
-        if (cell.type !== "seat") return cell;
+    setSeatMap((prev) => ({
+      ...prev,
+      rows: prev.rows.map((row) => ({
+        ...row,
+        cells: row.cells.map((cell) => {
+          if (cell.id !== cellId) return cell;
+          if (cell.type !== "seat") return cell;
 
-        return {
-          ...cell,
-          seatKind:
-            cell.seatKind === "handicapped"
-              ? "regular"
-              : "handicapped",
-        };
-      }),
-    })),
-  }));
-}
+          return {
+            ...cell,
+            seatKind:
+              cell.seatKind === "handicapped" ? "regular" : "handicapped",
+          };
+        }),
+      })),
+    }));
+  }
 
   /* ---------------- DND ---------------- */
 
@@ -238,54 +237,119 @@ export default function useSeatMapCreator() {
     });
   }
 
-  function renumerateFromCell(cellId: string, step: number = 1) {
+  function renumerateFromCell(
+    cellId: string,
+    step: number = 1,
+    direction: string = "up",
+  ): string {
+    let error = "";
+
     setSeatMap((prev) => ({
       ...prev,
       rows: prev.rows.map((row) => {
         const startIndex = row.cells.findIndex((c) => c.id === cellId);
         if (startIndex === -1) return row;
 
-        // Determine starting number
-        let currentNumber = Number(row.cells[startIndex]?.label) || 1;
+        const startLabel = row.cells[startIndex]?.label;
+        const startNumber = Number(startLabel);
+
+        //  non-numeric start
+        if (!Number.isInteger(startNumber)) {
+          error = "NON_NUMERIC_START";
+          return row;
+        }
+
+        const usedNumbers = new Set<number>();
+
+        // collect existing numbers BEFORE startIndex
+        row.cells.forEach((cell, idx) => {
+          if (cell.type === "seat" && idx < startIndex) {
+            const n = Number(cell.label);
+            if (Number.isInteger(n)) usedNumbers.add(n);
+          }
+        });
+
+        let currentNumber = startNumber;
 
         const newCells = row.cells.map((cell, index) => {
-          if (cell.type !== "seat") return cell;
-          if (index < startIndex) return cell;
+          if (cell.type !== "seat" || index < startIndex) return cell;
+
+          //  below 1
+          if (currentNumber < 1) {
+            error = "NUMBER_BELOW_ONE";
+            return cell;
+          }
+
+          //  duplicate
+          if (usedNumbers.has(currentNumber)) {
+            error = "DUPLICATE_NUMBER";
+            return cell;
+          }
+
+          usedNumbers.add(currentNumber);
 
           const updated = {
             ...cell,
             label: String(currentNumber),
           };
 
-          currentNumber += step;
+          currentNumber =
+            direction === "up" ? currentNumber + step : currentNumber - step;
+
           return updated;
         });
 
-        return {
-          ...row,
-          cells: newCells,
-        };
+        return error ? row : { ...row, cells: newCells };
       }),
     }));
+
+    return error;
   }
 
   function saveMap() {
     console.log(seatMap);
   }
 
-  function updateSeatLabel(seatId: string, newLabel: string) {
-    setSeatMap((prev) => ({
+function updateSeatLabel(seatId: string, newLabel: string): boolean {
+  newLabel = newLabel.replace(/\s+/g, ' ').trim();
+  const normalized = newLabel.toLowerCase();
+  let hasDuplicate = false;
+
+  setSeatMap((prev) => {
+    return {
       ...prev,
-      rows: prev.rows.map((row) => ({
-        ...row,
-        cells: row.cells.map((cell) =>
-          cell.id === seatId && cell.type === "seat"
-            ? { ...cell, label: newLabel }
-            : cell,
-        ),
-      })),
-    }));
-  }
+      rows: prev.rows.map((row) => {
+        // Is this the row containing the seat?
+        const seatIndex = row.cells.findIndex(
+          (c) => c.id === seatId && c.type === "seat"
+        );
+
+        if (seatIndex === -1) return row; // not this row
+
+        // ✅ check duplicates ONLY in this row
+        hasDuplicate = row.cells.some(
+          (cell) =>
+            cell.type === "seat" &&
+            cell.id !== seatId &&
+            cell.label?.toLowerCase() === normalized
+        );
+
+        if (hasDuplicate) return row; // abort update for this row
+
+        return {
+          ...row,
+          cells: row.cells.map((cell) =>
+            cell.id === seatId && cell.type === "seat"
+              ? { ...cell, label: newLabel }
+              : cell
+          ),
+        };
+      }),
+    };
+  });
+
+  return !hasDuplicate;
+}
 
   return {
     seatMap,

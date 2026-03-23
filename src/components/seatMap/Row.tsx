@@ -14,9 +14,13 @@ interface Props {
 
   deleteRow: (id: string) => void;
   deleteTheCell: (cellId: string) => void;
-  updateSeatLabel: (cellId: string, newLabel: string) => void;
-  updateRowLabel: (rowId: string, newLabel: string) => void;
-  renumerateFromCell: (cellId: string, step: number) => void;
+  updateSeatLabel: (cellId: string, newLabel: string) => boolean;
+  updateRowLabel: (rowId: string, newLabel: string) => boolean;
+  renumerateFromCell: (
+    cellId: string,
+    step: number,
+    selectedIncrement: string,
+  ) => string;
   addCellToLeft: (cellId: string) => void;
 }
 
@@ -34,15 +38,28 @@ export default function Row({
   renumerateFromCell,
   addCellToLeft,
   toggleHandicappedSeat,
-
 }: Props) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [desiredLabel, setDesiredLabel] = useState("");
 
+  const [formError, setFormError] = useState("");
+
+
   const handleSave = () => {
     if (desiredLabel != "") {
-      updateRowLabel(row.id, desiredLabel);
+      const success = updateRowLabel(row.id, desiredLabel);
+      console.log(success)
+      if (!success) {
       setRenameOpen(false);
+
+      }
+      else {
+        setFormError("Bu isimde bir sıra zaten bulunmaktadır.")
+      }
+    }
+    else {
+        setFormError("Sıra ismi boş olamaz.")
+
     }
   };
 
@@ -73,12 +90,7 @@ export default function Row({
           }}
           className="  hover:bg-red-500 rounded-md duration-200 border-gray-500 hover:border-black border-2 min-w-8 min-h-10 bg-white"
         >
-          <svg
-            width="32px"
-            height="32px"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
+          <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none">
             <path
               d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
               stroke="#000000"
@@ -103,7 +115,6 @@ export default function Row({
           </svg>
         </div>
       </div>
-
 
       <div className="grid grid-flow-col gap-1 shrink-0 auto-cols-max ">
         {row.cells.map((cell, i) => (
@@ -147,7 +158,7 @@ export default function Row({
             }}
           >
             {/* MODAL BOX */}
-            <div className="modal-box max-w-48 border">
+            <div className="modal-box max-w-56 border">
               <button
                 className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
                 onClick={() => setRenameOpen(false)}
@@ -155,7 +166,7 @@ export default function Row({
                 ✕
               </button>
 
-              <div className="grid gap-2 mt-5">
+              <div className="grid gap-4 mt-5">
                 <div className="flex justify-between items-center">
                   <span>Yeni İsim:</span>
                   <input
@@ -177,6 +188,9 @@ export default function Row({
                 >
                   Değiştir
                 </button>
+                                <div className={" font-bold text-red-500 px-1"}>
+                  {formError}
+                </div>
               </div>
             </div>
 
