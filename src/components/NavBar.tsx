@@ -25,12 +25,12 @@ export default function NavBar() {
   </div>
   <div className="w-full flex justify-between px-2">
   <div className="dropdown dropdown-hover">
-  <div tabIndex={0} role="button" className="btn btn-ghost">
+  <div  className="btn btn-ghost">
     Menü {'\u25BC'}
   </div>
 
   <ul
-    tabIndex={0}
+    
     className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border"
   >
         <li onClick={() => router.push("/account/")}>
