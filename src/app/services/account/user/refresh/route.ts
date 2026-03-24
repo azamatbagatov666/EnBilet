@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 
 export async function POST() {
+  const isProd = process.env.NODE_ENV === "production";
+
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refresh_token")?.value;
 
@@ -20,9 +22,10 @@ export async function POST() {
 
   cookieStore.set("access_token", data.accessToken, {
     httpOnly: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 15,
+    maxAge: 60 * 60 * 24,
   });
 
   cookieStore.set("session", "1", {
@@ -33,6 +36,7 @@ export async function POST() {
 
   cookieStore.set("refresh_token", data.refreshToken, {
     httpOnly: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/services/account/user",
     maxAge: 60 * 60 * 24 * 7,

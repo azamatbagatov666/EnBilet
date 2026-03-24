@@ -6,6 +6,9 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { username, password } = body;
 
+  const isProd = process.env.NODE_ENV === "production";
+
+
   const backendRes = await fetch("http://localhost:5000/Authentication/Login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25,9 +28,10 @@ export async function POST(request: Request) {
 
   cookieStore.set("access_token", data.accessToken, {
     httpOnly: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 15,
+    maxAge: 60 * 60 * 24,
   });
 
   cookieStore.set("session", "1", {
@@ -38,6 +42,7 @@ export async function POST(request: Request) {
 
   cookieStore.set("refresh_token", data.refreshToken, {
     httpOnly: true,
+    secure: isProd,
     sameSite: "lax",
     path: "/services/account/user",
     maxAge: 60 * 60 * 24 * 7,

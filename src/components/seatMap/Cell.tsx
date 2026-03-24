@@ -33,9 +33,7 @@ export function Cell({
   const [steps, SetSteps] = useState<number>(1);
   const [renumerateError, setRenumerateError] = useState(false);
   const [formError, setFormError] = useState("");
-  const [selectedIncrement, setSelectedIncrement] = useState<"up" | "down">(
-    "up",
-  );
+  const [selectedIncrement, setSelectedIncrement] = useState<"up" | "down">("up");
 
   const [modalMode, setModalMode] = useState("");
 
@@ -179,7 +177,7 @@ export function Cell({
                 top: contextPos.y,
                 left: contextPos.x,
               }}
-              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black"
+              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black dark:border-gray-500"
               ref={ref}
             >
               <li onClick={() => deleteTheCell(cell.id)}>

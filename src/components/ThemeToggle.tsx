@@ -3,16 +3,20 @@
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
+  // Read theme AFTER mount (DOM already correct)
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as "light" | "dark" | null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const current =
+      document.documentElement.getAttribute("data-theme") as
+        | "light"
+        | "dark"
+        | null;
 
-    const initial = stored ?? (prefersDark ? "dark" : "light");
-    setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    setTheme(current ?? "light");
   }, []);
+
+  if (!theme) return null; // ⛔ avoid hydration mismatch
 
   const toggleTheme = () => {
     const next = theme === "light" ? "dark" : "light";
