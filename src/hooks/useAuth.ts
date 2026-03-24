@@ -15,8 +15,10 @@ export function useAuth() {
     });
 
 
+
+
     if (!res.ok) {
-      return false;
+      return res.status;
     }
 
     router.push("/");

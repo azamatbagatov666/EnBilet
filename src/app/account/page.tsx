@@ -8,28 +8,27 @@ export default function List() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loginFailed, setLoginFailed] = useState(false);
-  const [formError, setFormError] = useState(false);
+  const [formError, setFormError] = useState("");
   const [passType, setPassType] = useState<"password" | "text">("password");
 
-  useEffect(() => {
-    (async () => {})();
-  }, []);
+
 
   const handleLogin = async () => {
-    setFormError(false);
-    setLoginFailed(false);
+    setFormError("");
 
     if (username != "" && password != "") {
       try {
         const res = await login(username, password);
-        if (!res) {
-          setLoginFailed(true);
+        if (res === 401) {
+          setFormError("Hatalı kullanıcı adı veya parola.");
+        }
+        else if (res === 500) {
+        setFormError("Bağlantı sorunu.");
+
         }
       } catch (error) {
-        setLoginFailed(true);
       }
-    } else setFormError(true);
+    } else setFormError("Kullanıcı adı veya parola boş olamaz.");
   };
 
   return (
@@ -55,7 +54,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group h-14 border-t-0 border-x-0 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
+                className="input group h-14 w-full border-t-0 border-x-0 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
                 placeholder="Kullanıcı Adı"
               />
             </div>
@@ -76,7 +75,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group h-14 border-t-0 border-x-0 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
+                className="input group w-full h-14 border-t-0 border-x-0 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
                 type={passType}
                 placeholder="Parola"
               />
@@ -110,18 +109,13 @@ export default function List() {
               Giriş Yap
             </button>
           </div>
+                        <div
+        className="text-red-500 text-center font-bold w-72 mt-2 h-6"
+      > {formError}
+      
+      </div>
         </div>
-        {loginFailed && (
-          <div className="text-red-500 font-bold absolute mt-[20rem]">
-            Hatalı kullanıcı adı veya parola.
-          </div>
-        )}
 
-        {formError && (
-          <div className="text-red-500 font-bold absolute mt-[20rem]">
-            Kullanıcı adı veya parola boş olamaz.
-          </div>
-        )}
       </div>
     </>
   );

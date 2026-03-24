@@ -16,7 +16,7 @@ export default function ThemeToggle() {
     setTheme(current ?? "light");
   }, []);
 
-  if (!theme) return null; // ⛔ avoid hydration mismatch
+  if (!theme) return null; //  avoid hydration mismatch
 
   const toggleTheme = () => {
     const next = theme === "light" ? "dark" : "light";
