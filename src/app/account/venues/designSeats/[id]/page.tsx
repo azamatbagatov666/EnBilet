@@ -52,7 +52,11 @@ export default function SeatMapCreatorPage() {
         <span>Aşağıda</span>
       </div>
 
-      <div className="flex flex-col items-left mt-2  bg-[repeating-linear-gradient(45deg,_#e1e1e1_0,_#e1e1e1_1px,_transparent_0,_transparent_50%)] dark:bg-[repeating-linear-gradient(45deg,_#374151_0,_#374151_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed">
+      <div 
+      onContextMenu={(e) => {
+            e.preventDefault();
+          }}
+      className="flex flex-col  items-left mt-2  ">
         <div className="relative overflow-auto border-2 bg-transparent">
           <div data-theme="" className="px-5 bg-transparent">
             <div className="min-w-max select-none">

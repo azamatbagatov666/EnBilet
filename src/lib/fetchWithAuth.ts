@@ -1,39 +1,48 @@
 "use client";
 
-import { redirect } from "next/navigation";
-
+let refreshPromise: Promise<boolean> | null = null;
 
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ) {
-  
   let res = await fetch(url, {
     ...options,
-    credentials: "include", 
+    credentials: "include",
   });
 
-  if (res.status === 401) {
-    const refresh = await fetch("/services/account/user/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
+  if (res.status !== 401) {
+    return res;
+  }
 
-    if (!refresh.ok) {
-      // hard logout 
-      await fetch("/services/account/user/logout", {
+  // ---- SINGLE FLIGHT REFRESH ----
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refresh = await fetch("/services/account/user/refresh", {
         method: "POST",
         credentials: "include",
       });
 
-      window.location.replace("/");
-    }
-    // retry original request
-    res = await fetch(url, {
-      ...options,
-      credentials: "include",
-    });
+      refreshPromise = null;
+      return refresh.ok;
+    })();
   }
 
-  return res;
+  const refreshOk = await refreshPromise;
+
+  if (!refreshOk) {
+    await fetch("/services/account/user/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    window.location.replace("/");
+    throw new Error("Session expired");
+  }
+
+  // retry original request
+  return fetch(url, {
+    ...options,
+    credentials: "include",
+  });
 }

@@ -132,14 +132,11 @@ export default function useSeatMapCreator() {
         id: crypto.randomUUID(),
       })),
     };
-
-    const newRows = [...prev.rows];
-    newRows.splice(rowIndex + 1, 0, copiedRow);
-
-    return {
-      ...prev,
-      rows: newRows.map((r, i) => ({ ...r, order: i })),
-    };
+    
+     return {
+        ...prev,
+        rows: [...prev.rows, copiedRow],
+      };
   });
 }
 
