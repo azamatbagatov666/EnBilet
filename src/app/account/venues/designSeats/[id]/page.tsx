@@ -24,6 +24,7 @@ export default function SeatMapCreatorPage() {
     addCellToLeft,
     updateStageLocation,
     toggleHandicappedSeat,
+    copyRow,
   } = useSeatMapCreator();
 
   const [numberOfSeats, SetNumberOfSeats] = useState<number>(12);
@@ -94,6 +95,7 @@ export default function SeatMapCreatorPage() {
                                 renumerateFromCell={renumerateFromCell}
                                 addCellToLeft={addCellToLeft}
                                 toggleHandicappedSeat={toggleHandicappedSeat}
+                                copyRow={copyRow}
                                 totalRows={rows.length}
                               />
                             </div>

@@ -113,6 +113,36 @@ export default function useSeatMapCreator() {
     return hasDuplicate;
   }
 
+  function copyRow(rowId: string) {
+  setSeatMap((prev) => {
+    const rowIndex = prev.rows.findIndex((r) => r.id === rowId);
+    if (rowIndex === -1) return prev;
+
+    const sourceRow = prev.rows[rowIndex];
+    if (sourceRow.type !== "seated") return prev;
+
+    const newLabel = getNextRowLabel(prev.rows);
+
+    const copiedRow: SeatRow = {
+      ...sourceRow,
+      id: crypto.randomUUID(),
+      label: newLabel,
+      cells: sourceRow.cells.map((cell) => ({
+        ...cell,
+        id: crypto.randomUUID(),
+      })),
+    };
+
+    const newRows = [...prev.rows];
+    newRows.splice(rowIndex + 1, 0, copiedRow);
+
+    return {
+      ...prev,
+      rows: newRows.map((r, i) => ({ ...r, order: i })),
+    };
+  });
+}
+
   /* ---------------- CELLS ---------------- */
 
   function getNextSeatLabel(cells: SeatCell[]): string {
@@ -367,7 +397,7 @@ function updateSeatLabel(seatId: string, newLabel: string): boolean {
     renumerateFromCell,
     addCellToLeft,
     updateStageLocation,
-
+    copyRow,
     toggleHandicappedSeat,
   };
 }

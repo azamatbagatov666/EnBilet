@@ -217,7 +217,7 @@ export function Cell({
                     }}
                   >
                     <a className="flex justify-between">
-                      <span>Engelli Koltuğu</span>{" "}
+                      <span>Engelli Koltuğu</span>
                       {isHandicapped && (
                         <span className="font-bold text-[25px] text-green-500">
                           {"\u2713"}
@@ -298,7 +298,7 @@ export function Cell({
                       value="up"
                       checked={selectedIncrement === "up"}
                       onChange={(e) => setSelectedIncrement("up")}
-                    />{" "}
+                    />
                     Artarak
                   </label>
                   <br />
@@ -308,7 +308,7 @@ export function Cell({
                       value="down"
                       checked={selectedIncrement === "down"}
                       onChange={(e) => setSelectedIncrement("down")}
-                    />{" "}
+                    />
                     Azalarak
                   </label>
                 </div>

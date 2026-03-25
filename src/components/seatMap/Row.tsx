@@ -11,6 +11,7 @@ interface Props {
   toggleCell: (cellId: string) => void;
   toggleHandicappedSeat: (cellId: string) => void;
   addCellToEnd: (rowId: string) => void;
+  copyRow: (rowId: string) => void;
 
   deleteRow: (id: string) => void;
   deleteTheCell: (cellId: string) => void;
@@ -37,6 +38,7 @@ export default function Row({
   updateRowLabel,
   renumerateFromCell,
   addCellToLeft,
+  copyRow,
   toggleHandicappedSeat,
 }: Props) {
   const [renameOpen, setRenameOpen] = useState(false);
@@ -44,22 +46,17 @@ export default function Row({
 
   const [formError, setFormError] = useState("");
 
-
   const handleSave = () => {
     if (desiredLabel != "") {
       const success = updateRowLabel(row.id, desiredLabel);
-      console.log(success)
+      console.log(success);
       if (!success) {
-      setRenameOpen(false);
-
+        setRenameOpen(false);
+      } else {
+        setFormError("Bu isimde bir sıra zaten bulunmaktadır.");
       }
-      else {
-        setFormError("Bu isimde bir sıra zaten bulunmaktadır.")
-      }
-    }
-    else {
-        setFormError("Sıra ismi boş olamaz.")
-
+    } else {
+      setFormError("Sıra ismi boş olamaz.");
     }
   };
 
@@ -101,13 +98,36 @@ export default function Row({
           </svg>
         </button>
       </div>
+      <div className="tooltip inline-flex" data-tip="Sırayı Kopyala">
+        <button
+          onClick={() => {copyRow(row.id)}}
+          className="  hover:bg-red-500 rounded-md duration-200 border-gray-500 hover:border-black border-2 min-w-8 min-h-10 bg-white"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="size-8"
+            fill="none"
+          >
+              <path
+                d="M6 11C6 8.17157 6 6.75736 6.87868 5.87868C7.75736 5 9.17157 5 12 5H15C17.8284 5 19.2426 5 20.1213 5.87868C21 6.75736 21 8.17157 21 11V16C21 18.8284 21 20.2426 20.1213 21.1213C19.2426 22 17.8284 22 15 22H12C9.17157 22 7.75736 22 6.87868 21.1213C6 20.2426 6 18.8284 6 16V11Z"
+                stroke="#000000"
+                strokeWidth="1.5"
+              ></path>
+              <path
+                d="M6 19C4.34315 19 3 17.6569 3 16V10C3 6.22876 3 4.34315 4.17157 3.17157C5.34315 2 7.22876 2 11 2H15C16.6569 2 18 3.34315 18 5"
+                stroke="#000000"
+                strokeWidth="1.5"
+              ></path>
+          </svg>
+        </button>
+      </div>
       <div className="tooltip inline-flex" data-tip="Sırayı Taşı">
         <div
           {...dragHandleProps}
           className="hover:bg-red-500 text-black bg-white duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md !px-4"
         >
           <div className="!min-w-8">
-            {" "}
+            
             {row.type != "empty" && <span>{row.label}</span>}
           </div>
           <svg className="!min-w-8" viewBox="0 0 512 512">
@@ -188,7 +208,7 @@ export default function Row({
                 >
                   Değiştir
                 </button>
-                                <div className={" font-bold text-red-500 px-1"}>
+                <div className={" font-bold text-red-500 px-1"}>
                   {formError}
                 </div>
               </div>
