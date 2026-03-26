@@ -42,7 +42,7 @@ export default function NavBar() {
     <li onClick={() => router.push("/account/venues")}>
       <a>Salonlar</a>
     </li>
-    <li><a>Link 2</a></li>
+    <li onClick={() => router.push("/account/shows")}><a>Gösteriler</a></li>
     <li onClick={logout}>
       <a>Çıkış Yap</a>
     </li>

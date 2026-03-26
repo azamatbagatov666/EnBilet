@@ -183,6 +183,7 @@ export default function List() {
               className="select select-accent w-5/6 "
               value={selectedVenue}
               onChange={(e) => setSelectedVenue(Number(e.target.value))}
+              disabled={selectedCity == ""}
             >
               {Object.entries(venues).map(([id, venue]) => (
                 <option key={id} value={id}>
