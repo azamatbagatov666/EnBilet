@@ -12,7 +12,7 @@ export default function FileDropzone({
 
   const [preview, setPreview] = useState<string | null>(null);
 
-  const MAX_SIZE_MB = 2;
+  const MAX_SIZE_MB = 5;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
   const [error, setError] = useState("");
 
@@ -65,7 +65,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
 
   function validate(file: File): boolean {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Sadece JPG, PNG veya WEBP dosyaları kabul edilir.");
+      setError("Sadece JPG, PNG, GIF veya WEBP dosyaları kabul edilir.");
       return false;
     }
 
@@ -97,7 +97,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
 
   return (
     <>
-      <div className="">
+      <div className="select-none">
         {preview == null ? (<div>
           <div
             onDragOver={onDragOver}
@@ -121,7 +121,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
             </svg>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg, image/png, image/webp, image/gif"
               hidden
               ref={inputRef}
               onChange={onFileChange}
@@ -132,19 +132,20 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
             </div>
             <div className="text-lg "> veya </div>
             <div className="grid gap-1">
-              <button
+              <button data-theme="light"
                 className="btn "
                 onClick={() => inputRef.current?.click()}
               >
                 Dosya Seçin
               </button>
-              <div className="text-xs text-center">En fazla 5MB</div>
+              <div className="text-xs text-center">En fazla {MAX_SIZE_MB}MB</div>
             </div>
           </div>
             <div className="flex justify-center mt-2 text-red-500 font-bold">{error}</div></div>
           
         ) : (
-          <div className=" bg-gray-500 relative p-1 rounded-3xl">
+          <div className="flex justify-center">
+          <div className=" bg-gray-500   relative p-1 rounded-3xl">
             <div>
               <button
                 onClick={() => clearFile()}
@@ -154,6 +155,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
               </button>
               <img src={preview!} className="rounded-3xl" alt="Önizleme" />
             </div>
+          </div>
           </div>
         )}
       </div>

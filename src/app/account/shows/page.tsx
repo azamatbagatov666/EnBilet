@@ -91,11 +91,11 @@ export default function shows() {
               onChange={(e) => setShowName(e.target.value)}
             ></input>
             <div>Gösteri Açıklaması:</div>
-            <input
-              className="input input-accent w-full"
+            <textarea 
+              className="input input-accent w-full h-28"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-            ></input>
+            ></textarea>
             <div>Kapak Resmi:</div>
 
 
