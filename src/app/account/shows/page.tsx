@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
-import type { VenueType } from "@/src/models/VenueType";
+import type { ShowType } from "@/src/models/ShowType";
 import { useRouter } from "next/navigation";
 import "@/src/app/account/account.css";
 import DialogModal from "@/src/components/DialogModal";
@@ -20,10 +20,10 @@ export default function shows() {
 
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const [shows, setShows] = useState<VenueType[]>([]);
+  const [shows, setShows] = useState<ShowType[]>([]);
 
-  const getAllShows = async () => {
-    const res = await fetchWithAuth("/services/account/get/getAllVenues");
+  const getShows = async () => {
+    const res = await fetchWithAuth("/services/account/get/getShows");
     if (!res.ok) {
       return;
     }
@@ -32,28 +32,32 @@ export default function shows() {
   };
 
   useEffect(() => {
-    getAllShows();
+    getShows();
   }, []);
 
   const createShow = async () => {
     if (showName != "") {
       try {
-        const res = await fetchWithAuth("/services/account/actions/addVenue", {
+        const res = await fetchWithAuth("/services/account/actions/addShow", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            showName: showName,
+            description: description,
+            imageKey: "imagePath"
+          }),
         });
         if (res.status === 409) {
           setDialogueText(
-            "Seçtiğiniz şehirde belirttiğiniz isimde bir salon zaten bulunuyor.",
+            "Belirttiğiniz isimde bir gösteri zaten bulunuyor.",
           );
           setDialogueOpen(true);
 
           return;
         } else if (!res.ok) {
-          throw new Error("Failed to add venue");
+          throw new Error("Failed to add show");
         }
 
         setShowName("");
@@ -62,7 +66,7 @@ export default function shows() {
         setDialogueText("Gösteri başarıyla eklendi.");
         setDialogueOpen(true);
 
-        getAllShows();
+        getShows();
       } catch (err) {
         setDialogueText("Bağlantı sorunu.");
         setDialogueOpen(true);
@@ -133,18 +137,16 @@ export default function shows() {
 
             <tbody>
               {shows.map((show) => (
-                <tr className="font-bold" key={show.id}>
-                  <td>{show.city}</td>
+                <tr className="font-bold" key={show.showID}>
+                  <td>{show.showName}</td>
 
-                  <td>{show.venue}</td>
+                  <td>{show.description}</td>
 
-                  <td>{show.address}</td>
+                  <td>{show.imageKey}</td>
                   <td>
                     <div className="flex justify-center">
                       <button
-                        onClick={() =>
-                          router.push(`/account/venues/designSeats/${show.id}`)
-                        }
+      
                         className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
                       >
                         <svg
