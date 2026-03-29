@@ -13,7 +13,8 @@ export default function shows() {
 
   const [showName, setShowName] = useState("");
   const [description, setDescription] = useState("");
-  const [imagePath, setImagePath] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePath, setImagePath] = useState<string | null>(null);
 
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [dialogueText, setDialogueText] = useState("");
@@ -35,53 +36,84 @@ export default function shows() {
     getShows();
   }, []);
 
-  const createShow = async () => {
-    if (showName != "") {
-      try {
-        const res = await fetchWithAuth("/services/account/actions/addShow", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            showName: showName,
-            description: description,
-            imageKey: "imagePath"
-          }),
-        });
-        if (res.status === 409) {
-          setDialogueText(
-            "Belirttiğiniz isimde bir gösteri zaten bulunuyor.",
-          );
-          setDialogueOpen(true);
+const createShow = async () => {
+  if (!showName) {
+    setDialogueText("Lütfen gösteri adını girdiğinizden emin olun.");
+    setDialogueOpen(true);
+    return;
+  }
 
-          return;
-        } else if (!res.ok) {
-          throw new Error("Failed to add show");
-        }
+  try {
+    let uploadedPath: string | null = null;
 
-        setShowName("");
-        setDescription("");
-        setImagePath("");
-        setDialogueText("Gösteri başarıyla eklendi.");
-        setDialogueOpen(true);
-
-        getShows();
-      } catch (err) {
-        setDialogueText("Bağlantı sorunu.");
-        setDialogueOpen(true);
-      }
-    } else {
-      setDialogueText("Lütfen gösteri adını girdiğinizden emin olun.");
-      setDialogueOpen(true);
+    if (imageFile) {
+      uploadedPath = await uploadImage(imageFile);
     }
-  };
+
+    const res = await fetchWithAuth("/services/account/actions/addShow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        showName,
+        description,
+        imageKey: uploadedPath, 
+      }),
+    });
+
+    if (res.status === 409) {
+      setDialogueText("Belirttiğiniz isimde bir gösteri zaten bulunuyor.");
+      setDialogueOpen(true);
+      return;
+    }
+
+    if (!res.ok) throw new Error("Failed to add show");
+
+    setShowName("");
+    setDescription("");
+    setImageFile(null);
+    setImagePath(null);
+
+    setDialogueText("Gösteri başarıyla eklendi.");
+    setDialogueOpen(true);
+
+    getShows();
+  } catch {
+    setDialogueText("Bağlantı sorunu.");
+    setDialogueOpen(true);
+  }
+};
 
   useEffect(() => {
     if (dialogueOpen) {
       dialogRef.current?.focus();
     }
   }, [dialogueOpen]);
+
+const uploadImage = async (file: File): Promise<string> => {
+  const sasRes = await fetchWithAuth("/services/account/get/getImageUploadSas", {
+    method: "POST",
+  });
+
+  const { uploadUrl, sasToken } = await sasRes.json();
+
+  const ext = file.name.split(".").pop();
+  const fileName = `show-covers/${crypto.randomUUID()}.${ext}`;
+
+  const res = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
+    method: "PUT",
+    headers: {
+      "x-ms-blob-type": "BlockBlob",
+      "Content-Type": file.type,
+    },
+    body: file,
+  });
+
+  if (!res.ok) throw new Error("Upload failed");
+
+  return fileName; 
+};
 
   return (
     <>
@@ -95,19 +127,16 @@ export default function shows() {
               onChange={(e) => setShowName(e.target.value)}
             ></input>
             <div>Gösteri Açıklaması:</div>
-            <textarea 
+            <textarea
               className="input input-accent w-full h-28"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             ></textarea>
             <div>Kapak Resmi:</div>
 
-
-
             <FileDropzone
-              onFile={(file) => {
-                // upload to backend here
-              }}
+              file={imageFile}
+              onChange={(file) => setImageFile(file)}
             />
           </div>
         </div>
@@ -142,13 +171,15 @@ export default function shows() {
 
                   <td>{show.description}</td>
 
-                  <td>{show.imageKey}</td>
+                  <td>
+                    <img
+                      src={`https://cocukakli.blob.core.windows.net/public-images/${show.imageKey}`}
+                      alt="Gösteri Fotoğrafı"
+                    />
+                  </td>
                   <td>
                     <div className="flex justify-center">
-                      <button
-      
-                        className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
-                      >
+                      <button className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black">
                         <svg
                           width="32px"
                           height="32px"

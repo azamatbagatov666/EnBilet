@@ -2,9 +2,11 @@
 import { useState, useRef } from "react";
 
 export default function FileDropzone({
-  onFile,
+  file,
+  onChange,
 }: {
-  onFile: (file: File | null) => void;
+  file: File | null;
+  onChange: (file: File | null) => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -13,7 +15,12 @@ export default function FileDropzone({
   const [preview, setPreview] = useState<string | null>(null);
 
   const MAX_SIZE_MB = 5;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
   const [error, setError] = useState("");
 
   function onDragOver(e: React.DragEvent) {
@@ -40,7 +47,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
     }
     if (!file) return;
 
-    onFile(file);
+onChange(file);
     setPreview(URL.createObjectURL(file));
   }
 
@@ -59,7 +66,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
     }
     if (!file) return;
 
-    onFile(file);
+onChange(file);
     setPreview(URL.createObjectURL(file));
   }
 
@@ -79,17 +86,14 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp, image/gif"];
   }
 
   function clearFile() {
-    // clear preview
     if (preview) {
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
     setError("")
 
-    // clear parent state
-    onFile(null); // or change prop typing (recommended below)
+onChange(null);
 
-    // clear native input
     if (inputRef.current) {
       inputRef.current.value = "";
     }
