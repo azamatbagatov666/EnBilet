@@ -55,7 +55,6 @@ export default function DialogModal({
         >
           ✕
         </button>
-            <h3 className="font-extrabold text-2xl">Dikkat!</h3>
 
 
         <div className="mt-5 flex font-bold text-lg  justify-center text-center">

@@ -6,6 +6,8 @@ import type { VenueType } from "@/src/models/VenueType";
 import { useRouter } from "next/navigation";
 import '@/src/app/account/account.css';
 import DialogModal from "@/src/components/DialogModal";
+import SuccessAlert from "@/src/components/SuccessAlert";
+
 
 
 
@@ -102,6 +104,9 @@ export default function venues() {
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [dialogueText, setDialogueText] = useState("");
 
+    const [alertOpen, setAlertOpen] = useState(false);
+  const [alertText, setAlertText] = useState("");
+
   const dialogRef = useRef<HTMLDialogElement>(null);
 
 
@@ -143,8 +148,8 @@ export default function venues() {
         setSelectedCity("");
         setVenueName("");
         setAddress("");
-        setDialogueText("Salon başarıyla eklendi.")
-        setDialogueOpen(true)
+      setAlertText("Salon başarıyla eklendi.");
+      setAlertOpen(true);
 
 
         getAllVenues();
@@ -262,6 +267,12 @@ export default function venues() {
 >
   {dialogueText}
 </DialogModal>
+
+      {alertOpen && (
+        <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+          {alertText}
+        </SuccessAlert>
+      )}
     </>
   );
 }

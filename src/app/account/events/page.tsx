@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import type { EventType } from "@/src/models/EventType";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DialogModal from "@/src/components/DialogModal";
+import SuccessAlert from "@/src/components/SuccessAlert";
+
 
 
 
@@ -21,7 +23,12 @@ export default function List() {
     new Set(),
   );
   const [dialogueOpen, setDialogueOpen] = useState(false);
+
+  
   const [dialogueText, setDialogueText] = useState("");
+
+    const [alertOpen, setAlertOpen] = useState(false);
+  const [alertText, setAlertText] = useState("");
 
   const [time, setTime] = useState("");
   const now = new Date();
@@ -56,8 +63,10 @@ export default function List() {
         setSelectedVenue("");
         setVenues({});
         setTime("");
-                            setDialogueText("Etkinlik başarıyla eklendi.")
-          setDialogueOpen(true)
+
+
+setAlertText("Etkinlik başarıyla eklendi.");
+      setAlertOpen(true);
 
         getEvents();
       } catch (err) {
@@ -276,6 +285,12 @@ export default function List() {
       >
         {dialogueText}
       </DialogModal>
+
+            {alertOpen && (
+              <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+                {alertText}
+              </SuccessAlert>
+            )}
     </>
   );
 }
