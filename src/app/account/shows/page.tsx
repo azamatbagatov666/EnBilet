@@ -9,25 +9,30 @@ import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
 import FormContainer from "@/src/components/forms/FormContainer";
 
-
 export default function shows() {
+  //Fetched
+  const [shows, setShows] = useState<ShowType[]>([]);
+
+  //ADD Show
   const [showName, setShowName] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
 
+  //EditShow
+  const [isEditing, setIsEditing] = useState(false);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [editedShow, setEditedShow] = useState<ShowType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
-  const [shows, setShows] = useState<ShowType[]>([]);
-
   const [imageToDelete, setImageToDelete] = useState("");
+  const [originalShow, setOriginalShow] = useState<ShowType | null>(null);
 
+  //Alerts
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [dialogueText, setDialogueText] = useState("");
   const [alertText, setAlertText] = useState("");
 
+  //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -37,7 +42,8 @@ export default function shows() {
 
   const handleOpenEdit = (showInfo: ShowType) => {
     setIsEditing(false);
-    setEditedShow(showInfo);
+    setEditedShow({ ...showInfo }); 
+    setOriginalShow({ ...showInfo }); 
     setImageToDelete("");
     setNewImageFile(null);
     setEditDialogueOpen(true);
@@ -119,8 +125,37 @@ export default function shows() {
     }
   };
 
+  const hasShowChanged = (
+  original: ShowType,
+  updated: ShowType,
+  imageToDelete: string,
+  newImageFile: File | null
+) => {
+  if (original.showName !== updated.showName) return true;
+  if (original.description !== updated.description) return true;
+  if (imageToDelete) return true;
+  if (newImageFile) return true;
+
+  return false;
+};
+
   const editShow = async () => {
-    if (!editedShow || isEditing || editedShow?.showName == "") return;
+    if (!editedShow || isEditing || editedShow?.showName == "" || !originalShow ) return;
+
+    if (
+    !hasShowChanged(
+      originalShow,
+      editedShow,
+      imageToDelete,
+      newImageFile
+    )
+  ) {
+    setDialogueOpen(false);
+    setEditDialogueOpen(false);
+    setEditedShow(undefined);
+    setOriginalShow(null);
+    return;
+  }
 
     setIsEditing(true);
     let updatedShow = { ...editedShow };
@@ -146,7 +181,7 @@ export default function shows() {
       body: JSON.stringify(updatedShow),
     });
 
-    setIsEditing(false)
+    setIsEditing(false);
     setDialogueOpen(false);
     setEditDialogueOpen(false);
     setEditedShow(undefined);
@@ -193,28 +228,26 @@ export default function shows() {
 
   return (
     <>
-           <FormContainer title="Yeni Gösteri Ekle">
+      <FormContainer title="Yeni Gösteri Ekle">
+        <div>Gösteri İsmi:</div>
+        <input
+          className="input input-accent  w-full"
+          value={showName}
+          onChange={(e) => setShowName(e.target.value)}
+        ></input>
+        <div>Gösteri Açıklaması:</div>
+        <textarea
+          className="input input-accent w-full h-28"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        ></textarea>
+        <div>Kapak Resmi:</div>
 
-            <div>Gösteri İsmi:</div>
-            <input
-              className="input input-accent  w-full"
-              value={showName}
-              onChange={(e) => setShowName(e.target.value)}
-              
-            ></input>
-            <div>Gösteri Açıklaması:</div>
-            <textarea
-              className="input input-accent w-full h-28"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
-            <div>Kapak Resmi:</div>
-
-            <FileDropzone
-              ref={dropzoneRef}
-              file={imageFile}
-              onChange={(file) => setImageFile(file)}
-            />
+        <FileDropzone
+          ref={dropzoneRef}
+          file={imageFile}
+          onChange={(file) => setImageFile(file)}
+        />
         <div className="flex justify-center mt-10">
           <button className="btn btn-success  " onClick={() => createShow()}>
             GÖSTERİ EKLE
@@ -290,19 +323,24 @@ export default function shows() {
       </div>
 
       {dialogueOpen && (
-        <DialogModal open={dialogueOpen} onClose={() => {setDialogueOpen(false); setEditDialogueOpen(false)}} disableClose={isEditing}>
+        <DialogModal
+          open={dialogueOpen}
+          onClose={() => {
+            setDialogueOpen(false);
+            setEditDialogueOpen(false);
+          }}
+          disableClose={isEditing}
+        >
           {dialogueText}
           {editDialogueOpen && (
-            <div
-              className={`grid gap-2 w-[500px]`}
-            >
+            <div className={`grid gap-2 w-[500px]`}>
               <div>Gösteri İsmi:</div>
               <input
-                          className={`input input-accent w-full ${
-            editedShow?.showName == ""
-              ? "!border-red-500 border-4 !outline-red-500"
-              : ""
-          }`}
+                className={`input input-accent w-full ${
+                  editedShow?.showName == ""
+                    ? "!border-red-500 border-4 !outline-red-500"
+                    : ""
+                }`}
                 value={editedShow?.showName ?? ""}
                 onChange={(e) =>
                   setEditedShow((prev) =>
@@ -365,15 +403,12 @@ export default function shows() {
               </div>
             </div>
           )}
-
         </DialogModal>
       )}
 
-
-        <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-          {alertText}
-        </SuccessAlert>
-
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+        {alertText}
+      </SuccessAlert>
     </>
   );
 }

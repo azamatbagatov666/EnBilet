@@ -105,11 +105,9 @@ export default function venues() {
 
   //ToEdit
   const [isEditing, setIsEditing] = useState(false);
-    const [editedVenue, setEditedVenue] = useState<VenueType>();
+  const [editedVenue, setEditedVenue] = useState<VenueType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
-
-  
-
+  const [originalVenue, setOriginalVenue] = useState<VenueType | null>(null);
 
   //Alerts
   const [dialogueOpen, setDialogueOpen] = useState(false);
@@ -123,12 +121,13 @@ export default function venues() {
   //Fetched
   const [venues, setVenues] = useState<VenueType[]>([]);
 
-    const handleOpenEdit = (venueInfo: VenueType) => {
-      setIsEditing(false);
-      setEditedVenue(venueInfo);
-      setEditDialogueOpen(true);
-      setDialogueOpen(true);
-    };
+  const handleOpenEdit = (venueInfo: VenueType) => {
+    setIsEditing(false);
+        setEditedVenue({ ...venueInfo }); 
+    setOriginalVenue({ ...venueInfo }); 
+    setEditDialogueOpen(true);
+    setDialogueOpen(true);
+  };
 
   const getAllVenues = async () => {
     const res = await fetchWithAuth("/services/account/get/getAllVenues");
@@ -183,14 +182,35 @@ export default function venues() {
     }
   };
 
-    const editVenue = async () => {
-    if (!editedVenue || isEditing || editedVenue?.venueName == "") return;
+    const hasVenueChanged = (
+    original: VenueType,
+    updated: VenueType,
+  ) => {
+    if (original.venueID !== updated.venueID) return true;
+    if (original.venueName !== updated.venueName) return true;
+    if (original.city !== updated.city) return true;
+  
+    return false;
+  };
+
+  const editVenue = async () => {
+    if (!editedVenue || isEditing || editedVenue?.venueName == "" || !originalVenue ) return;
+
+        if (
+    !hasVenueChanged(
+      originalVenue,
+      editedVenue,
+    )
+  ) {
+    setDialogueOpen(false);
+    setEditDialogueOpen(false);
+    setEditedVenue(undefined);
+    setOriginalVenue(null);
+    return;
+  }
 
     setIsEditing(true);
     let updatedVenue = { ...editedVenue };
-
-
-
 
     await fetchWithAuth("/services/account/actions/editVenue", {
       method: "POST",
@@ -198,7 +218,7 @@ export default function venues() {
       body: JSON.stringify(updatedVenue),
     });
 
-    setIsEditing(false)
+    setIsEditing(false);
     setDialogueOpen(false);
     setEditDialogueOpen(false);
     setEditedVenue(undefined);
@@ -288,7 +308,9 @@ export default function venues() {
                     <div className="flex justify-center">
                       <button
                         onClick={() =>
-                          router.push(`/account/venues/designSeats/${venue.venueID}`)
+                          router.push(
+                            `/account/venues/designSeats/${venue.venueID}`,
+                          )
                         }
                         className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
                       >
@@ -335,75 +357,80 @@ export default function venues() {
         </div>
       </div>
 
-      <DialogModal open={dialogueOpen} onClose={() => {setDialogueOpen(false); setEditDialogueOpen(false)}} disableClose={isEditing}>
+      <DialogModal
+        open={dialogueOpen}
+        onClose={() => {
+          setDialogueOpen(false);
+          setEditDialogueOpen(false);
+        }}
+        disableClose={isEditing}
+      >
         {dialogueText}
-        {editDialogueOpen && <>
-
-            <div
-              className={`grid gap-2 w-[500px]`}
-            >
-
-        <div>Şehir Seçiniz:</div>
-        <select
-          className="select select-accent   "
-          value={editedVenue?.city ?? ""}
-                         onChange={(e) =>
+        {editDialogueOpen && (
+          <>
+            <div className={`grid gap-2 w-[500px]`}>
+              <div>Şehir Seçiniz:</div>
+              <select
+                className="select select-accent   "
+                value={editedVenue?.city ?? ""}
+                onChange={(e) =>
                   setEditedVenue((prev) =>
                     prev ? { ...prev, city: e.target.value } : prev,
                   )
                 }
-        >
-          <option value="" disabled>
-            Şehir seçiniz.
-          </option>
+              >
+                <option value="" disabled>
+                  Şehir seçiniz.
+                </option>
 
-          {cities.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
-        <div>Salon İsmi:</div>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+              <div>Salon İsmi:</div>
 
-        <input
-          
-                                    className={`input input-accent ${
-            editedVenue?.venueName == ""
-              ? "!border-red-500 border-4 !outline-red-500"
-              : ""
-          }`}
-          value={editedVenue?.venueName ?? ""}
-                                   onChange={(e) =>
+              <input
+                className={`input input-accent ${
+                  editedVenue?.venueName == ""
+                    ? "!border-red-500 border-4 !outline-red-500"
+                    : ""
+                }`}
+                value={editedVenue?.venueName ?? ""}
+                onChange={(e) =>
                   setEditedVenue((prev) =>
                     prev ? { ...prev, venueName: e.target.value } : prev,
                   )
                 }
-        ></input>
-        <div>Salonun Adresi:</div>
+              ></input>
+              <div>Salonun Adresi:</div>
 
-        <input
-          className="input input-accent  "
-          value={editedVenue?.address ?? ""}
-                                             onChange={(e) =>
+              <input
+                className="input input-accent  "
+                value={editedVenue?.address ?? ""}
+                onChange={(e) =>
                   setEditedVenue((prev) =>
                     prev ? { ...prev, address: e.target.value } : prev,
                   )
                 }
-        ></input>
-        <div className="flex justify-center mt-4">
-          <button className="btn btn-success  " onClick={() => editVenue()}>
-            Kaydet
-          </button>
-        </div>
-
-
+              ></input>
+              <div className="flex justify-center mt-4">
+                <button
+                  className="btn btn-success  "
+                  onClick={() => editVenue()}
+                >
+                  Kaydet
+                </button>
+              </div>
             </div>
-        </>}
+          </>
+        )}
       </DialogModal>
 
-        <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-          {alertText}
-        </SuccessAlert>
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+        {alertText}
+      </SuccessAlert>
     </>
   );
 }
