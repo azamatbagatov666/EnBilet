@@ -9,30 +9,23 @@ type Props = {
 };
 
 export default function SuccessAlert({ open, onClose, children }: Props) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
+useEffect(() => {
+  if (!open) return;
 
-    if (open) {
-      if (!dialog.open) dialog.show();
+  const t = setTimeout(() => {
+    onClose();
+  }, 4000);
 
-      const t = setTimeout(() => {
-        dialog.close();
-        onClose();
-      }, 3000);
-
-      return () => clearTimeout(t);
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open, onClose]);
+  return () => clearTimeout(t);
+}, [open, onClose]);
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="fixed bottom-6 font-bold w-full sm:w-3/5 px-4 border-none bg-transparent"
+    <div className="flex justify-center">
+    <div
+      className={`fixed bottom-6 font-bold w-full sm:w-3/5 px-4 border-none bg-transparent transition-all duration-300 ease-out ${open
+      ? "opacity-100 translate-y-0"
+      : "opacity-0 translate-y-2 pointer-events-none"}`}
     >
       <div role="alert" className="alert alert-success !text-white shadow-lg flex justify-left">
         <svg
@@ -50,6 +43,7 @@ export default function SuccessAlert({ open, onClose, children }: Props) {
         </svg>
         {children}
       </div>
-    </dialog>
+    </div>
+    </div>
   );
 }

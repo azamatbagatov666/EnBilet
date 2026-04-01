@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import type { EventType } from "@/src/models/EventType";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
-import DialogModal from "@/src/components/DialogModal";
-import SuccessAlert from "@/src/components/SuccessAlert";
-
-
+import DialogModal from "@/src/components/alerts/DialogModal";
+import SuccessAlert from "@/src/components/alerts/SuccessAlert";
+import FormContainer from "@/src/components/forms/FormContainer";
 
 
 export default function List() {
   const [events, setEvents] = useState<EventType[]>([]);
 
   const [selectedCity, setSelectedCity] = useState("");
+  const [selectedShow, setSelectedShow] = useState<number | "">("");
   const [selectedVenue, setSelectedVenue] = useState<number | "">("");
   const [venues, setVenues] = useState<Record<number, string>>({});
   const [cities, setCities] = useState([]);
@@ -24,10 +24,11 @@ export default function List() {
   );
   const [dialogueOpen, setDialogueOpen] = useState(false);
 
-  
+  const [shows, setShows] = useState<Record<number, string>>({});
+
   const [dialogueText, setDialogueText] = useState("");
 
-    const [alertOpen, setAlertOpen] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
   const [alertText, setAlertText] = useState("");
 
   const [time, setTime] = useState("");
@@ -40,38 +41,38 @@ export default function List() {
     if (selectedVenue != "" && time != "") {
       try {
         const res = await fetchWithAuth("/services/account/actions/addEvent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        venueID: selectedVenue,
-        date: time,
-      }),
-    });
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            venueID: selectedVenue,
+            showID: selectedShow,
+            date: time,
+          }),
+        });
         if (res.status === 409) {
-                    setDialogueText("Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.")
-          setDialogueOpen(true)
-      return
-    }
-        else if (!res.ok) {
+          setDialogueText(
+            "Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.",
+          );
+          setDialogueOpen(true);
+          return;
+        } else if (!res.ok) {
           throw new Error("Failed to add event");
         }
-
 
         setSelectedCity("");
         setSelectedVenue("");
         setVenues({});
         setTime("");
 
-
-setAlertText("Etkinlik başarıyla eklendi.");
-      setAlertOpen(true);
+        setAlertText("Etkinlik başarıyla eklendi.");
+        setAlertOpen(true);
 
         getEvents();
       } catch (err) {
-                            setDialogueText("Bağlantı sorunu.")
-          setDialogueOpen(true)
+        setDialogueText("Bağlantı sorunu.");
+        setDialogueOpen(true);
       }
     }
   };
@@ -80,11 +81,13 @@ setAlertText("Etkinlik başarıyla eklendi.");
     if (!selectedCity) return;
     const fetchData = async () => {
       try {
-        const res = await fetchWithAuth(`/services/account/get/getVenues?city=${selectedCity}`);
-        const data: { id: number; venue: string }[] = await res.json();
+        const res = await fetchWithAuth(
+          `/services/account/get/getVenues?city=${selectedCity}`,
+        );
+        const data: { venueID: number; venueName: string }[] = await res.json();
 
         const venuesObject = Object.fromEntries(
-          data.map((v: { id: number; venue: string }) => [v.id, v.venue]),
+          data.map((v: { venueID: number; venueName: string }) => [v.venueID, v.venueName]),
         );
         setVenues(venuesObject);
 
@@ -95,8 +98,8 @@ setAlertText("Etkinlik başarıyla eklendi.");
           throw new Error("Failed to fetch venues");
         }
       } catch (err) {
-                                    setDialogueText("Bağlantı sorunu.")
-          setDialogueOpen(true)
+        setDialogueText("Bağlantı sorunu.");
+        setDialogueOpen(true);
       }
     };
 
@@ -105,21 +108,43 @@ setAlertText("Etkinlik başarıyla eklendi.");
 
   useEffect(() => {
     (async () => {
-      const res = await fetchWithAuth("/services/account/get/getCities");
-      if (!res.ok) {
-        return
-      }
-      const data = await res.json();
-      setCities(data);
-      getEvents();
+      getShows();
+      getCities();
     })();
   }, []);
 
+  const getShows = async () => {
+    const res = await fetchWithAuth("/services/account/get/getShows");
+    if (!res.ok) {
+      return;
+    }
+    const data = await res.json();
+    setShows(data);
+
+    const showsObject = Object.fromEntries(
+      data.map((v: { showID: number; showName: string }) => [
+        v.showID,
+        v.showName,
+      ]),
+    );
+    setShows(showsObject);
+  };
+
+  const getCities = async () => {
+    const res = await fetchWithAuth("/services/account/get/getCities");
+    if (!res.ok) {
+      return;
+    }
+    const data = await res.json();
+    setCities(data);
+    getEvents();
+  };
+
   const getEvents = async () => {
     const res = await fetchWithAuth("/services/account/get/getEvents");
-          if (!res.ok) {
-        return
-      }
+    if (!res.ok) {
+      return;
+    }
     const data = await res.json();
     setEvents(data);
   };
@@ -131,16 +156,17 @@ setAlertText("Etkinlik başarıyla eklendi.");
       } else {
         setUpdatingIsPublic((prev) => new Set(prev).add(eventID));
       }
-        const response = await fetchWithAuth("/services/account/actions/updateBool", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventID, info, value }),
-    });
-
+      const response = await fetchWithAuth(
+        "/services/account/actions/updateBool",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventID, info, value }),
+        },
+      );
 
       if (!response.ok) {
-          throw new Error("Failed to update");
-
+        throw new Error("Failed to update");
       }
 
       if (info == "ticketsale") {
@@ -159,21 +185,35 @@ setAlertText("Etkinlik başarıyla eklendi.");
 
       getEvents();
     } catch {
-                                  setDialogueText("Bağlantı sorunu.")
-          setDialogueOpen(true)
+      setDialogueText("Bağlantı sorunu.");
+      setDialogueOpen(true);
     }
   };
 
   return (
     <>
-      <div>
-        <div className="mt-96 flex justify-center">
-          <div className=" grid grid-cols-3 w-9/12">
-            <div>Şehir Seçiniz:</div>
-            <div>Salon Seçiniz:</div>
-            <div>Tarih ve Saat Seçiniz:</div>
+   <FormContainer title="Yeni Etkinlik Ekle">
+
+            <div>Gösteri Seçiniz:</div>
             <select
-              className="select select-accent w-56 "
+              className="select select-accent w-full "
+              value={selectedShow}
+              onChange={(e) => setSelectedShow(Number(e.target.value))}
+            >
+              <option value="" disabled>
+                Gösteri seçiniz.
+              </option>
+
+              {Object.entries(shows).map(([showID, showName]) => (
+                <option key={showID} value={showID}>
+                  {showName}
+                </option>
+              ))}
+            </select>
+            <div>Şehir Seçiniz:</div>
+
+            <select
+              className="select select-accent w-full "
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
             >
@@ -188,18 +228,21 @@ setAlertText("Etkinlik başarıyla eklendi.");
               ))}
             </select>
 
+            <div>Salon Seçiniz:</div>
+
             <select
-              className="select select-accent w-5/6 "
+              className="select select-accent w-full "
               value={selectedVenue}
               onChange={(e) => setSelectedVenue(Number(e.target.value))}
               disabled={selectedCity == ""}
             >
-              {Object.entries(venues).map(([id, venue]) => (
-                <option key={id} value={id}>
-                  {venue}
+              {Object.entries(venues).map(([venueID, venueName]) => (
+                <option key={venueID} value={venueID}>
+                  {venueName}
                 </option>
               ))}
             </select>
+            <div>Tarih ve Saat Seçiniz:</div>
 
             <input
               className="select select-accent w-48"
@@ -208,20 +251,20 @@ setAlertText("Etkinlik başarıyla eklendi.");
               min={today}
               onChange={(e) => setTime(e.target.value)}
             ></input>
-          </div>
-        </div>
-        <div className="flex justify-center mt-10">
+   
+        <div className="flex justify-center mt-6">
           <button className="btn btn-success  " onClick={() => createEvent()}>
             ETKİNLİK OLUŞTUR
           </button>
         </div>
-      </div>
+      </FormContainer>
       <div>
         <div className=" flex justify-center my-10">
           <table className="table table-auto w-6/12 table-zebra border-2 border-black dark:border-white">
             <thead>
               <tr className="bg-gray-300 font-bold text-lg text-black">
                 <th>Tarih</th>
+                <th>Gösteri</th>
                 <th>Şehir</th>
                 <th>Salon</th>
                 <th>Satışa Açık</th>
@@ -233,9 +276,10 @@ setAlertText("Etkinlik başarıyla eklendi.");
               {events.map((event) => (
                 <tr key={event.eventID}>
                   <td>{event.date}</td>
+                  <td>{event.showName}</td>
 
                   <td>{event.city}</td>
-                  <td>{event.venue}</td>
+                  <td>{event.venueName}</td>
 
                   <td
                     className={`text-center ${updatingTicketSale.has(event.eventID!) ? "bg-yellow-300" : ""}`}
@@ -279,18 +323,13 @@ setAlertText("Etkinlik başarıyla eklendi.");
         </div>
       </div>
 
-      <DialogModal
-        open={dialogueOpen}
-        onClose={() => setDialogueOpen(false)}
-      >
+      <DialogModal open={dialogueOpen} onClose={() => setDialogueOpen(false)}>
         {dialogueText}
       </DialogModal>
 
-            {alertOpen && (
-              <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-                {alertText}
-              </SuccessAlert>
-            )}
+        <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+          {alertText}
+        </SuccessAlert>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "src/app/globals.css";
-import NavBar from "@/src/components/NavBar";
+import NavBar from "@/src/components/navBar/NavBar";
 
 
 
@@ -17,8 +17,9 @@ export default function RootLayout({
   return (
 
  <>
-
+<div className="my-8">
         {children}
+        </div>
 </>
   );
 }

@@ -1,6 +1,6 @@
 export interface VenueType {
-  id?: number;     
-  venue?: string;     
+  venueID?: number;     
+  venueName?: string;     
   city?: string;
   address?: string;
 }

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
-import ThemeToggle from "@/src/components/ThemeToggle"
+import ThemeToggle from "@/src/components/navBar/ThemeToggle"
 
 
 

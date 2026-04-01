@@ -4,9 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import type { ShowType } from "@/src/models/ShowType";
 import "@/src/app/account/account.css";
-import DialogModal from "@/src/components/DialogModal";
-import SuccessAlert from "@/src/components/SuccessAlert";
+import DialogModal from "@/src/components/alerts/DialogModal";
+import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
+import FormContainer from "@/src/components/forms/FormContainer";
+
 
 export default function shows() {
   const [showName, setShowName] = useState("");
@@ -118,7 +120,7 @@ export default function shows() {
   };
 
   const editShow = async () => {
-    if (!editedShow || isEditing) return;
+    if (!editedShow || isEditing || editedShow?.showName == "") return;
 
     setIsEditing(true);
     let updatedShow = { ...editedShow };
@@ -144,9 +146,9 @@ export default function shows() {
       body: JSON.stringify(updatedShow),
     });
 
-    //setIsEditing(false)
-    //setDialogueOpen(false);
-    //setEditDialogueOpen(false);
+    setIsEditing(false)
+    setDialogueOpen(false);
+    setEditDialogueOpen(false);
     setEditedShow(undefined);
     setImageToDelete("");
     setNewImageFile(null);
@@ -191,14 +193,14 @@ export default function shows() {
 
   return (
     <>
-      <div>
-        <div className="mt-4 flex justify-center ">
-          <div className="grid gap-2 w-[500px]">
+           <FormContainer title="Yeni Gösteri Ekle">
+
             <div>Gösteri İsmi:</div>
             <input
               className="input input-accent  w-full"
               value={showName}
               onChange={(e) => setShowName(e.target.value)}
+              
             ></input>
             <div>Gösteri Açıklaması:</div>
             <textarea
@@ -213,14 +215,12 @@ export default function shows() {
               file={imageFile}
               onChange={(file) => setImageFile(file)}
             />
-          </div>
-        </div>
         <div className="flex justify-center mt-10">
           <button className="btn btn-success  " onClick={() => createShow()}>
             GÖSTERİ EKLE
           </button>
         </div>
-      </div>
+      </FormContainer>
       <div>
         <div className="  my-10">
           <div className="overflow-x-auto flex justify-center">
@@ -290,15 +290,19 @@ export default function shows() {
       </div>
 
       {dialogueOpen && (
-        <DialogModal open={dialogueOpen} onClose={() => setDialogueOpen(false)}>
+        <DialogModal open={dialogueOpen} onClose={() => {setDialogueOpen(false); setEditDialogueOpen(false)}} disableClose={isEditing}>
           {dialogueText}
           {editDialogueOpen && (
             <div
-              className={`grid gap-2 w-[500px] ${isEditing ? "pointer-events-none blur-sm opacity-35" : ""}`}
+              className={`grid gap-2 w-[500px]`}
             >
               <div>Gösteri İsmi:</div>
               <input
-                className="input input-accent  w-full"
+                          className={`input input-accent w-full ${
+            editedShow?.showName == ""
+              ? "!border-red-500 border-4 !outline-red-500"
+              : ""
+          }`}
                 value={editedShow?.showName ?? ""}
                 onChange={(e) =>
                   setEditedShow((prev) =>
@@ -361,17 +365,15 @@ export default function shows() {
               </div>
             </div>
           )}
-          {isEditing && (
-            <span className="loading loading-spinner loading-lg absolute top-2/4"></span>
-          )}
+
         </DialogModal>
       )}
 
-      {alertOpen && (
+
         <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
           {alertText}
         </SuccessAlert>
-      )}
+
     </>
   );
 }
