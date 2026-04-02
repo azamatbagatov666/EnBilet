@@ -7,11 +7,11 @@ export async function POST(request: Request) {
   
     const body = await request.json();
 
-    const res = await fetch("http://localhost:5000/updateBool", {
+    const res = await fetch("http://localhost:5000/EditEvent", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
 
       },
       body: JSON.stringify(body),
