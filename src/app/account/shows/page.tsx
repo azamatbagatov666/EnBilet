@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import type { ShowType } from "@/src/models/ShowType";
-import "@/src/app/account/account.css";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
