@@ -126,11 +126,14 @@ export function Cell({
               ? `Engelli koltuğu ${ID}${cell.label}`
               : `Koltuk ${ID}${cell.label}`
           }
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setContextPos({ x: e.clientX, y: e.clientY });
-            setMenuOpen(true);
-          }}
+onContextMenu={(e) => {
+  e.preventDefault();
+  setContextPos({
+    x: e.pageX,
+    y: e.pageY,
+  });
+  setMenuOpen(true);
+}}
           onClick={onToggle}
           className={`
   w-10 h-10 text-xs rounded border-2
