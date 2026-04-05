@@ -289,6 +289,7 @@ const eventColumns: Column<EventType>[] = [
 ];
   return (
     <>
+
       <FormContainer title="Yeni Etkinlik Ekle">
         <div>Gösteri Seçiniz:</div>
         <select
@@ -354,84 +355,10 @@ const eventColumns: Column<EventType>[] = [
           </button>
         </div>
       </FormContainer>
-      <div>
-        <div className=" flex justify-center my-10">
-          <table className="table table-auto w-6/12 table-zebra border-2 border-black dark:border-white">
-            <thead>
-              <tr className="bg-gray-300 font-bold text-lg text-black">
-                <th>Tarih</th>
-                <th>Gösteri</th>
-                <th>Şehir</th>
-                <th>Salon</th>
-                <th>Satışa Açık</th>
-                <th>Görünür</th>
-                <th>Düzenle</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {events.map((event) => (
-                <tr key={event.eventID}>
-                  <td>{event.date}</td>
-                  <td>{event.showName}</td>
-
-                  <td>{event.city}</td>
-                  <td>{event.venueName}</td>
-
-                  <td
-                  >
-                    <input
-                      className="checkbox checkbox-success cursor-default"
-                      readOnly
-                      type="checkbox"
-                      checked={event.ticketsale}
-                    />
-
-                  </td>
-
-                  <td
-                  >
-                    <input
-                      className="checkbox checkbox-success cursor-default"
-                      readOnly
-                      type="checkbox"
-                      checked={event.ispublic}
-                    />
-     
-                  </td>
-                  <td>
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => {
-                          handleOpenEdit(event);
-                        }}
-                        className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
-                      >
-                        <svg
-                          width="32px"
-                          height="32px"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
-                          <path
-                            d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
-                            stroke="#000000"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <DataTable data={events} columns={eventColumns} title="Etkinlikler" />
+
+
+
 
       <DialogModal open={dialogueOpen} onClose={() => setDialogueOpen(false)}>
         {dialogueText}
