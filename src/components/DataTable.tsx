@@ -233,11 +233,20 @@ const handleFilter = (key: string) => {
         )
       ) return false;
 
-      // 📅 DATE PANEL FILTER
-      if (dateValueFilters.size > 0 && dateColumn) {
-        const key = toDateParts(row[dateColumn.key])?.key;
-        if (!key || !dateValueFilters.has(key)) return false;
-      }
+// 📆 Native date picker (single day)
+if (dateColumn) {
+  const selectedDate = dateFilters[dateColumn.key as string];
+  if (selectedDate) {
+    const rowKey = toDateParts(row[dateColumn.key])?.key;
+    if (rowKey !== selectedDate) return false;
+  }
+}
+
+// 📅 Date panel (multi select)
+if (dateValueFilters.size > 0 && dateColumn) {
+  const key = toDateParts(row[dateColumn.key])?.key;
+  if (!key || !dateValueFilters.has(key)) return false;
+}
 
       // ✅ BOOLEAN FILTERS
       for (const [key, value] of Object.entries(boolFilters)) {
@@ -253,7 +262,17 @@ const handleFilter = (key: string) => {
 
       return true;
     });
-  }, [data, columns, globalSearch, boolFilters, valueFilters, dateValueFilters, dateColumn]);
+ }, [
+  data,
+  columns,
+  globalSearch,
+  columnSearch,
+  boolFilters,
+  valueFilters,
+  dateFilters,
+  dateValueFilters,
+  dateColumn,
+]);
 
 
 

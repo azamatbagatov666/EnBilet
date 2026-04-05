@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
+import DataTable from "@/src/components/DataTable";
+
 import type { ShowType } from "@/src/models/ShowType";
+import type { Column } from "@/src/models/dataTable/Column";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
@@ -39,10 +42,56 @@ export default function shows() {
     dropzoneRef.current?.cleanUp();
   };
 
+  const showColumns: Column<ShowType>[] = [
+    {
+      key: "showName",
+      label: "Gösteri Adı",
+      searchable: true,
+      filterType: "multi",
+    },
+    { key: "description", label: "Gösteri Açıklaması", filterType: "none" },
+    {
+      key: "imageKey",
+      label: "Kapak Fotğrafı",
+      filterType: "none",
+      render: (row) =>
+        row.imageKey ? (
+          <img
+            className="w-full sm:max-w-64 h-auto"
+            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageKey}`}
+            alt="Gösteri Fotoğrafı"
+          />
+        ) : null,
+    },
+    {
+      key: "showID",
+      label: "Düzenle",
+      filterType: "none",
+      render: (row) => (
+        <button
+          onClick={() => {
+            handleOpenEdit(row);
+          }}
+          className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
+        >
+          <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
+              stroke="#000000"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      ),
+    },
+  ];
+
   const handleOpenEdit = (showInfo: ShowType) => {
     setIsEditing(false);
-    setEditedShow({ ...showInfo }); 
-    setOriginalShow({ ...showInfo }); 
+    setEditedShow({ ...showInfo });
+    setOriginalShow({ ...showInfo });
     setImageToDelete("");
     setNewImageFile(null);
     setEditDialogueOpen(true);
@@ -125,36 +174,32 @@ export default function shows() {
   };
 
   const hasShowChanged = (
-  original: ShowType,
-  updated: ShowType,
-  imageToDelete: string,
-  newImageFile: File | null
-) => {
-  if (original.showName !== updated.showName) return true;
-  if (original.description !== updated.description) return true;
-  if (imageToDelete) return true;
-  if (newImageFile) return true;
+    original: ShowType,
+    updated: ShowType,
+    imageToDelete: string,
+    newImageFile: File | null,
+  ) => {
+    if (original.showName !== updated.showName) return true;
+    if (original.description !== updated.description) return true;
+    if (imageToDelete) return true;
+    if (newImageFile) return true;
 
-  return false;
-};
+    return false;
+  };
 
   const editShow = async () => {
-    if (!editedShow || isEditing || editedShow?.showName == "" || !originalShow ) return;
+    if (!editedShow || isEditing || editedShow?.showName == "" || !originalShow)
+      return;
 
     if (
-    !hasShowChanged(
-      originalShow,
-      editedShow,
-      imageToDelete,
-      newImageFile
-    )
-  ) {
-    setDialogueOpen(false);
-    setEditDialogueOpen(false);
-    setEditedShow(undefined);
-    setOriginalShow(null);
-    return;
-  }
+      !hasShowChanged(originalShow, editedShow, imageToDelete, newImageFile)
+    ) {
+      setDialogueOpen(false);
+      setEditDialogueOpen(false);
+      setEditedShow(undefined);
+      setOriginalShow(null);
+      return;
+    }
 
     setIsEditing(true);
     let updatedShow = { ...editedShow };
@@ -253,73 +298,10 @@ export default function shows() {
           </button>
         </div>
       </FormContainer>
-      <div>
-        <div className="  my-10">
-          <div className="overflow-x-auto flex justify-center">
-            <table className="table sm:table-auto sm:w-6/12 table-zebra border-2 border-black dark:border-white">
-              <colgroup>
-                <col />
-                <col />
-                <col />
-                <col className="w-4" />
-              </colgroup>
-              <thead>
-                <tr className="bg-gray-300 font-bold text-lg text-black text-center">
-                  <th>Gösteri Adı</th>
-                  <th>Gösteri Açıklaması</th>
-                  <th>Kapak Fotoğrafı</th>
-                  <th>Düzenle</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {shows.map((show) => (
-                  <tr className="font-bold" key={show.showID}>
-                    <td>{show.showName}</td>
+      <DataTable data={shows} columns={showColumns} title="Gösteriler" />
 
-                    <td>{show.description}</td>
 
-                    <td className="place-items-center">
-                      {show.imageKey != null && (
-                        <img
-                          className="w-full sm:max-w-64 h-auto "
-                          src={`https://cocukakli.blob.core.windows.net/public-images/${show.imageKey}`}
-                          alt="Gösteri Fotoğrafı"
-                        />
-                      )}
-                    </td>
-                    <td>
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => {
-                            handleOpenEdit(show);
-                          }}
-                          className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
-                        >
-                          <svg
-                            width="32px"
-                            height="32px"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <path
-                              d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
-                              stroke="#000000"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
       {dialogueOpen && (
         <DialogModal

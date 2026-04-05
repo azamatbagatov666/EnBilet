@@ -260,7 +260,7 @@ const eventColumns: Column<EventType>[] = [
   { key: "date", label: "Tarih", filterType:"date"},
   { key: "showName", label: "Gösteri", searchable: true, filterType: "multi" },
   { key: "city", label: "Şehir", searchable: true, filterType: "multi" },
-  { key: "venueName", label: "Salon", searchable: true,filterType: "multi" },
+  { key: "venueName", label: "Salon", searchable: true, filterType: "multi" },
   { key: "ticketsale", label: "Satışa Açık", filterType: "boolean" },
   { key: "ispublic", label: "Görünür", filterType: "boolean" },
   { key: "eventID", label: "Düzenle", filterType: "none", render:  (row) => (
