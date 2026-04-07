@@ -5,5 +5,6 @@ export type Column<T> = {
   searchable?: boolean;
   filterType?: "boolean" | "multi" | "date" | "none";
   render?: (row: T) => React.ReactNode;
-  columnType?: "data" | "action";
+
+  reactKey?: string;
 };

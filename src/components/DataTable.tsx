@@ -1,8 +1,13 @@
   "use client";
 
+
+  import styles from './DataTable.module.css'
+
+
   import { useState, useMemo, useEffect, useRef } from "react";
   import type { Column } from "@/src/models/dataTable/Column";
-  import Search from "@/src/components/svg/Search";
+  import SearchSvg from "@/src/components/svg/SearchSvg";
+  import CancelSvg from "@/src/components/svg/CancelSvg";
 
   type Props<T> = {
     data: T[];
@@ -39,6 +44,36 @@
     // 🔹 REFS
     const filterButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
+
+const isColumnFiltered = (col: Column<T>) => {
+  const key = col.key as string;
+
+  /* ---------- NONE ---------- */
+  if (col.filterType === "none") return false;
+
+
+
+  /* ---------- DATE ---------- */
+  if (col.filterType === "date") {
+    const allKeys = allDateKeys;           // computed once
+    const selected = dateValueFilters;     // SAVED only
+
+    if (!allKeys.length) return false;
+    if (!selected.size) return false;
+
+    // 🔑 fully selected = NOT filtered
+    return selected.size !== allKeys.length;
+  }
+
+  /* ---------- MULTI VALUE ---------- */
+   const selected = valueFilters[key];
+  const allValues= uniqueColumnValues[key];
+
+  if (!selected || selected.size === 0) return false;
+  if (!allValues || allValues.length === 0) return false;
+
+  return selected.size !== allValues.length;
+};
 
   const toDateParts = (value: unknown) => {
     if (!value) return null;
@@ -189,9 +224,9 @@
 
   const allDateKeys = useMemo(getAllDateKeys, [dateTree]);
 
-  const isAllDatesSelected =
-    allDateKeys.length > 0 &&
-    allDateKeys.every((k) => draftDateValueFilters.has(k));
+const isAllDatesSelected =
+  allDateKeys.length > 0 &&
+  draftDateValueFilters.size === allDateKeys.length;
 
 
 const handleFilter = (key: string) => {
@@ -232,6 +267,19 @@ const handleFilter = (key: string) => {
             .includes(globalSearch.toLowerCase())
         )
       ) return false;
+
+      // 🔎 COLUMN SEARCH
+for (const [key, value] of Object.entries(columnSearch)) {
+  if (!value) continue;
+
+  const cellValue = String(row[key as keyof T] ?? "")
+    .toLowerCase()
+    .trim();
+
+  if (!cellValue.includes(value.toLowerCase().trim())) {
+    return false;
+  }
+}
 
 // 📆 Native date picker (single day)
 if (dateColumn) {
@@ -304,32 +352,25 @@ if (dateValueFilters.size > 0 && dateColumn) {
         <div className=" my-8">
           <div className="flex justify-center  ">
             <div className=" ">
-              <div className="grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black p-2">
+              <div className="grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black dark:border-white p-2  text-black dark:text-white dark:bg-gray-700">
                 <div></div>
             <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150"> {title}</span></div>
                 <div className="flex justify-end">
               
                   <label className="flex gap-1 input input-sm h-9 w-64 !outline-none ">
                     <div className="flex justify-center items-center">
-                      <Search></Search>
+<SearchSvg/>
                     </div>
                     <input
                       className="font-bold !outline-none"
-                      placeholder="Genel arama"
+                      placeholder="Genel Arama"
                       value={globalSearch}
                       onChange={(e) => setGlobalSearch(e.target.value)}
                     />
                     <div className="size-7 self-center">
                       {globalSearch != "" && (
                         <button onClick={() => setGlobalSearch("")}>
-                          <svg
-                            fill="#000000"
-                            className="size-7"
-                            viewBox="0 0 32 32"
-                            version="1.1"
-                          >
-                            <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
-                          </svg>
+                          <CancelSvg/>
                         </button>
                       )}
                     </div>
@@ -338,12 +379,12 @@ if (dateValueFilters.size > 0 && dateColumn) {
               </div>
               {/* Table */}
               <div className="flex justify-center">
-                <table className="table table-auto table-zebra border-2 border-black dark:border-white">
-                  <thead>
-                    <tr className="bg-gray-300 font-bold text-lg text-black">
+                <table className={`${styles.table} table table-auto  `}>
+                  <thead className='text-black dark:text-white'>
+                    <tr className={`${styles.tr} bg-gray-300 font-bold text-lg text-black dark:text-white dark:bg-gray-700`}>
                       {columns.map((col) => (
-                        <th key={String(col.key)}>
-                          <div className="inline-flex items-center relative">
+<th className={styles.th} key={col.reactKey ?? String(col.key)}>
+                            <div className="inline-flex items-center relative">
                             <span>{col.label}</span>
                             {col.filterType != "none" && (
                               <>
@@ -360,7 +401,15 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                   <svg
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    className={`size-6  ${selectedFilter == col.key ? "fill-black" : "fill-gray-400"}`}
+                                    className={`size-6
+    ${
+      selectedFilter == col.key
+        ? "fill-black dark:fill-green-500"
+        : isColumnFiltered(col)
+          ? "fill-red-600"
+          : "fill-gray-400"
+    }
+  `}
                                   >
                                     <path
                                       fillRule="evenodd"
@@ -371,12 +420,12 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                 </button>
                                 {selectedFilter == col.key && (
                                   <div className="" ref={ref}>
-                                    <div className="absolute left-full top-full z-50  bg-gray-200 rounded-md pt-2 p-1 border-black border">
+                                    <div className="absolute left-full top-full z-50  bg-gray-200  dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border">
                                     {col.filterType != "date" ?      <div>
                                       {col.searchable && (
                            <label className="flex gap-1 mb-2 input input-xs !outline-none ">
                               <div className="flex justify-center items-center">
-                                <Search></Search>
+<SearchSvg/>
                               </div>
                              <input
                                           className=" !outline-none"
@@ -402,14 +451,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                             }))
                                           }
                                     >
-                                      <svg
-                                        fill="#000000"
-                                        className="size-5"
-                                        viewBox="0 0 32 32"
-                                        version="1.1"
-                                      >
-                                        <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
-                                      </svg>
+                          <CancelSvg className='size-5'/>
+
                                     </button>
                                   )}
                               </div>
@@ -693,13 +736,13 @@ if (dateValueFilters.size > 0 && dateColumn) {
                         </th>
                       ))}
                     </tr>
-                    <tr className="bg-gray-300">
+                    <tr className={`${styles.tr} !bg-gray-300 dark:!bg-gray-700`}>
                       {columns.map((col) => (
-                        <th key={String(col.key)}>
-                          {col.searchable && (
+<th className={styles.th} key={col.reactKey ?? String(col.key)}>
+                            {col.searchable && (
                             <label className="flex gap-1 input input-sm h-9 !outline-none ">
                               <div className="flex justify-center items-center">
-                                <Search></Search>
+<SearchSvg/>
                               </div>
                               <input
                                 className=" !outline-none "
@@ -723,14 +766,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                         }))
                                       }
                                     >
-                                      <svg
-                                        fill="#000000"
-                                        className="size-7"
-                                        viewBox="0 0 32 32"
-                                        version="1.1"
-                                      >
-                                        <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
-                                      </svg>
+                                          <CancelSvg/>
+
                                     </button>
                                   )}
                               </div>
@@ -740,7 +777,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           {col.filterType === "boolean" && (
                             <label className="flex justify-between h-9 input input-sm !outline-none ">
                               <select
-                                className="!outline-none"
+                                className="!outline-none bg-transparent"
                                 value={
                                   boolFilters[col.key as string] === null ||
                                   boolFilters[col.key as string] === undefined
@@ -773,14 +810,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                         }))
                                       }
                                     >
-                                      <svg
-                                        fill="#000000"
-                                        className="size-7"
-                                        viewBox="0 0 32 32"
-                                        version="1.1"
-                                      >
-                                        <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
-                                      </svg>
+                                        <CancelSvg/>
+
                                     </button>
                                   )}
                               </div>
@@ -788,7 +819,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           )}
 
                           {col.filterType === "date" && (
-                            <label className="flex  input input-sm !outline-none ">
+                            <label className="flex h-9 input input-sm !outline-none ">
                               <input
                                 className="!outline-none w"
                                 type="date"
@@ -811,14 +842,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                       }))
                                     }
                                   >
-                                    <svg
-                                      fill="#000000"
-                                      className="size-7"
-                                      viewBox="0 0 32 32"
-                                      version="1.1"
-                                    >
-                                      <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
-                                    </svg>
+                          <CancelSvg/>
+
                                   </button>
                                 )}
                               </div>
@@ -831,10 +856,10 @@ if (dateValueFilters.size > 0 && dateColumn) {
 
                   <tbody>
                     {filteredData.map((row, i) => (
-                      <tr key={i}>
+                      <tr key={i} className={styles.tr}>
                         {columns.map((col) => (
-                          <td key={String(col.key)}>
-                            {col.render ? (
+<td className={styles.td} key={col.reactKey ?? String(col.key)}>
+                              {col.render ? (
                               <div className="flex justify-center">
                                 {col.render(row)}
                               </div>
@@ -856,10 +881,10 @@ if (dateValueFilters.size > 0 && dateColumn) {
                     ))}
 
                     {filteredData.length === 0 && (
-                      <tr>
+                      <tr className={styles.tr}>
                         <td
                           colSpan={columns.length}
-                          className="text-center py-6 text-gray-500"
+                           className={` ${styles.td} text-center py-6 text-black text-xl dark:text-white font-bold`}
                         >
                           Sonuç bulunamadı
                         </td>
@@ -868,7 +893,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-end bg-gray-300 border-2 border-t-0 border-black p-2">
+              <div className="flex justify-end !g-gray-300 dark:bg-gray-700 border-2 border-t-0 border-black p-2 dark:border-white">
                 <button
                   className="btn btn-sm btn-error"
                   onClick={() => {

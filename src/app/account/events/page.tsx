@@ -49,15 +49,17 @@ export default function List() {
     setDialogueOpen(true);
   };
 
-  const hasEventChanged = (original: EventType, updated: EventType) => {
-    if (original.showID !== updated.showID) return true;
-    if (original.venueID !== updated.venueID) return true;
-    if (original.date !== updated.date) return true;
-    if (original.ticketsale !== updated.ticketsale) return true;
-    if (original.ispublic !== updated.ispublic) return true;
+  const hasEventChanged = (
+  original: EventType,
+  updated: EventType,
+) =>
+  Object.keys(original).some(
+    (key) =>
+      original[key as keyof EventType] !==
+      updated[key as keyof EventType],
+  );
 
-    return false;
-  };
+
 
   const editEvent = async () => {
     if (!editedEvent || isEditing || !originalEvent) return;

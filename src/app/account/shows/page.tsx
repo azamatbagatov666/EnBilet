@@ -173,6 +173,8 @@ export default function shows() {
     }
   };
 
+  
+
   const hasShowChanged = (
     original: ShowType,
     updated: ShowType,

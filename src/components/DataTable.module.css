@@ -1,0 +1,21 @@
+/* DataTable.module.css */
+
+.table {
+  @apply border-collapse border-2 border-black dark:border-white;
+}
+
+.tr {
+  @apply border-2 border-black dark:border-white;
+}
+
+.th {
+  @apply border-2 border-black dark:border-white;
+}
+
+.td {
+  @apply border-2 border-black dark:border-white text-black dark:text-white;
+}
+
+.tr:nth-child(even) {
+  @apply bg-slate-200 dark:bg-gray-600;
+}
