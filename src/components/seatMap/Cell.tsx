@@ -68,7 +68,7 @@ export function Cell({
   };
 
   const handleSave = () => {
-    if (desiredLabel != "") {
+    if (desiredLabel.trim() != "") {
       const success = updateSeatLabel(cell.id, desiredLabel);
       if (success) {
         setDialogueOpen(false);

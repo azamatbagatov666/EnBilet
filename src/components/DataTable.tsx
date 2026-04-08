@@ -352,7 +352,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
         <div className=" my-8">
           <div className="flex justify-center  ">
             <div className=" ">
-              <div className="grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black dark:border-white p-2  text-black dark:text-white dark:bg-gray-700">
+              <div className="rounded-t-xl grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black dark:border-white p-2  text-black dark:text-white dark:bg-gray-700">
                 <div></div>
             <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150"> {title}</span></div>
                 <div className="flex justify-end">
@@ -893,7 +893,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-end !g-gray-300 dark:bg-gray-700 border-2 border-t-0 border-black p-2 dark:border-white">
+              <div className="rounded-b-xl flex justify-end bg-gray-300 dark:bg-gray-700 border-2 border-t-0 border-black p-2 dark:border-white">
                 <button
                   className="btn btn-sm btn-error"
                   onClick={() => {

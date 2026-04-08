@@ -6,9 +6,9 @@ export async function GET(request: Request) {
   const token = cookieStore.get("access_token")?.value;
 
   const { searchParams } = new URL(request.url);
-  const city = searchParams.get("city");
+  const venueID = searchParams.get("venueID");
 
-  const res = await fetch(`http://localhost:5000/getVenues?city=${city}`, {
+  const res = await fetch(`http://localhost:5000/getMaps?venueID=${venueID}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   if (!res.ok) {
     return NextResponse.json(
-      { error: "Failed to fetch venues" },
+      { error: "Failed to fetch the map" },
       { status: res.status },
     );
   }

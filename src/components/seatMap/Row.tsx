@@ -47,7 +47,7 @@ export default function Row({
   const [formError, setFormError] = useState("");
 
   const handleSave = () => {
-    if (desiredLabel != "") {
+    if (desiredLabel.trim() != "") {
       const success = updateRowLabel(row.id, desiredLabel);
       console.log(success);
       if (!success) {

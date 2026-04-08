@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
 import type { SeatMap, stageLocation } from "@/src/models/seatMap/SeatMap";
+import { count } from "console";
 
 function createSeat(label: string): SeatCell {
   return {
@@ -12,17 +13,105 @@ function createSeat(label: string): SeatCell {
   };
 }
 
+type SeatMapValidationResult = {
+  valid: boolean;
+  errors: string[];
+};
+
 export default function useSeatMapCreator() {
   const [seatMap, setSeatMap] = useState<SeatMap>({
     id: crypto.randomUUID(),
     name: "New Seat Map",
-    venueId: 1,
-    venueName: "Test Venue",
     blockId: 1,
     blockName: "General",
     rows: [],
     stageLocation: "up",
   });
+
+  function validateSeatMap(map: SeatMap): SeatMapValidationResult {
+  const errors: string[] = [];
+  const rows = map.rows;
+
+  const seatedRows = rows.filter((r) => r.type === "seated");
+  const emptyRows = rows.filter((r) => r.type === "empty");
+
+  /* 4️⃣ At least one seated row */
+  if (seatedRows.length === 0) {
+    errors.push("En az bir koltuklu sıra olmalıdır.");
+  }
+
+  /* 7️⃣ Cannot contain only empty rows */
+  if (seatedRows.length === 0 && emptyRows.length > 0) {
+    errors.push("Sadece boş sıralardan oluşamaz.");
+  }
+
+  /* 6️⃣ Cannot start or end with empty row */
+  if (rows.length > 0) {
+    if (rows[0].type === "empty") {
+      errors.push("İlk sıra boş olamaz.");
+    }
+    if (rows[rows.length - 1].type === "empty") {
+      errors.push("Son sıra boş olamaz.");
+    }
+  }
+  
+
+  seatedRows.forEach((row) => {
+
+      var counter = 0;
+
+
+    /* 1️⃣ Seated row label empty */
+    if (!row.label || row.label.trim() === "") {
+      errors.push(`Bir koltuklu sıranın etiketi boş.`);
+    }
+
+    /* 5️⃣ Seated rows must have cells */
+    if (!row.cells || row.cells.length === 0) {
+      errors.push(`"${row.label}" sırası boş olamaz.`);
+      return;
+    }
+
+    const seenLabels = new Set<string>();
+
+    row.cells.forEach((cell) => {
+        if (cell.type == "seat") {
+counter = counter + 1
+
+      };
+
+      if (cell.type !== "seat") return;
+
+      /* 2️⃣ Cell empty label */
+      if (!cell.label || cell.label.trim() === "") {
+        errors.push(`"${row.label}" sırasındaki bir koltuğun etiketi boş.`);
+        return;
+      }
+
+      /* 3️⃣ Duplicate seat labels in same row */
+      const normalized = cell.label.trim().toLowerCase();
+      if (seenLabels.has(normalized)) {
+        errors.push(
+          `"${row.label}" sırasındaki "${cell.label}" numarası tekrar ediyor.`,
+        );
+      } else {
+        seenLabels.add(normalized);
+      }
+    });
+              if (counter == 0) {
+        errors.push(`"${row.label}" sırası koltuklu sıra olduğu için en az bir koltuk içermelidir.`);
+        return;}
+
+    
+  });
+
+
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
 
   function updateStageLocation(location: stageLocation) {
     setSeatMap((prev) => ({
@@ -333,9 +422,17 @@ export default function useSeatMapCreator() {
     return error;
   }
 
-  function saveMap() {
-    console.log(seatMap);
+function saveMap() {
+  const result = validateSeatMap(seatMap);
+
+  if (!result.valid) {
+    console.error("Seat map validation failed:", result.errors);
+    alert(result.errors.join("\n"));
+    return;
   }
+
+  console.log("Seat map is valid:", seatMap);
+}
 
 function updateSeatLabel(seatId: string, newLabel: string): boolean {
   newLabel = newLabel.replace(/\s+/g, ' ').trim();

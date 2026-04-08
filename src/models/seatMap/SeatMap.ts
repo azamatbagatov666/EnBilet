@@ -6,8 +6,6 @@ export interface SeatMap {
   id: string;
   name: string;
 
-  venueId: number;
-  venueName: string;
 
   blockId: number;
   blockName: string;

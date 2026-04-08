@@ -1,13 +1,21 @@
 "use client";
 
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import useSeatMapCreator from "@/src/hooks/useSeatMapCreator";
 import Row from "@/src/components/seatMap/Row";
+import { SeatMapType } from "@/src/models/SeatMapType";
 import { useState, useEffect, useRef } from "react";
 import type { stageLocation } from "@/src/models/seatMap/SeatMap";
+import { use } from 'react'
 
 
-export default function SeatMapCreatorPage() {
+
+export default function SeatMapCreatorPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const {
     rows,
     addEmptyRow,
@@ -27,19 +35,42 @@ export default function SeatMapCreatorPage() {
     copyRow,
   } = useSeatMapCreator();
 
+    const { id } = use(params)
+
+
   const [numberOfSeats, SetNumberOfSeats] = useState<number>(12);
+  const [venueName, setVenueName] = useState("");
   const [stageLocation, setStageLocation] = useState<stageLocation>("up");
+  const [maps, setMaps] = useState<SeatMapType[]>([]);
+  
 
   useEffect(() => {
     updateStageLocation(stageLocation);
   }, [stageLocation]);
 
 
+
+    useEffect(() => {
+    getMaps();
+  }, []);
+
+    const getMaps = async () => {
+      const res = await fetchWithAuth(`/services/account/get/getMaps?venueID=${id}`);
+      if (!res.ok) {
+        return;
+      }
+      const data = await res.json();
+      setMaps(data);
+      setVenueName(data[0].venueName)
+    };
+  
+
   const [menuVersion, setMenuVersion] = useState(0);
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Seat Map Creator</h1>
+      <h1 className="text-xl font-bold mb-4">Oturma Düzeni Oluştur</h1>
+      <h1 className="text-xl font-bold mb-4">{venueName}</h1>
       <span className="font-bold text-lg">Sahne pozisyonu:</span>
       <div className="flex justify-left gap-2 mt-2">
         <span>Yukarıda</span>
@@ -140,8 +171,6 @@ export default function SeatMapCreatorPage() {
               max={50}
               min={1}
               className="w-10 h-6 pl-1 bg-white text-black rounded-md "
-              name=""
-              id=""
             />
           </div>
           <button
