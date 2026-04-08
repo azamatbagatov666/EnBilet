@@ -777,7 +777,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           {col.filterType === "boolean" && (
                             <label className="flex justify-between h-9 input input-sm !outline-none ">
                               <select
-                                className="!outline-none bg-transparent"
+                                className="!outline-none bg-transparent "
                                 value={
                                   boolFilters[col.key as string] === null ||
                                   boolFilters[col.key as string] === undefined
@@ -794,9 +794,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                   }))
                                 }
                               >
-                                <option value="">Hepsi</option>
-                                <option value="true">Evet</option>
-                                <option value="false">Hayır</option>
+                                <option className='text-black' value="">Hepsi</option>
+                                <option className='text-black' value="true">Evet</option>
+                                <option className='text-black' value="false">Hayır</option>
                               </select>
                               <div className="size-7 self-center">
                                 {boolFilters[col.key as string] !== null &&
