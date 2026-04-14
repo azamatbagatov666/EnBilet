@@ -4,11 +4,9 @@ export type stageLocation = "up" | "down";
 
 export interface SeatMap {
   id: string;
-  name: string;
 
 
-  blockId: number;
-  blockName: string;
+
 
   stageLocation: stageLocation;
 

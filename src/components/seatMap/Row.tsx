@@ -49,7 +49,6 @@ export default function Row({
   const handleSave = () => {
     if (desiredLabel.trim() != "") {
       const success = updateRowLabel(row.id, desiredLabel);
-      console.log(success);
       if (!success) {
         setRenameOpen(false);
       } else {

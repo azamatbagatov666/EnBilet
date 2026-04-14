@@ -54,7 +54,6 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
     const file = e.dataTransfer.files?.[0];
     if (file) {
       const check = validate(file);
-      console.log(check);
       if (!check) {
         return;
       }
@@ -69,7 +68,6 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
     const file = e.target.files?.[0];
     if (file) {
       const check = validate(file);
-      console.log(check);
 
       if (!check) {
         return;

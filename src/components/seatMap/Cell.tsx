@@ -83,7 +83,6 @@ export function Cell({
   const handleNumarete = () => {
     if (!renumerateError) {
       const success = renumerateFromCell(cell.id, steps, selectedIncrement);
-      console.log(success);
       if (success == "") {
         setDialogueOpen(false);
         SetSteps(1);

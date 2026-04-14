@@ -21,97 +21,111 @@ type SeatMapValidationResult = {
 export default function useSeatMapCreator() {
   const [seatMap, setSeatMap] = useState<SeatMap>({
     id: crypto.randomUUID(),
-    name: "New Seat Map",
-    blockId: 1,
-    blockName: "General",
+
     rows: [],
     stageLocation: "up",
   });
 
   function validateSeatMap(map: SeatMap): SeatMapValidationResult {
-  const errors: string[] = [];
-  const rows = map.rows;
+    const errors: string[] = [];
+    const rows = map.rows;
 
-  const seatedRows = rows.filter((r) => r.type === "seated");
-  const emptyRows = rows.filter((r) => r.type === "empty");
+    const seatedRows = rows.filter((r) => r.type === "seated");
+    const emptyRows = rows.filter((r) => r.type === "empty");
 
-  /* 4️⃣ At least one seated row */
-  if (seatedRows.length === 0) {
-    errors.push("En az bir koltuklu sıra olmalıdır.");
-  }
-
-  /* 7️⃣ Cannot contain only empty rows */
-  if (seatedRows.length === 0 && emptyRows.length > 0) {
-    errors.push("Sadece boş sıralardan oluşamaz.");
-  }
-
-  /* 6️⃣ Cannot start or end with empty row */
-  if (rows.length > 0) {
-    if (rows[0].type === "empty") {
-      errors.push("İlk sıra boş olamaz.");
+    /* 4️⃣ At least one seated row */
+    if (seatedRows.length === 0) {
+      errors.push("‣ En az bir koltuklu sıra olmalıdır.");
     }
-    if (rows[rows.length - 1].type === "empty") {
-      errors.push("Son sıra boş olamaz.");
+
+    /* 7️⃣ Cannot contain only empty rows */
+    if (seatedRows.length === 0 && emptyRows.length > 0) {
+      errors.push("‣ Sadece boş sıralardan oluşamaz.");
     }
-  }
-  
 
-  seatedRows.forEach((row) => {
 
+
+    /* 6️⃣ Cannot start or end with empty row */
+    if (rows.length > 0) {
+      if (rows[0].type === "empty") {
+        errors.push("‣ İlk sıra boş olamaz.");
+      }
+      if (rows[rows.length - 1].type === "empty") {
+        errors.push("‣ Son sıra boş olamaz.");
+      }
+    }
+
+    
+
+    seatedRows.forEach((row) => {
       var counter = 0;
 
 
-    /* 1️⃣ Seated row label empty */
-    if (!row.label || row.label.trim() === "") {
-      errors.push(`Bir koltuklu sıranın etiketi boş.`);
-    }
 
-    /* 5️⃣ Seated rows must have cells */
-    if (!row.cells || row.cells.length === 0) {
-      errors.push(`"${row.label}" sırası boş olamaz.`);
-      return;
-    }
+      /* 1️⃣ Seated row label empty */
+      if (!row.label || row.label.trim() === "") {
+        errors.push(`‣ İsmi olmayan koltuklu bir sıra var.`);
+      }
 
-    const seenLabels = new Set<string>();
-
-    row.cells.forEach((cell) => {
-        if (cell.type == "seat") {
-counter = counter + 1
-
-      };
-
-      if (cell.type !== "seat") return;
-
-      /* 2️⃣ Cell empty label */
-      if (!cell.label || cell.label.trim() === "") {
-        errors.push(`"${row.label}" sırasındaki bir koltuğun etiketi boş.`);
+      /* 5️⃣ Seated rows must have cells */
+      if (!row.cells || row.cells.length === 0) {
+        errors.push(`‣ "${row.label}" sırası boş olamaz.`);
         return;
       }
 
-      /* 3️⃣ Duplicate seat labels in same row */
-      const normalized = cell.label.trim().toLowerCase();
-      if (seenLabels.has(normalized)) {
+      const seenLabels = new Set<string>();
+
+      /* 8️⃣ Seated row cannot end with space */
+const lastSeatIndex = [...row.cells]
+  .map((c) => c.type)
+  .lastIndexOf("seat");
+
+
+for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
+  if (row.cells[i].type === "space") {
+    errors.push(
+      `‣ "${row.label}" sırası koltuklu sıra olduğu için koltukla bitmelidir, boşlukla bitemez.`,
+    );
+    break;
+  }
+}
+
+      row.cells.forEach((cell) => {
+        if (cell.type == "seat") {
+          counter = counter + 1;
+        }
+
+        if (cell.type !== "seat") return;
+
+        /* 2️⃣ Cell empty label */
+        if (!cell.label || cell.label.trim() === "") {
+          errors.push(`‣ "${row.label}" sırasındaki bir koltuğun etiketi boş.`);
+          return;
+        }
+
+        /* 3️⃣ Duplicate seat labels in same row */
+        const normalized = cell.label.trim().toLowerCase();
+        if (seenLabels.has(normalized)) {
+          errors.push(
+            `‣ "${row.label}" sırasındaki "${cell.label}" numarası tekrar ediyor.`,
+          );
+        } else {
+          seenLabels.add(normalized);
+        }
+      });
+      if (counter == 0) {
         errors.push(
-          `"${row.label}" sırasındaki "${cell.label}" numarası tekrar ediyor.`,
+          `‣ "${row.label}" sırası koltuklu sıra olduğu için en az bir koltuk içermelidir.`,
         );
-      } else {
-        seenLabels.add(normalized);
+        return;
       }
     });
-              if (counter == 0) {
-        errors.push(`"${row.label}" sırası koltuklu sıra olduğu için en az bir koltuk içermelidir.`);
-        return;}
 
-    
-  });
-
-
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
 
   function updateStageLocation(location: stageLocation) {
     setSeatMap((prev) => ({
@@ -181,15 +195,18 @@ counter = counter + 1
 
   function updateRowLabel(rowId: string, newLabel: string): boolean {
     let hasDuplicate = false;
-    newLabel = newLabel.replace(/\s+/g, ' ').trim();
+    newLabel = newLabel.replace(/\s+/g, " ").trim();
     setSeatMap((prev) => {
       const exists = prev.rows.some(
-        (r) => r.label.trim().toLowerCase() === newLabel.trim().toLowerCase() && r.id.trim().toLowerCase() !== rowId.trim().toLowerCase(),
+        (r) =>
+          r.label.trim().toLowerCase() === newLabel.trim().toLowerCase() &&
+          r.id.trim().toLowerCase() !== rowId.trim().toLowerCase(),
       );
 
       if (exists) {
-        hasDuplicate = true
-        return prev;}
+        hasDuplicate = true;
+        return prev;
+      }
 
       return {
         ...prev,
@@ -203,31 +220,31 @@ counter = counter + 1
   }
 
   function copyRow(rowId: string) {
-  setSeatMap((prev) => {
-    const rowIndex = prev.rows.findIndex((r) => r.id === rowId);
-    if (rowIndex === -1) return prev;
+    setSeatMap((prev) => {
+      const rowIndex = prev.rows.findIndex((r) => r.id === rowId);
+      if (rowIndex === -1) return prev;
 
-    const sourceRow = prev.rows[rowIndex];
-    if (sourceRow.type !== "seated") return prev;
+      const sourceRow = prev.rows[rowIndex];
+      if (sourceRow.type !== "seated") return prev;
 
-    const newLabel = getNextRowLabel(prev.rows);
+      const newLabel = getNextRowLabel(prev.rows);
 
-    const copiedRow: SeatRow = {
-      ...sourceRow,
-      id: crypto.randomUUID(),
-      label: newLabel,
-      cells: sourceRow.cells.map((cell) => ({
-        ...cell,
+      const copiedRow: SeatRow = {
+        ...sourceRow,
         id: crypto.randomUUID(),
-      })),
-    };
-    
-     return {
+        label: newLabel,
+        cells: sourceRow.cells.map((cell) => ({
+          ...cell,
+          id: crypto.randomUUID(),
+        })),
+      };
+
+      return {
         ...prev,
         rows: [...prev.rows, copiedRow],
       };
-  });
-}
+    });
+  }
 
   /* ---------------- CELLS ---------------- */
 
@@ -422,58 +439,86 @@ counter = counter + 1
     return error;
   }
 
-function saveMap() {
-  const result = validateSeatMap(seatMap);
 
-  if (!result.valid) {
-    console.error("Seat map validation failed:", result.errors);
-    alert(result.errors.join("\n"));
-    return;
+
+  function updateSeatLabel(seatId: string, newLabel: string): boolean {
+    newLabel = newLabel.replace(/\s+/g, " ").trim();
+    const normalized = newLabel.toLowerCase();
+    let hasDuplicate = false;
+
+    setSeatMap((prev) => {
+      return {
+        ...prev,
+        rows: prev.rows.map((row) => {
+          // Is this the row containing the seat?
+          const seatIndex = row.cells.findIndex(
+            (c) => c.id === seatId && c.type === "seat",
+          );
+
+          if (seatIndex === -1) return row; // not this row
+
+          // ✅ check duplicates ONLY in this row
+          hasDuplicate = row.cells.some(
+            (cell) =>
+              cell.type === "seat" &&
+              cell.id !== seatId &&
+              cell.label?.toLowerCase() === normalized,
+          );
+
+          if (hasDuplicate) return row; // abort update for this row
+
+          return {
+            ...row,
+            cells: row.cells.map((cell) =>
+              cell.id === seatId && cell.type === "seat"
+                ? { ...cell, label: newLabel }
+                : cell,
+            ),
+          };
+        }),
+      };
+    });
+
+    return !hasDuplicate;
   }
 
-  console.log("Seat map is valid:", seatMap);
-}
+  function loadSeatMap(map: SeatMap) {
+    setSeatMap(map);
+  }
 
-function updateSeatLabel(seatId: string, newLabel: string): boolean {
-  newLabel = newLabel.replace(/\s+/g, ' ').trim();
-  const normalized = newLabel.toLowerCase();
-  let hasDuplicate = false;
+  function clearMap() {
+    setSeatMap({
+      id: crypto.randomUUID(),
 
-  setSeatMap((prev) => {
-    return {
-      ...prev,
-      rows: prev.rows.map((row) => {
-        // Is this the row containing the seat?
-        const seatIndex = row.cells.findIndex(
-          (c) => c.id === seatId && c.type === "seat"
-        );
+      rows: [],
+      stageLocation: "up",
+    });
+  }
 
-        if (seatIndex === -1) return row; // not this row
+    function saveMap() {
+    const result = validateSeatMap(seatMap);
 
-        // ✅ check duplicates ONLY in this row
-        hasDuplicate = row.cells.some(
-          (cell) =>
-            cell.type === "seat" &&
-            cell.id !== seatId &&
-            cell.label?.toLowerCase() === normalized
-        );
+    if (!result.valid) {
+      return result.errors.join("\n");
+    }
 
-        if (hasDuplicate) return row; // abort update for this row
+    return seatMap;
+  }
 
-        return {
-          ...row,
-          cells: row.cells.map((cell) =>
-            cell.id === seatId && cell.type === "seat"
-              ? { ...cell, label: newLabel }
-              : cell
-          ),
-        };
-      }),
-    };
-  });
+    function isMapEmpty() {
 
-  return !hasDuplicate;
-}
+      const rows = seatMap.rows;
+
+
+
+    if (rows.length === 0) {
+
+      return true;
+
+    }
+   
+    return false;
+  }
 
   return {
     seatMap,
@@ -493,5 +538,8 @@ function updateSeatLabel(seatId: string, newLabel: string): boolean {
     updateStageLocation,
     copyRow,
     toggleHandicappedSeat,
+    loadSeatMap,
+    clearMap,
+    isMapEmpty,
   };
 }
