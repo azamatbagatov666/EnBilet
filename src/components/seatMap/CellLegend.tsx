@@ -8,6 +8,9 @@ interface Props {
     | "handicapped";
 }
 
+  import HandiSvg from "@/src/components/svg/HandiSvg";
+
+
 export default function CellLegendItem({ label, variant }: Props) {
   const bgClass =
     variant === "available"
@@ -32,6 +35,12 @@ export default function CellLegendItem({ label, variant }: Props) {
         `}
       >
         A1
+{variant == "handicapped" &&     <HandiSvg></HandiSvg>          
+}
+           
+
+   
+       
       </div>
       <span className="text-sm font-medium">{label}</span>
     </div>
