@@ -1,6 +1,7 @@
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
 import { Cell } from "./Cell";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { createPortal } from "react-dom";
 
 interface Props {
@@ -59,6 +60,16 @@ export default function Row({
     }
   };
 
+     const inputRef = useRef<HTMLInputElement>(null);
+
+
+    useEffect(() => {
+    if (!renameOpen) return;
+  
+      inputRef.current?.focus();
+      inputRef.current?.select();
+  }, [renameOpen]);
+
   return (
     <div className="flex items-center gap-2 mb-2 select-none">
       <div className="tooltip inline-flex" data-tip="Sırayı Sil">
@@ -78,7 +89,7 @@ export default function Row({
         </button>
       </div>
 
-      <div className="tooltip inline-flex" data-tip="Sıra İsmini Düzenle">
+      {row.type != "empty" ? (<>      <div className="tooltip inline-flex" data-tip="Sıra İsmini Düzenle">
         <button
           onClick={() => {
             setRenameOpen(true);
@@ -120,6 +131,10 @@ export default function Row({
           </svg>
         </button>
       </div>
+      </>) : (<><div className="min-w-8 min-h-10"></div> <div className="size-10"></div></>)}
+
+
+
       <div className="tooltip inline-flex" data-tip="Sırayı Taşı">
         <div
           {...dragHandleProps}
@@ -192,7 +207,7 @@ export default function Row({
                     value={desiredLabel}
                     onChange={(e) => setDesiredLabel(e.target.value)}
                     className="w-16 h-6 input rounded-md px-1 border border-gray-500"
-                    autoFocus
+                    ref={inputRef}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSave();
                     }}

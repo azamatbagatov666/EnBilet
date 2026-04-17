@@ -8,8 +8,11 @@ import DataTable from "@/src/components/DataTable";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FormContainer from "@/src/components/forms/FormContainer";
+import { useRouter } from "next/navigation";
 
 export default function List() {
+  const router = useRouter();
+
   //fetched
   const [events, setEvents] = useState<EventType[]>([]);
   const [shows, setShows] = useState<Record<number, string>>({});
@@ -39,8 +42,6 @@ export default function List() {
   const [originalEvent, setOriginalEvent] = useState<EventType | null>(null);
   const [editVenues, setEditVenues] = useState<Record<number, string>>({});
 
-
-
   const handleOpenEdit = (eventInfo: EventType) => {
     setIsEditing(false);
     setEditedEvent({ ...eventInfo });
@@ -49,17 +50,11 @@ export default function List() {
     setDialogueOpen(true);
   };
 
-  const hasEventChanged = (
-  original: EventType,
-  updated: EventType,
-) =>
-  Object.keys(original).some(
-    (key) =>
-      original[key as keyof EventType] !==
-      updated[key as keyof EventType],
-  );
-
-
+  const hasEventChanged = (original: EventType, updated: EventType) =>
+    Object.keys(original).some(
+      (key) =>
+        original[key as keyof EventType] !== updated[key as keyof EventType],
+    );
 
   const editEvent = async () => {
     if (!editedEvent || isEditing || !originalEvent) return;
@@ -122,10 +117,7 @@ export default function List() {
           throw new Error("Failed to add event");
         }
 
-        setSelectedCity("");
-        setSelectedVenue("");
-        setVenues({});
-        setTime("");
+        clearForm();
 
         setAlertText("Etkinlik başarıyla eklendi.");
         setAlertOpen(true);
@@ -138,57 +130,57 @@ export default function List() {
     }
   };
 
-const fetchVenuesByCity = async (
-  city: string,
-  setter: React.Dispatch<React.SetStateAction<Record<number, string>>>
-): Promise<Record<number, string>> => {
-  const res = await fetchWithAuth(
-    `/services/account/get/getVenues?city=${city}`
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch venues");
-  }
-
-  const data: { venueID: number; venueName: string }[] = await res.json();
-
-  const venuesObject = Object.fromEntries(
-    data.map((v) => [v.venueID, v.venueName])
-  );
-
-  setter(venuesObject);
-  return venuesObject; // ✅ ALWAYS returns
-};
-
-useEffect(() => {
-  if (!selectedCity) return;
-
-  (async () => {
-    const venuesObject = await fetchVenuesByCity(selectedCity, setVenues);
-
-    const firstVenueId = Object.keys(venuesObject)[0];
-    setSelectedVenue(firstVenueId ? Number(firstVenueId) : "");
-  })();
-}, [selectedCity]);
-
-useEffect(() => {
-  if (!editedEvent?.city) return;
-
-  (async () => {
-    const venuesObject = await fetchVenuesByCity(
-      editedEvent.city,
-      setEditVenues
+  const fetchVenuesByCity = async (
+    city: string,
+    setter: React.Dispatch<React.SetStateAction<Record<number, string>>>,
+  ): Promise<Record<number, string>> => {
+    const res = await fetchWithAuth(
+      `/services/account/get/getVenues?city=${city}`,
     );
 
-    const firstVenueId = Object.keys(venuesObject)[0];
+    if (!res.ok) {
+      throw new Error("Failed to fetch venues");
+    }
 
-    setEditedEvent((prev) =>
-      prev && firstVenueId
-        ? { ...prev, venueID: Number(firstVenueId) }
-        : prev
+    const data: { venueID: number; venueName: string }[] = await res.json();
+
+    const venuesObject = Object.fromEntries(
+      data.map((v) => [v.venueID, v.venueName]),
     );
-  })();
-}, [editedEvent?.city]);
+
+    setter(venuesObject);
+    return venuesObject; // ✅ ALWAYS returns
+  };
+
+  useEffect(() => {
+    if (!selectedCity) return;
+
+    (async () => {
+      const venuesObject = await fetchVenuesByCity(selectedCity, setVenues);
+
+      const firstVenueId = Object.keys(venuesObject)[0];
+      setSelectedVenue(firstVenueId ? Number(firstVenueId) : "");
+    })();
+  }, [selectedCity]);
+
+  useEffect(() => {
+    if (!editedEvent?.city) return;
+
+    (async () => {
+      const venuesObject = await fetchVenuesByCity(
+        editedEvent.city,
+        setEditVenues,
+      );
+
+      const firstVenueId = Object.keys(venuesObject)[0];
+
+      setEditedEvent((prev) =>
+        prev && firstVenueId
+          ? { ...prev, venueID: Number(firstVenueId) }
+          : prev,
+      );
+    })();
+  }, [editedEvent?.city]);
 
   useEffect(() => {
     (async () => {
@@ -233,6 +225,14 @@ useEffect(() => {
     setEvents(data);
   };
 
+  const clearForm = () => {
+    setSelectedCity("");
+    setSelectedShow("");
+    setSelectedVenue("");
+    setVenues({});
+    setTime("");
+  };
+
   const toDateTimeLocal = (value?: string) => {
     if (!value) return "";
 
@@ -255,43 +255,67 @@ useEffect(() => {
     return "";
   };
 
-
-
-
-const eventColumns: Column<EventType>[] = [
-  { key: "date", label: "Tarih", filterType:"date"},
-  { key: "showName", label: "Gösteri", searchable: true, filterType: "multi" },
-  { key: "city", label: "Şehir", searchable: true, filterType: "multi" },
-  { key: "venueName", label: "Salon", searchable: true, filterType: "multi" },
-  { key: "ticketsale", label: "Satışa Açık", filterType: "boolean" },
-  { key: "ispublic", label: "Görünür", filterType: "boolean" },
-  { key: "eventID", label: "Düzenle", filterType: "none", render:  (row) => (
-                 <button
-                        onClick={() => {
-                          handleOpenEdit(row);
-                        }}
-                        className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
-                      >
-                        <svg
-                          width="32px"
-                          height="32px"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
-                          <path
-                            d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
-                            stroke="#000000"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-    ), },
-];
+  const eventColumns: Column<EventType>[] = [
+    { key: "date", label: "Tarih", filterType: "date" },
+    {
+      key: "showName",
+      label: "Gösteri",
+      searchable: true,
+      filterType: "multi",
+    },
+    { key: "city", label: "Şehir", searchable: true, filterType: "multi" },
+    { key: "venueName", label: "Salon", searchable: true, filterType: "multi" },
+    { key: "ticketsale", label: "Satışa Açık", filterType: "boolean" },
+    {
+      key: "ispublic",
+      label: "Görünür",
+      filterType: "boolean",
+      reactKey: "ticket-price",
+    },
+    {
+      key: "eventID",
+      label: "Koltuk Durumu",
+      filterType: "none",
+      reactKey: "edit",
+      render: (row) => (
+        <button
+          onClick={() =>
+            router.push(`/account/events/ticketPrices/${row.eventID}`)
+          }
+          className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
+        >
+          <svg fill="#000000" viewBox="0 0 24 24" className="size-8">
+            <path d="m13.817 5.669 4.504 4.501-8.15 8.15-4.501-4.504zm-3.006 13.944 8.8-8.8c.166-.163.27-.389.27-.64s-.103-.477-.269-.64l-5.156-5.156c-.166-.158-.392-.255-.64-.255s-.474.097-.64.256l-8.8 8.8c-.166.163-.27.389-.27.64s.103.477.269.64l5.156 5.156c.166.158.392.255.64.255s.474-.097.64-.256zm12.663-9.073-12.918 12.933c-.332.326-.787.527-1.289.527s-.957-.201-1.289-.527l-1.794-1.793c.477-.492.77-1.164.77-1.905 0-1.513-1.227-2.74-2.74-2.74-.74 0-1.412.294-1.905.771l.001-.001-1.781-1.794c-.326-.332-.527-.787-.527-1.289s.201-.957.527-1.289l12.919-12.906c.332-.326.787-.527 1.289-.527s.957.201 1.289.527l1.781 1.781c-.515.499-.835 1.197-.835 1.969 0 1.513 1.227 2.74 2.74 2.74.773 0 1.471-.32 1.969-.835l.001-.001 1.794 1.781c.326.332.527.787.527 1.289s-.201.957-.527 1.289z"></path>
+          </svg>
+        </button>
+      ),
+    },
+    {
+      key: "eventID",
+      label: "Düzenle",
+      filterType: "none",
+      render: (row) => (
+        <button
+          onClick={() => {
+            handleOpenEdit(row);
+          }}
+          className="bg-white p-1 rounded-md hover:bg-red-500 duration-200 transition-colors border border-black"
+        >
+          <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
+              stroke="#000000"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      ),
+    },
+  ];
   return (
     <>
-
       <FormContainer title="Yeni Etkinlik Ekle">
         <div>Gösteri Seçiniz:</div>
         <select
@@ -358,9 +382,6 @@ const eventColumns: Column<EventType>[] = [
         </div>
       </FormContainer>
       <DataTable data={events} columns={eventColumns} title="Etkinlikler" />
-
-
-
 
       <DialogModal open={dialogueOpen} onClose={() => setDialogueOpen(false)}>
         {dialogueText}

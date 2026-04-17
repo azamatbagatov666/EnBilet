@@ -63,9 +63,20 @@ export function Cell({
   const openDialogue = (menuName: string) => {
     setFormError("");
     setModalMode(menuName);
+
+
+
     setDialogueOpen(true);
     setMenuOpen(false);
+
   };
+
+  useEffect(() => {
+  if (!dialogueOpen) return;
+
+    inputRef.current?.focus();
+    inputRef.current?.select();
+}, [dialogueOpen, modalMode]);
 
   const handleSave = () => {
     if (desiredLabel.trim() != "") {
@@ -105,6 +116,9 @@ export function Cell({
       setRenumerateError(true);
     }
   }, [cell.label]);
+
+     const inputRef = useRef<HTMLInputElement>(null);
+
 
   const bgClass = menuOpen
     ? isSeat
@@ -261,7 +275,7 @@ onContextMenu={(e) => {
                     value={desiredLabel}
                     onChange={(e) => setDesiredLabel(e.target.value)}
                     className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
-                    autoFocus
+                    ref={inputRef}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSave();
                     }}
@@ -322,7 +336,7 @@ onContextMenu={(e) => {
                     onChange={(e) => SetSteps(+e.target.value)}
                     max={50}
                     min={1}
-                    autoFocus
+                    ref={inputRef}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleNumarete();
                     }}

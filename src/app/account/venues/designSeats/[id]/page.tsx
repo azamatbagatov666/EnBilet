@@ -7,7 +7,7 @@ import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import useSeatMapCreator from "@/src/hooks/useSeatMapCreator";
 import type { VenueType } from "@/src/models/VenueType";
-import Row from "@/src/components/seatMap/Row";
+import Row from "@/src/components/seatMap/designer/Row";
 import { SeatMapType } from "@/src/models/SeatMapType";
 import { useState, useEffect, useRef } from "react";
 import type { stageLocation } from "@/src/models/seatMap/SeatMap";
@@ -273,18 +273,15 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
         </span>
       </div>
 
-      <div className="flex gap-4">
-        <div className="text-xl font-bold mb-4">
-          Salon Adı:{" "}
-          <span className="font-semibold">{theVenue?.venueName}</span>{" "}
-        </div>
-        <div className="text-xl font-bold mb-4">
-          Şehir: <span className="font-semibold">{theVenue?.city}</span>
-        </div>
-        <div className="text-xl font-bold mb-4">
-          Adres: <span className="font-semibold">{theVenue?.address}</span>
+            <div className="">
+        <div className="flex gap-4 text-xl font-bold my-4">
+          <span>Salon Adı:{" "}<span className="font-semibold">{theVenue?.venueName}</span></span>
+          <span>Şehir:{" "}<span className="font-semibold">{theVenue?.city}</span></span>
+          <span>Adres:{" "}<span className="font-semibold">{theVenue?.address}</span></span>
         </div>
       </div>
+
+
 
       <div className="flex w-max flex-col bg-base-300 p-4 rounded-box">
         <div className="flex">
