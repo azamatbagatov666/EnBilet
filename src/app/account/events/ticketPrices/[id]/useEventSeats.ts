@@ -29,28 +29,31 @@ const setAllPrices = (price: number) => {
 };
 
 
+const isEditable = (seat: seatState) =>
+  seat.status === "available" || seat.status === "blocked";
+
 const validatePrices = () => {
   const errors: string[] = [];
 
+  let invalidPrices = 0;
+
   for (const seat of Object.values(eventSeats)) {
-    // Safety net only — shouldn't be possible via UI
-    if (seat.status === "sold") {
-      errors.push(`Sold seat ${seat.seatId} cannot be modified`);
-      continue;
-    }
 
-    // Blocked seats must be free
-    if (seat.status === "blocked") {
-      if (seat.price !== 0) {
-        errors.push(`Blocked seat ${seat.seatId} must have price 0`);
-      }
-      continue;
-    }
+    // 🚫 ignore locked seats completely
+    if (!isEditable(seat)) continue;
 
-    // Sellable seats must have price
-    if (seat.price == null || seat.price <= 0) {
-      errors.push(`Seat ${seat.seatId} must have a valid price`);
+    // price validation only for editable seats
+    if (
+      seat.price == null ||
+      seat.price <= 0 ||
+      Number.isNaN(seat.price)
+    ) {
+      invalidPrices++;
     }
+  }
+
+  if (invalidPrices > 0) {
+    errors.push("Tüm satılabilir koltukların geçerli fiyatı olmalıdır.");
   }
 
   return {
@@ -76,14 +79,14 @@ const setRowPrice = (row: SeatRow, price: number) => {
   });
 };
 
-const setSeatPrice = (seatId: string, price: number) => {
+const setSeatPrice = (cellID: string, price: number) => {
   setEventSeats(prev => {
-    const seat = prev[seatId];
+    const seat = prev[cellID];
     if (!seat || !canEdit(seat)) return prev;
 
     return {
       ...prev,
-      [seatId]: { ...seat, price },
+      [cellID]: { ...seat, price },
     };
   });
 };
@@ -111,11 +114,11 @@ const toggleAll = () => {
 
 const toggleRow = (row: SeatRow) => {
   setEventSeats(prev => {
-    const seatIds = row.cells
+    const cellIDs = row.cells
       .filter(c => c.type === "seat")
       .map(c => c.id);
 
-    const editableSeats = seatIds
+    const editableSeats = cellIDs
       .map(id => prev[id])
       .filter((s): s is seatState => !!s && canEdit(s));
 
@@ -125,7 +128,7 @@ const toggleRow = (row: SeatRow) => {
     const next = { ...prev };
 
     editableSeats.forEach(seat => {
-      next[seat.seatId] = {
+      next[seat.cellID] = {
         ...seat,
         status: allBlocked ? "available" : "blocked",
       };
@@ -134,14 +137,14 @@ const toggleRow = (row: SeatRow) => {
     return next;
   });
 };
-const toggleSeat = (seatId: string) => {
+const toggleSeat = (cellID: string) => {
   setEventSeats(prev => {
-    const seat = prev[seatId];
+    const seat = prev[cellID];
     if (!seat || !canEdit(seat)) return prev;
 
     return {
       ...prev,
-      [seatId]: {
+      [cellID]: {
         ...seat,
         status: seat.status === "blocked" ? "available" : "blocked",
       },

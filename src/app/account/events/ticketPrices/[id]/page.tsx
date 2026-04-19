@@ -5,6 +5,8 @@ import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import { useEventSeats } from "./useEventSeats";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import CellLegend from "@/src/components/seatMap/CellLegend";
+import { debounce } from 'lodash';
+
 
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import type { EventType } from "@/src/models/EventType";
@@ -46,11 +48,14 @@ export default function ticketPrices({
   //-------------FORM------------
   const [noMaps, setNoMaps] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
 
   //------------MAPS-------------
   const [stageLocation, setStageLocation] = useState<stageLocation>("up");
-
+  const [lockSeatMap, setLockSeatMap] = useState(false);
   const [seatMap, setSeatMap] = useState<any | null>(null);
+  const [selectedMapName, setSelectedMapName] = useState("");
 
   //------------DIALOGUE&ALERTS---------
 
@@ -68,6 +73,13 @@ export default function ticketPrices({
   useEffect(() => {
     if (theEvent?.venueID) {
       getMaps();
+    }
+  }, [theEvent]);
+
+  useEffect(() => {
+
+    if (theEvent?.mapID) {
+      setSelectedMapId(String(theEvent.mapID));
     }
   }, [theEvent]);
 
@@ -99,15 +111,65 @@ export default function ticketPrices({
     setDesiredPrice(value);
   };
 
-  const handleSavePrices = () => {
-    if (desiredPrice.trim() != "" ) {
-      setAllPrices(Number(desiredPrice));
-      setDesiredPrice("");
-      setDialogueOpen(false);
-    } else {
+  const handleChangeAllPrices = () => {
+    const price = Number(desiredPrice.replace(",", "."));
+
+    if (!Number.isFinite(price) || price <= 0) {
       setFormError("Lütfen geçerli bir fiyat giriniz.");
+      return;
     }
+    setAllPrices(Number(desiredPrice));
+    setDesiredPrice("");
+    setDialogueOpen(false);
   };
+
+  const handleSavePrices =  debounce(async() => {
+    const { valid, errors } = validatePrices();
+
+    if (!valid) {
+      setIsEditing(false);
+      setDialogueText(errors.join("\n"));
+      setDialogueOpen(true);
+    } else {
+      const seatsToSave = Object.values(eventSeats).filter(
+        (seat) => seat.status === "available" || seat.status === "blocked",
+      );
+
+      const res = await fetchWithAuth("/services/account/actions/eventSeats/saveSeats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventID: id,
+          mapID: Number(selectedMapId),
+          Seats: seatsToSave,
+        }),
+      });
+
+      if (res.ok) {
+
+        setAlertText("Koltuklar başarıyla güncellendi.");
+        setAlertOpen(true);
+
+    getEventInfo();
+
+
+      } else {
+        setDialogueText("Koltuklar kaydedilirken bir hata oluştu.")
+        setDialogueOpen(true)
+      }
+
+
+    }
+
+
+
+    setIsEditing(false);
+}, 2000);
+
+
+
+
+
 
   const getMaps = async () => {
     const res = await fetchWithAuth(
@@ -127,10 +189,15 @@ export default function ticketPrices({
     if (!selectedMapId) return;
 
     const selected = maps.find((m) => m.mapID === Number(selectedMapId));
-    if (!selected?.layoutJS) return;
+
+    if (!selected?.mapName || !selected?.layoutJS) {
+      return;
+    }
+    setSelectedMapName(selected?.mapName);
 
     try {
       const parsed = JSON.parse(selected.layoutJS);
+
       setStageLocation(parsed.stageLocation);
 
       setSeatMap(parsed);
@@ -141,8 +208,8 @@ export default function ticketPrices({
         row.cells.forEach((cell: any) => {
           if (cell.type === "seat") {
             normalized[cell.id] = {
-              seatId: cell.id,
-              price: 1650.99,
+              cellID: cell.id,
+              price: 650.99,
               status: "available",
             };
           }
@@ -155,19 +222,69 @@ export default function ticketPrices({
     }
   }, [selectedMapId, maps]);
 
-     const priceInputRef = useRef<HTMLInputElement>(null);
-  
+  useEffect(() => {
+    if (!seatMap || !theEvent?.eventID) return;
+
+    loadEventSeats();
+  }, [seatMap]);
+
+  const loadEventSeats = async () => {
+    const res = await fetchWithAuth(
+      `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (data.length == 0) {
+      return;
+    }
+
+    const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
+    setLockSeatMap(hasSoldSeat);
+
+    if (theEvent?.mapID != Number(selectedMapId)) {
+      return;
+    }
+
+    const savedSeats: seatState[] = data;
+
+    const savedMap = Object.fromEntries(savedSeats.map((s) => [s.cellID, s]));
+
+    const normalized: Record<string, seatState> = {};
+
+    seatMap.rows.forEach((row: any) => {
+      row.cells.forEach((cell: any) => {
+        if (cell.type !== "seat") return;
+
+        const saved = savedMap[cell.id];
+
+        normalized[cell.id] = {
+          cellID: cell.id,
+          price: saved?.price ?? 0,
+          status: saved?.status ?? "available",
+        };
+      });
+    });
+
+    setEventSeats(normalized);
+  };
+
+  const priceInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!dialogueOpen) return;
-  
-      priceInputRef.current?.focus();
-  
+
+    priceInputRef.current?.focus();
   }, [dialogueOpen]);
 
   return (
     <>
       <div className="px-6">
-        <div className="flex justify-center text-3xl font-bold ">
+        <div
+          className="flex justify-center text-3xl font-bold "
+
+        >
           <span className="bg-red-600 rounded-xl p-2 dark:text-white duration-150">
             Koltuk Fiyat ve Durumu Düzenle
           </span>
@@ -192,29 +309,49 @@ export default function ticketPrices({
           </div>
         </div>
 
-        <select
-          className="select select-info "
-          value={selectedMapId ?? ""}
-          onChange={(e) => setSelectedMapId(e.target.value)}
-        >
-          <option value="" disabled>
-            Oturma Planı Seç
-          </option>
-
-          {maps.map((map) => (
-            <option key={map.mapID} value={map.mapID}>
-              {map.mapName}
+        <label htmlFor="">
+          <span>Oturma Planı Seç:</span>
+          <select
+            className="select select-info ml-5"
+            disabled={lockSeatMap || isEditing}
+            value={selectedMapId ?? ""}
+            onChange={(e) => setSelectedMapId(e.target.value)}
+          >
+            <option value="" disabled>
+              Oturma Planı Seç
             </option>
-          ))}
-        </select>
 
-        {seatMap && (
+            {maps.map((map) => (
+              <option key={map.mapID} value={map.mapID}>
+                {map.mapName}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {lockSeatMap && (
+          <div className="text-sm text-red-600 mt-1 font-semibold">
+            Satılmış koltuklar olduğu için oturma planı değiştirilemez.
+          </div>
+        )}
+
+        {seatMap && (<div>
+{isEditing && <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner !blur-0 !opacity-100 text-accent"></span>}
+
           <div
-            className=" select-none"
+            className={` select-none ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
             onContextMenu={(e) => {
               e.preventDefault();
             }}
           >
+            
+
+            <div className="mt-4 font-bold">
+              <span>Şu Anda Düzenlenen Oturma Planı:</span>
+              <span className="ml-4">{selectedMapName}</span>
+              
+              </div>
+
             <div className="flex flex-wrap gap-6 mt-6 justify-center">
               <CellLegend variant="available" label="Müsait" />
               <CellLegend variant="blocked" label="Kapalı" />
@@ -280,8 +417,17 @@ export default function ticketPrices({
               >
                 Bütün Koltukları Aç/Kapat
               </button>
-              <button onClick={()=>{validatePrices()}} className="btn btn-success text-white">Kaydet</button>
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  handleSavePrices();
+                }}
+                className="btn btn-success text-white"
+              >
+                Kaydet
+              </button>
             </div>
+          </div>
           </div>
         )}
 
@@ -317,6 +463,7 @@ export default function ticketPrices({
         onClose={() => {
           setDialogueOpen(false);
           setEditDialogueOpen(false);
+          setDialogueText("");
           setFormError("");
           setDesiredPrice("");
         }}
@@ -334,7 +481,6 @@ export default function ticketPrices({
                     inputMode="decimal"
                     ref={priceInputRef}
                     placeholder="0,00"
-                    autoFocus
                     value={desiredPrice.replace(".", ",")}
                     onChange={(e) =>
                       handlePriceChange(e.target.value.replace(",", "."))
@@ -344,7 +490,7 @@ export default function ticketPrices({
                       setDesiredPrice(Number(desiredPrice).toFixed(2));
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSavePrices();
+                      if (e.key === "Enter") handleChangeAllPrices();
                     }}
                   />
                   <span className=" self-center text-lg select-none">₺</span>
@@ -354,7 +500,7 @@ export default function ticketPrices({
                 <button
                   className="btn btn-success text-white"
                   onClick={() => {
-                    handleSavePrices();
+                    handleChangeAllPrices();
                   }}
                 >
                   Kaydet
@@ -367,6 +513,10 @@ export default function ticketPrices({
           </div>
         )}
       </DialogModal>
+
+            <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+              {alertText}
+            </SuccessAlert>
     </>
   );
 }

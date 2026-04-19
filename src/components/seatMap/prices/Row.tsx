@@ -46,16 +46,21 @@ export default function Row({
     setDesiredPrice(value);
   };
 
-  const handleSavePrices = () => {
-    if (desiredPrice.trim() != "" && desiredPrice.trim() != "0.00") {
-      setRowPrice(row, Number(desiredPrice));
 
+
+      const handleSavePrices = () => {
+      const price = Number(desiredPrice.replace(",", "."));
+
+  if (!Number.isFinite(price) || price <= 0) {
+    setFormError("Lütfen geçerli bir fiyat giriniz.");
+    return;
+  }
+      setRowPrice(row, Number(desiredPrice));
       setDesiredPrice("");
       setDialogueOpen(false);
-    } else {
-      setFormError("Lütfen geçerli bir fiyat giriniz.");
-    }
+
   };
+
 
   const priceInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,7 +176,6 @@ export default function Row({
                   className="!outline-none w-20 text-right"
                   inputMode="decimal"
                   placeholder="0,00"
-                  autoFocus
                   value={desiredPrice.replace(".", ",")}
                   onChange={(e) =>
                     handlePriceChange(e.target.value.replace(",", "."))

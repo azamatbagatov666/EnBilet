@@ -1,6 +1,7 @@
 export interface EventType  {
   eventID?: number;
   showID: number;
+  mapID: number;
   venueID: number;
   city: string;
   date: string;

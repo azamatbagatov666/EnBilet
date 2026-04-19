@@ -5,7 +5,7 @@ export type SeatStatus =
   | "blocked";
 
 export interface seatState {
-  seatId: string;
+  cellID: string;
   price: number;
   status: SeatStatus;
 }
