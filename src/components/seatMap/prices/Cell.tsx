@@ -3,8 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import { createPortal } from "react-dom";
 import type { seatState } from "@/src/models/seatMap/seatState";
-  import HandiSvg from "@/src/components/svg/HandiSvg";
-
+import HandiSvg from "@/src/components/svg/HandiSvg";
 
 interface Props {
   cell: SeatCell;
@@ -26,8 +25,6 @@ export function Cell({
   const [menuOpen, setMenuOpen] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const [modalMode, setModalMode] = useState("");
-
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [desiredPrice, setDesiredPrice] = useState("");
 
@@ -37,17 +34,16 @@ export function Cell({
 
   const status = seatState?.status;
 
-const isAvailable = status === "available";
-const isBlocked   = status === "blocked";
-const isReserved  = status === "reserved";
-const isSold      = status === "sold";
+  const isAvailable = status === "available";
+  const isBlocked = status === "blocked";
+  const isReserved = status === "reserved";
+  const isSold = status === "sold";
 
-const formatPriceTR = (price: number) =>
-  price.toLocaleString("tr-TR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
+  const formatPriceTR = (price: number) =>
+    price.toLocaleString("tr-TR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   const handlePriceChange = (value: string) => {
     value = value.replace(".", ".");
@@ -70,21 +66,19 @@ const formatPriceTR = (price: number) =>
       setSeatPrice(cell.id, Number(desiredPrice));
       setDesiredPrice("");
       setDialogueOpen(false);
-    }
-    else {
-      setFormError("Lütfen geçerli bir fiyat giriniz.")
+    } else {
+      setFormError("Lütfen geçerli bir fiyat giriniz.");
     }
   };
 
   const priceInputRef = useRef<HTMLInputElement>(null);
 
-useEffect(() => {
-  if (!dialogueOpen) return;
+  useEffect(() => {
+    if (!dialogueOpen) return;
 
     priceInputRef.current?.focus();
     priceInputRef.current?.select();
-
-}, [dialogueOpen]);
+  }, [dialogueOpen]);
 
   useEffect(() => {
     const handleOutSideClick = (event: Event) => {
@@ -103,51 +97,50 @@ useEffect(() => {
     };
   }, [ref]);
 
-  const openDialogue = (menuName: string) => {
+  const openDialogue = () => {
     setFormError("");
-    setModalMode(menuName);
-    setDialogueOpen(true);
     setMenuOpen(false);
+    setDesiredPrice(Number(seatState?.price.toString()).toFixed(2));
+    setDialogueOpen(true);
   };
 
-const bgClass = menuOpen
-  ? "border-black  bg-gray-400  !border-b-8 "
-  : isBlocked
-    ? "bg-gray-600 !border-gray-400 text-white !border-b-8 line-through decoration-[1.5px]"
-    : isSold
-      ? "bg-red-600 border-red-800 text-white cursor-not-allowed !border-b-8"
-      : isReserved
-        ? "bg-yellow-400 border-yellow-600 text-black cursor-not-allowed !border-b-8"
-        : isHandicapped
-          ? "bg-blue-500 border-blue-700 text-white !border-b-8"
-          : isAvailable
-            ? "bg-gray-300 dark:bg-neutral-700  border-neutral-500 border-b-8"
-            : "!bg-transparent border-none";
+  const bgClass = menuOpen
+    ? "border-black  bg-gray-400  !border-b-8 "
+    : isBlocked
+      ? "bg-gray-600 !border-gray-400 text-white !border-b-8 line-through decoration-[1.5px]"
+      : isSold
+        ? "bg-red-600 border-red-800 text-white cursor-not-allowed !border-b-8"
+        : isReserved
+          ? "bg-yellow-400 border-yellow-600 text-black cursor-not-allowed !border-b-8"
+          : isHandicapped
+            ? "bg-blue-500 border-blue-700 text-white !border-b-8"
+            : isAvailable
+              ? "bg-gray-300 dark:bg-neutral-700  border-neutral-500 border-b-8"
+              : "!bg-transparent border-none";
 
   return (
     <>
       <div className="relative ml-3">
         <button
           onClick={isAvailable || isBlocked ? onClick : undefined}
-            disabled={isSold || isReserved || !isSeat}
-
+          disabled={isSold || isReserved || !isSeat}
           aria-label={
             isHandicapped
               ? `Engelli koltuğu ${rowLabel}${cell.label}`
               : `Koltuk ${rowLabel}${cell.label}`
           }
-
-            onContextMenu={isAvailable || isBlocked ? (e) => {
-            e.preventDefault();
-            setContextPos({
-              x: e.pageX,
-              y: e.pageY,
-            });
-            setMenuOpen(true);
-          } : undefined}
-
-
-       
+          onContextMenu={
+            isAvailable || isBlocked
+              ? (e) => {
+                  e.preventDefault();
+                  setContextPos({
+                    x: e.pageX,
+                    y: e.pageY,
+                  });
+                  setMenuOpen(true);
+                }
+              : undefined
+          }
           className={`
   w-10 h-10 text-xs rounded border-2 
   flex items-center justify-center 
@@ -169,17 +162,11 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
         ${isAvailable ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400 line-through"}
       `}
             >
-            
-
               {formatPriceTR(seatState.price)}₺
-
             </span>
           )}
 
-          {isHandicapped && !menuOpen && (
-<HandiSvg></HandiSvg>
-
-          )}
+          {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
         </button>
 
         {menuOpen && (
@@ -189,7 +176,6 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
           />
         )}
         {menuOpen &&
-          
           createPortal(
             <ul
               style={{
@@ -201,9 +187,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
             >
               <li
                 onClick={() => {
-                  setMenuOpen(false)
-                  setDesiredPrice(Number(seatState?.price.toString()).toFixed(2))
-                  setDialogueOpen(true);
+                  openDialogue();
                 }}
               >
                 <a>Koltuk Fiyatını Düzenle</a>
@@ -221,29 +205,29 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
       >
         <div className="flex justify-center">
           <div>
-          <span>Lütfen bu koltuk için bir fiyat belirleyin.</span>
-         <div className="flex justify-center mt-4">
-            <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
-              <input
-              ref={priceInputRef}
-                className="!outline-none w-20 text-right"
-                inputMode="decimal"
-                placeholder="0,00"
-                autoFocus
-  value={desiredPrice.replace(".", ",")}
-  onChange={(e) =>
-    handlePriceChange(e.target.value.replace(",", "."))
-  }
-  onBlur={() => {
-    if (!desiredPrice) return;
-    setDesiredPrice(Number(desiredPrice).toFixed(2));
-  }}
-                 onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSavePrices();
-                    }}
-              />
-              <span className=" self-center text-lg select-none">₺</span>
-            </div>
+            <span>Lütfen bu koltuk için bir fiyat belirleyin.</span>
+            <div className="flex justify-center mt-4">
+              <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
+                <input
+                  ref={priceInputRef}
+                  className="!outline-none w-20 text-right"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  autoFocus
+                  value={desiredPrice.replace(".", ",")}
+                  onChange={(e) =>
+                    handlePriceChange(e.target.value.replace(",", "."))
+                  }
+                  onBlur={() => {
+                    if (!desiredPrice) return;
+                    setDesiredPrice(Number(desiredPrice).toFixed(2));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSavePrices();
+                  }}
+                />
+                <span className=" self-center text-lg select-none">₺</span>
+              </div>
             </div>
             <div className="flex justify-center mt-4">
               <button
@@ -254,15 +238,12 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
               >
                 Kaydet
               </button>
-    
             </div>
-                                    <div className={" font-bold text-red-500 h-4 px-1"}>
-                  {formError}
-                </div>
-                </div>
-                </div>
-      
-      
+            <div className={" font-bold text-red-500 h-4 px-1"}>
+              {formError}
+            </div>
+          </div>
+        </div>
       </DialogModal>
     </>
   );

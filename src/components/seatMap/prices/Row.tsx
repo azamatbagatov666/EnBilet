@@ -57,14 +57,19 @@ export default function Row({
     }
   };
 
-   const priceInputRef = useRef<HTMLInputElement>(null);
-  
+  const priceInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!dialogueOpen) return;
-  
-      priceInputRef.current?.focus();
-  
+
+    priceInputRef.current?.focus();
   }, [dialogueOpen]);
+
+  const openDialogue = () => {
+    setFormError("");
+    setDesiredPrice("");
+    setDialogueOpen(true);
+  };
 
   return (
     <div className="flex items-center gap-2 mb-2  select-none">
@@ -95,7 +100,7 @@ export default function Row({
           >
             <button
               onClick={() => {
-                setDialogueOpen(true);
+                openDialogue();
               }}
               className="  hover:bg-red-500 rounded-md duration-200 border-gray-500 hover:border-black border-2 place-items-center min-w-10 min-h-10 bg-white"
             >
@@ -162,22 +167,22 @@ export default function Row({
             <div className="flex justify-center mt-4">
               <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
                 <input
-                ref={priceInputRef}
+                  ref={priceInputRef}
                   className="!outline-none w-20 text-right"
                   inputMode="decimal"
                   placeholder="0,00"
                   autoFocus
-  value={desiredPrice.replace(".", ",")}
-  onChange={(e) =>
-    handlePriceChange(e.target.value.replace(",", "."))
-  }
-  onBlur={() => {
-    if (!desiredPrice) return;
-    setDesiredPrice(Number(desiredPrice).toFixed(2));
-  }}
-                 onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSavePrices();
-                    }}
+                  value={desiredPrice.replace(".", ",")}
+                  onChange={(e) =>
+                    handlePriceChange(e.target.value.replace(",", "."))
+                  }
+                  onBlur={() => {
+                    if (!desiredPrice) return;
+                    setDesiredPrice(Number(desiredPrice).toFixed(2));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSavePrices();
+                  }}
                 />
                 <span className=" self-center text-lg select-none">₺</span>
               </div>

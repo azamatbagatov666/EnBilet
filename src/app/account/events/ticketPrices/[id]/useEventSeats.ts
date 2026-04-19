@@ -28,6 +28,37 @@ const setAllPrices = (price: number) => {
   );
 };
 
+
+const validatePrices = () => {
+  const errors: string[] = [];
+
+  for (const seat of Object.values(eventSeats)) {
+    // Safety net only — shouldn't be possible via UI
+    if (seat.status === "sold") {
+      errors.push(`Sold seat ${seat.seatId} cannot be modified`);
+      continue;
+    }
+
+    // Blocked seats must be free
+    if (seat.status === "blocked") {
+      if (seat.price !== 0) {
+        errors.push(`Blocked seat ${seat.seatId} must have price 0`);
+      }
+      continue;
+    }
+
+    // Sellable seats must have price
+    if (seat.price == null || seat.price <= 0) {
+      errors.push(`Seat ${seat.seatId} must have a valid price`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+};
+
 const setRowPrice = (row: SeatRow, price: number) => {
   setEventSeats(prev => {
     const next = { ...prev };
@@ -125,5 +156,6 @@ const toggleSeat = (seatId: string) => {
     toggleAll,
     toggleRow,
     toggleSeat,
+    validatePrices,
   };
 }

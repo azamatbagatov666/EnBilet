@@ -30,6 +30,7 @@ export default function ticketPrices({
     toggleAll,
     toggleRow,
     toggleSeat,
+    validatePrices,
   } = useEventSeats(eventSeats, setEventSeats);
 
   const [desiredPrice, setDesiredPrice] = useState("");
@@ -99,7 +100,7 @@ export default function ticketPrices({
   };
 
   const handleSavePrices = () => {
-    if (desiredPrice.trim() != "" && desiredPrice.trim() != "0.00") {
+    if (desiredPrice.trim() != "" ) {
       setAllPrices(Number(desiredPrice));
       setDesiredPrice("");
       setDialogueOpen(false);
@@ -279,7 +280,7 @@ export default function ticketPrices({
               >
                 Bütün Koltukları Aç/Kapat
               </button>
-              <button className="btn btn-success text-white">Kaydet</button>
+              <button onClick={()=>{validatePrices()}} className="btn btn-success text-white">Kaydet</button>
             </div>
           </div>
         )}
@@ -317,6 +318,7 @@ export default function ticketPrices({
           setDialogueOpen(false);
           setEditDialogueOpen(false);
           setFormError("");
+          setDesiredPrice("");
         }}
       >
         {dialogueText}
