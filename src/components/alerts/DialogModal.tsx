@@ -57,6 +57,8 @@ export default function DialogModal({
     return () => dialog.removeEventListener("cancel", handleCancel);
   }, [onClose]);
 
+  
+
   return (
     <dialog ref={dialogRef} className="modal outline-none" onClose={onClose}>
       {/* Modal Box */}
