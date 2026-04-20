@@ -1,27 +1,71 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+
 import { useAuth } from "@/src/hooks/useAuth";
 import ThemeToggle from "@/src/components/navBar/ThemeToggle";
 import Link from "next/link";
+import { useState } from "react";
 
-export default function NavBar() {
+
+type Props = {
+  isLoggedIn: boolean;
+};
+
+export default function NavBar({ isLoggedIn }: Props) {
   const { logout } = useAuth();
 
-  const router = useRouter();
+    const [menuOpen, setMenuOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+
+    const toggleDropdown = (
+    e: React.MouseEvent,
+    type: "regular" | "admin"
+  ) => {
+    const isEnter = e.type === "mouseenter";
+    const isLeaveOrClick =
+      e.type === "mouseleave" || e.type === "click";
+
+    if (type === "regular") {
+      if (isEnter) setMenuOpen(true);
+      if (isLeaveOrClick) setMenuOpen(false);
+    }
+
+    if (type === "admin") {
+      if (isEnter) setAdminOpen(true);
+      if (isLeaveOrClick) setAdminOpen(false);
+    }
+  };
+
 
   return (
     <>
-      <div className="navbar bg-base-100 shadow-sm dark:shadow-white">
+      <div className="navbar bg-base-100 shadow-sm dark:shadow-white sticky top-0 z-[55]">
         <div className="">
-          <a className="btn btn-ghost text-xl" href="/">
+          <link className="btn btn-ghost text-xl" href="/">
             Çocuk Aklı
-          </a>
+          </link>
         </div>
         <div className="w-full flex justify-between px-2">
-          <div className="dropdown dropdown-hover">
-            <div className="btn btn-ghost">Menü {"\u25BC"}</div>
+          <div className="flex">
+                       <div 
+                       
+                         onMouseEnter={(e) => toggleDropdown(e, "regular")}
+  onMouseLeave={(e) => toggleDropdown(e, "regular")}
+  className=" dropdown dropdown-hover">
+            <div  className="btn btn-ghost">Menü {"\u25BC"}</div>
+  {menuOpen && 
+            <ul className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border">
+              <li>
+                <Link href="/account/">Giriş Yap</Link>
+              </li>
 
+            </ul> }
+            </div>
+           {isLoggedIn &&  <>
+           <div className="dropdown dropdown-hover "                          onMouseEnter={(e) => toggleDropdown(e, "admin")}
+  onMouseLeave={(e) => toggleDropdown(e, "admin")}>
+            <div className="btn btn-ghost">Yönetici {"\u25BC"}</div>
+ {adminOpen && 
             <ul className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border">
               <li>
                 <Link href="/account/">Giriş Yap</Link>
@@ -38,7 +82,9 @@ export default function NavBar() {
               <li onClick={logout}>
                 <a>Çıkış Yap</a>
               </li>
-            </ul>
+            </ul> }
+            </div>
+            </> }
           </div>
           <ThemeToggle></ThemeToggle>
         </div>

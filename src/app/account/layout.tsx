@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import NavBar from "@/src/components/navBar/NavBar";
 import Breadcrumbs from "@/src/components/navBar/Breadcrumbs";
 import PageTitle from "@/src/components/navBar/PageTitle";
 
