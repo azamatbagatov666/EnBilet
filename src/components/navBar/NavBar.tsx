@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/hooks/useAuth";
 import ThemeToggle from "@/src/components/navBar/ThemeToggle";
+import Link from "next/link";
 
 export default function NavBar() {
   const { logout } = useAuth();
@@ -23,16 +24,16 @@ export default function NavBar() {
 
             <ul className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border">
               <li>
-                <a href="/account/">Giriş Yap</a>
+                <Link href="/account/">Giriş Yap</Link>
               </li>
               <li>
-                <a href="/account/events">Etkinlik Ekle/Düzenle</a>
+                <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
               </li>
               <li>
-                <a href="/account/venues">Salonlar</a>
+                <Link href="/account/venues">Salonlar</Link>
               </li>
               <li>
-                <a href="/account/shows">Gösteriler</a>
+                <Link href="/account/shows">Gösteriler</Link>
               </li>
               <li onClick={logout}>
                 <a>Çıkış Yap</a>

@@ -59,7 +59,7 @@ export default function List() {
               />
             </div>
 
-            <div className="flex items-center group justify-left transition-colors duration-300  focus-within:border-black  border-b-2 border-[rgb(128,128,128)]">
+            <div className="relative flex items-center group justify-left transition-colors duration-300  focus-within:border-black  border-b-2 border-[rgb(128,128,128)]">
               <svg
                 viewBox="0 0 16 16"
                 className="size-6  fill-current text-gray-400  group-focus-within:text-black duration-300 transition-colors"
@@ -75,11 +75,11 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group w-full h-14 border-t-0 border-x-0 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
+                className="input group w-full h-14 border-t-0 border-x-0 pr-12 rounded-none !outline-none transition-colors duration-300  bg-white px-2  text-black "
                 type={passType}
                 placeholder="Parola"
               />
-              <button onClick={(e) => setPassType(passType === "password" ? "text" : "password")}>
+              <button className="absolute right-3" onClick={(e) => setPassType(passType === "password" ? "text" : "password")}>
                 {passType === "password" ? (
                   <svg
                     fill="#000000"
