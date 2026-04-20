@@ -326,7 +326,7 @@ render:  (row) => (
           onChange={(e) => setAddress(e.target.value)}
         ></input>
         <div className="flex justify-center mt-4">
-          <button className="btn btn-success  " onClick={() => createVenue()}>
+          <button className="btn btn-success  text-white" onClick={() => createVenue()}>
             SALON EKLE
           </button>
         </div>
@@ -397,7 +397,7 @@ render:  (row) => (
               ></input>
               <div className="flex justify-center mt-4">
                 <button
-                  className="btn btn-success  "
+                  className="btn btn-success text-white "
                   onClick={() => editVenue()}
                 >
                   Kaydet

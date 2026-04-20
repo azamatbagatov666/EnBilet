@@ -295,7 +295,7 @@ export default function shows() {
           onChange={(file) => setImageFile(file)}
         />
         <div className="flex justify-center mt-10">
-          <button className="btn btn-success  " onClick={() => createShow()}>
+          <button className="btn btn-success text-white " onClick={() => createShow()}>
             GÖSTERİ EKLE
           </button>
         </div>
@@ -376,7 +376,7 @@ export default function shows() {
 
               <div className="flex justify-center mt-10">
                 <button
-                  className="btn btn-success"
+                  className="btn btn-success text-white"
                   onClick={() => {
                     editShow();
                   }}

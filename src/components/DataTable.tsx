@@ -557,7 +557,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                       </div>
                                       <div className="flex justify-around mt-2">
                                         <button
-                                          className="btn btn-sm btn-success"
+                                          className="btn btn-sm btn-success text-white"
                                           onClick={() => {
                                             setValueFilters((prev) => ({
                                               ...prev,
@@ -705,7 +705,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                       </div>
                                       <div className="flex justify-around mt-2">
   <button
-    className="btn btn-sm btn-success"
+    className="btn btn-sm btn-success text-white"
     onClick={() => {
       setDateValueFilters(new Set(draftDateValueFilters));
       setSelectedFilter("");

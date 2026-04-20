@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+btn-success {
+  @apply text-white;
+}
+
 @layer base {
   [data-theme] {
     &, & * {

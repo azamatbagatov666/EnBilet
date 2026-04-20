@@ -195,7 +195,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
                   openDialogue();
                 }}
               >
-                <a>Koltuk Fiyatını Düzenle</a>
+                <a>Koltuk Fiyat ve Durumu</a>
               </li>
             </ul>,
             document.body,

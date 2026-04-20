@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import "src/app/globals.css";
 import NavBar from "@/src/components/navBar/NavBar";
+import Breadcrumbs from "@/src/components/navBar/Breadcrumbs";
+import PageTitle from "@/src/components/navBar/PageTitle";
+
 
 
 
@@ -17,6 +19,9 @@ export default function RootLayout({
   return (
 
  <>
+ <Breadcrumbs></Breadcrumbs>
+ <PageTitle></PageTitle>
+
 <div className="my-8">
         {children}
         </div>

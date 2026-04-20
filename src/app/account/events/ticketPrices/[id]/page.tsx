@@ -281,14 +281,7 @@ export default function ticketPrices({
   return (
     <>
       <div className="px-6">
-        <div
-          className="flex justify-center text-3xl font-bold "
 
-        >
-          <span className="bg-red-600 rounded-xl p-2 dark:text-white duration-150">
-            Koltuk Fiyat ve Durumu Düzenle
-          </span>
-        </div>
 
         <div className="">
           <div className="flex gap-4 text-xl font-bold my-4">

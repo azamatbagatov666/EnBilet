@@ -376,7 +376,7 @@ export default function List() {
         ></input>
 
         <div className="flex justify-center mt-6">
-          <button className="btn btn-success  " onClick={() => createEvent()}>
+          <button className="btn btn-success text-white " onClick={() => createEvent()}>
             ETKİNLİK OLUŞTUR
           </button>
         </div>
@@ -490,7 +490,7 @@ export default function List() {
 
               <div className="flex justify-center w-full mt-6">
                 <button
-                  className="btn btn-success  "
+                  className="btn btn-success  text-white"
                   onClick={() => editEvent()}
                 >
                   KAYDET
