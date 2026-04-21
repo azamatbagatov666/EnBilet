@@ -116,16 +116,18 @@ export function Cell({
       : isSold
         ? "bg-red-600 border-red-800 text-white cursor-not-allowed !border-b-8"
         : isReserved
-          ? "bg-yellow-400 border-yellow-600 text-black cursor-not-allowed !border-b-8"
+          ? "bg-yellow-400 border-yellow-600 !text-black cursor-not-allowed !border-b-8"
           : isHandicapped
             ? "bg-blue-500 border-blue-700 text-white !border-b-8"
             : isAvailable
-              ? "bg-gray-300 dark:bg-neutral-700  border-neutral-500 border-b-8"
+              ? "bg-gray-300 !text-black border-neutral-500 border-b-8"
               : "!bg-transparent border-none";
 
   return (
     <>
       <div className="relative ml-3">
+        <div className="tooltip" data-tip={seatState?.price + "k"}>
+
         <button
           onClick={isAvailable || isBlocked ? onClick : undefined}
           disabled={isSold || isReserved || !isSeat}
@@ -163,7 +165,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
           {seatState && (
             <span
               className={`
-        absolute top-10 font-bold text-[11px] 
+        absolute top-10 font-bold text-[11px] text-ellipsis max-w-[51px] overflow-hidden
         ${isAvailable ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400 line-through"}
       `}
             >
@@ -173,7 +175,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
 
           {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
         </button>
-
+</div>
         {menuOpen && (
           <div
             className="fixed inset-0 z-40"

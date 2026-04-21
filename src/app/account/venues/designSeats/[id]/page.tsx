@@ -72,7 +72,7 @@ export default function SeatMapCreatorPage({
     updateStageLocation(stageLocation);
   }, [stageLocation]);
 
-    useEffect(() => {
+  useEffect(() => {
     setStageLocation("up");
   }, [editType]);
 
@@ -113,25 +113,25 @@ export default function SeatMapCreatorPage({
     setTheVenue(data);
   };
 
-const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
-  if (type === "edit") {
-    return !isMapEmpty() || newMapName.trim() !== "";
-  }
+  const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
+    if (type === "edit") {
+      return !isMapEmpty() || newMapName.trim() !== "";
+    }
 
-  if (type === "create") {
-    const selected = maps.find((m) => m.mapID === Number(selectedMapId));
-    if (!selected) return false;
+    if (type === "create") {
+      const selected = maps.find((m) => m.mapID === Number(selectedMapId));
+      if (!selected) return false;
 
-    if (editingName !== selected.mapName) return true;
+      if (editingName !== selected.mapName) return true;
 
-    const result = saveMap();
-    if (typeof result === "string") return true;
+      const result = saveMap();
+      if (typeof result === "string") return true;
 
-    return JSON.stringify(result) !== selected.layoutJS;
-  }
+      return JSON.stringify(result) !== selected.layoutJS;
+    }
 
-  return false;
-};
+    return false;
+  };
 
   const handleEditType = (type: "create" | "edit") => {
     if (type === "edit") {
@@ -144,7 +144,6 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
     }
 
     if (type === "create") {
-
       if (selectedMapId === "" || selectedMapId === null) {
         setEditType(type);
         return;
@@ -233,7 +232,6 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
 
         cleanUp();
         return true;
-
       }
     } else if (editType === "edit" && typeof result == "object") {
       if (editingName.trim() == "") {
@@ -267,17 +265,20 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
 
   return (
     <div className="px-6">
-
-
-            <div className="">
+      <div className="">
         <div className="flex gap-4 text-xl font-bold my-4">
-          <span>Salon Adı:{" "}<span className="font-semibold">{theVenue?.venueName}</span></span>
-          <span>Şehir:{" "}<span className="font-semibold">{theVenue?.city}</span></span>
-          <span>Adres:{" "}<span className="font-semibold">{theVenue?.address}</span></span>
+          <span>
+            Salon Adı:{" "}
+            <span className="font-semibold">{theVenue?.venueName}</span>
+          </span>
+          <span>
+            Şehir: <span className="font-semibold">{theVenue?.city}</span>
+          </span>
+          <span>
+            Adres: <span className="font-semibold">{theVenue?.address}</span>
+          </span>
         </div>
       </div>
-
-
 
       <div className="flex w-max flex-col bg-base-300 p-4 rounded-box">
         <div className="flex">
@@ -334,8 +335,9 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
                 placeholder="Planın Adı"
                 className="input input-info"
               />
-                  <span className="font-normal text-xs w-48 h-0">"Küçük Sahne", "Ana Sahne" gibi</span>
-
+              <span className="font-normal text-xs w-48 h-0">
+                "Küçük Sahne", "Ana Sahne" gibi
+              </span>
             </div>
           </div>
         </div>
@@ -473,6 +475,24 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
           </div>
         </div>
 
+        <div className="font-semibold flex gap-4">
+          <span>
+            Toplam koltuklu sıra:{" "}
+            {rows.filter((r) => r.type === "seated").length}
+          </span>
+
+          <span>
+            Toplam koltuk:{" "}
+            {rows.reduce(
+              (sum, r) =>
+                r.type === "seated"
+                  ? sum + r.cells.filter((c) => c.type === "seat").length
+                  : sum,
+              0,
+            )}
+          </span>
+        </div>
+
         <div className="mt-4 flex gap-2">
           <div className="flex group bg-[#4a00ff] hover:bg-[#3f00e7] dark:bg-[#7480ff] dark:hover:bg-[#646ee4] duration-200 rounded-md ">
             <div className=" px-2 rounded-l-md flex  items-center ">
@@ -526,8 +546,7 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
                     (async () => {
                       const res = await handleSave();
                       if (res) {
-                      setEditType(editType ? "edit" : "create");
-
+                        setEditType(editType ? "edit" : "create");
                       }
                     })();
                   }}
@@ -537,7 +556,6 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
                 </button>
                 <button
                   onClick={() => {
-                    
                     resetForm();
                     setEditType(editType === "edit" ? "create" : "edit");
                   }}
@@ -549,7 +567,6 @@ const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
                   onClick={() => {
                     setDialogueOpen(false);
                     setEditDialogueOpen(false);
-                    
                   }}
                   className="btn btn-warning"
                 >

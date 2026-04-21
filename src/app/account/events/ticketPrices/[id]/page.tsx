@@ -346,12 +346,15 @@ export default function ticketPrices({
               </div>
 
             <div className="flex flex-wrap gap-6 mt-6 justify-center">
-              <CellLegend variant="available" label="Müsait" />
-              <CellLegend variant="blocked" label="Kapalı" />
-              <CellLegend variant="reserved" label="Rezerve" />
-              <CellLegend variant="sold" label="Satıldı" />
-              <CellLegend variant="handicapped" label="Engelli" />
-            </div>
+   <CellLegend variant="available" label="Müsait" quantity={Object.values(eventSeats).filter((seat) => seat.status === "available").length}/>
+                <CellLegend variant="blocked" label="Kapalı" quantity={Object.values(eventSeats).filter((seat) => seat.status === "blocked").length}/>
+
+              <CellLegend variant="reserved" label="Rezerve" quantity={Object.values(eventSeats).filter((seat) => seat.status === "reserved").length}/>
+
+              <CellLegend variant="sold" label="Satıldı" quantity={Object.values(eventSeats).filter((seat) => seat.status === "sold").length}/>
+
+</div>
+       
             <div className="h-16 my-4  flex justify-center">
               {stageLocation == "up" && (
                 <div
