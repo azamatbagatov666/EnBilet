@@ -4,6 +4,7 @@ import DialogModal from "@/src/components/alerts/DialogModal";
 import { createPortal } from "react-dom";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import HandiSvg from "@/src/components/svg/HandiSvg";
+import { stat } from "fs";
 
 interface Props {
   cell: SeatCell;
@@ -38,6 +39,16 @@ export function Cell({
   const isBlocked = status === "blocked";
   const isReserved = status === "reserved";
   const isSold = status === "sold";
+
+const statusTr = {
+    "available": "Müsait",
+    "blocked": "Kapalı",
+    "reserved": "Rezerve",
+    "sold": "Satıldı",
+};
+
+
+
 
   const formatPriceTR = (price: number) =>
     price.toLocaleString("tr-TR", {
@@ -126,9 +137,15 @@ export function Cell({
   return (
     <>
       <div className="relative ml-3">
-        <div className="tooltip" data-tip={seatState?.price + "k"}>
-
-        <button
+<div className="tooltip">
+  <div className="tooltip-content">
+    {seatState && <div> 
+      <div>{statusTr[status!]}</div>
+      <div>{formatPriceTR(seatState.price)}₺</div>
+      </div>}
+    
+  </div>
+          <button
           onClick={isAvailable || isBlocked ? onClick : undefined}
           disabled={isSold || isReserved || !isSeat}
           aria-label={
@@ -165,7 +182,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
           {seatState && (
             <span
               className={`
-        absolute top-10 font-bold text-[11px] text-ellipsis max-w-[51px] overflow-hidden
+        absolute top-10 font-bold text-[11px] text-ellipsis max-w-[51px]  overflow-hidden
         ${isAvailable ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400 line-through"}
       `}
             >
@@ -176,6 +193,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
           {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
         </button>
 </div>
+
         {menuOpen && (
           <div
             className="fixed inset-0 z-40"

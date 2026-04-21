@@ -345,7 +345,7 @@ export default function ticketPrices({
               
               </div>
 
-            <div className="flex flex-wrap gap-6 mt-6 justify-center">
+            <div className="flex flex-wrap gap-6 my-6 justify-center">
    <CellLegend variant="available" label="Müsait" quantity={Object.values(eventSeats).filter((seat) => seat.status === "available").length}/>
                 <CellLegend variant="blocked" label="Kapalı" quantity={Object.values(eventSeats).filter((seat) => seat.status === "blocked").length}/>
 
