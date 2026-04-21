@@ -1,10 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-btn-success {
-  @apply text-white;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark;
 }
+@custom-variant dark (&:where([data-theme=dark] *));
+
 
 @layer base {
   [data-theme] {

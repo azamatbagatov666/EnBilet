@@ -41,7 +41,7 @@ export default function NavBar({ isLoggedIn }: Props) {
     <>
       <div className="navbar bg-base-100 shadow-sm dark:shadow-white sticky top-0 z-[55]">
         <div className="">
-          <Link className="btn btn-ghost text-xl" href="/">
+          <Link className="btn btn-ghost text-xl w-max" href="/">
             Çocuk Aklı
           </Link>
         </div>

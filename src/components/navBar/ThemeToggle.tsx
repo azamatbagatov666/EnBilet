@@ -26,7 +26,7 @@ export default function ThemeToggle() {
   };
 
   return (
-    <label className="flex cursor-pointer gap-2">
+    <label className="flex cursor-pointer gap-2 items-center">
   <svg
     width="20"
     height="20"

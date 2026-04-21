@@ -1,21 +1,50 @@
 /* DataTable.module.css */
 
 .table {
-  @apply border-collapse border-2 border-black dark:border-white;
+  border-collapse: collapse;
+  border: 2px solid black;
 }
 
 .tr {
-  @apply border-2 border-black dark:border-white;
+  border: 2px solid black;
 }
 
 .th {
-  @apply border-2 border-black dark:border-white;
+  border: 2px solid black;
 }
 
 .td {
-  @apply border-2 border-black dark:border-white text-black dark:text-white;
+  border: 2px solid black;
+  color: black;
 }
 
 .tr:nth-child(even) {
-  @apply bg-slate-200 dark:bg-gray-600;
+  background-color: #e2e8f0; /* slate-200 */
+}
+
+/* Dark mode via data-theme or .dark */
+:global(.dark) .table,
+:global([data-theme="dark"]) .table {
+  border-color: white;
+}
+
+:global(.dark) .tr,
+:global([data-theme="dark"]) .tr {
+  border-color: white;
+}
+
+:global(.dark) .th,
+:global([data-theme="dark"]) .th {
+  border-color: white;
+}
+
+:global(.dark) .td,
+:global([data-theme="dark"]) .td {
+  border-color: white;
+  color: white;
+}
+
+:global(.dark) .tr:nth-child(even),
+:global([data-theme="dark"]) .tr:nth-child(even) {
+  background-color: #4b5563; /* gray-600 */
 }
