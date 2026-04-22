@@ -53,6 +53,10 @@ export default function SeatMapCreatorPage({
   //-------------FORM------------
   const [editType, setEditType] = useState<"create" | "edit" | null>(null);
   const [newMapName, setNewMapName] = useState("");
+  var maxNum = 50
+  const [mapCapacity, setMapCapacity] = useState(maxNum);
+  const [isSeated, setIsSeated] = useState(true);
+
   const [editingName, setEditingName] = useState("");
 
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
@@ -81,16 +85,24 @@ export default function SeatMapCreatorPage({
 
     const selected = maps.find((m) => m.mapID === Number(selectedMapId));
 
-    if (!selected || !selected.layoutJS || !selected.mapName) return;
+    if (!selected || !selected.mapName) return;
 
     setEditingName(selected.mapName);
-    try {
-      const parsed = JSON.parse(selected.layoutJS);
 
-      loadSeatMap(parsed); // 👈 BOOM
-      setStageLocation(parsed.stageLocation ?? "up");
-    } catch (err) {
-      console.error("Invalid seat map JSON", err);
+    if (selected && selected.isSeated && selected.layoutJS) {
+      setIsSeated(true);
+
+      try {
+        const parsed = JSON.parse(selected.layoutJS);
+
+        loadSeatMap(parsed); // 👈 BOOM
+        setStageLocation(parsed.stageLocation ?? "up");
+      } catch (err) {
+        console.error("Invalid seat map JSON", err);
+      }
+    } else if (selected.maxCapacity) {
+      setIsSeated(false);
+      setMapCapacity(selected.maxCapacity);
     }
   }, [selectedMapId]);
 
@@ -139,6 +151,8 @@ export default function SeatMapCreatorPage({
         openEditDialogue();
       } else {
         setEditType(type);
+        setIsSeated(true)
+        setMapCapacity(maxNum)
         return;
       }
     }
@@ -146,7 +160,23 @@ export default function SeatMapCreatorPage({
     if (type === "create") {
       if (selectedMapId === "" || selectedMapId === null) {
         setEditType(type);
+        setIsSeated(true)
+        setMapCapacity(maxNum)
         return;
+      }
+
+      if (!isSeated) {
+        const selected = maps.find((m) => m.mapID === Number(selectedMapId));
+        if (selected?.maxCapacity != mapCapacity) {
+          openEditDialogue();
+        } else {
+          clearMap();
+          setSelectedMapId("");
+          setEditType(type);
+                  setIsSeated(true)
+        setMapCapacity(maxNum)
+          return;
+        }
       }
 
       if (hasUnsavedChanges("create")) {
@@ -181,6 +211,8 @@ export default function SeatMapCreatorPage({
     setNewMapName("");
     setStageLocation("up");
     setSelectedMapId("");
+    setMapCapacity(maxNum);
+    setIsSeated(true);
   };
 
   const resetForm = () => {
@@ -191,6 +223,8 @@ export default function SeatMapCreatorPage({
     setNewMapName("");
     setStageLocation("up");
     setSelectedMapId("");
+    setMapCapacity(maxNum);
+    setIsSeated(true);
   };
 
   const openEditDialogue = () => {
@@ -202,27 +236,37 @@ export default function SeatMapCreatorPage({
   const handleSave = async () => {
     setDialogueOpen(false);
     setEditDialogueOpen(false);
-    const result = saveMap();
 
-    if (typeof result == "string") {
-      setDialogueText(result);
-      setDialogueOpen(true);
-      return;
-    }
+let layoutResult: any = null;
 
-    if (editType === "create" && typeof result == "object") {
-      if (newMapName.trim() == "") {
-        setDialogueText("Lütfen yeni oturma planına bir isim giriniz.");
-        setDialogueOpen(true);
-        return;
-      }
+if (isSeated) {
+  const result = saveMap();
+
+  if (typeof result === "string") {
+    setDialogueText(result);
+    setDialogueOpen(true);
+    return;
+  }
+
+  layoutResult = result;
+}
+    
+
+if (editType === "create") {
+  if (newMapName.trim() === "") {
+    setDialogueText("Lütfen yeni oturma planına bir isim giriniz.");
+    setDialogueOpen(true);
+    return;
+  }
       const res = await fetchWithAuth("/services/account/actions/addMap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mapName: newMapName,
           venueID: id,
-          layoutJS: JSON.stringify(result),
+          isSeated: isSeated,
+          layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
+          maxCapacity: isSeated ? null : mapCapacity,
         }),
       });
 
@@ -233,7 +277,7 @@ export default function SeatMapCreatorPage({
         cleanUp();
         return true;
       }
-    } else if (editType === "edit" && typeof result == "object") {
+    } else if (editType === "edit") {
       if (editingName.trim() == "") {
         setDialogueText("Düzenlenen isim boş olamaz.");
         setDialogueOpen(true);
@@ -246,7 +290,9 @@ export default function SeatMapCreatorPage({
         body: JSON.stringify({
           mapName: editingName,
           mapID: selectedMapId,
-          layoutJS: JSON.stringify(result),
+          isSeated: isSeated,
+          layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
+          maxCapacity: isSeated ? null : mapCapacity,
         }),
       });
 
@@ -346,7 +392,29 @@ export default function SeatMapCreatorPage({
       <div
         className={`${editType === null || (editType === "edit" && (selectedMapId === "" || selectedMapId === null)) ? "0 blur-sm opacity-35  pointer-events-none select-none" : ""}`}
       >
-        <div>
+        {editType === "create" && (
+          <div className="flex gap-4 align-middle my-4">
+            <span className="font-bold text-lg">
+              Sabit ve numaralı bir oturma düzeni mevcut mu?
+            </span>
+            <div className="flex justify-left align-middle self-center gap-2 ">
+              <span>Hayır</span>
+              <input
+                type="checkbox"
+                checked={isSeated === true}
+                onChange={(e) => {
+                  setIsSeated(e.target.checked ? true : false);
+
+                  console.log("sss");
+                }}
+                className="toggle bg-primary border-primary text-white"
+              />
+              <span>Evet</span>
+            </div>
+          </div>
+        )}
+
+        <div className="">
           <div className="font-bold text-3xl h-12 my-4 flex items-center ">
             {"Plan Adı: "}
             {editType === "create" ? (
@@ -381,154 +449,198 @@ export default function SeatMapCreatorPage({
               <></>
             )}
           </div>
+          <span className="font-bold">{isSeated ? "Numaralı Salon Düzeni" : "Numarasız Salon Düzeni"}</span>
         </div>
 
-        <div className="flex gap-4 align-middle mt-2">
-          <span className="font-bold text-lg">Sahne pozisyonu:</span>
-          <div className="flex justify-left align-middle self-center gap-2 ">
-            <span>Yukarıda</span>
-            <input
-              type="checkbox"
-              checked={stageLocation === "down"}
-              onChange={(e) =>
-                setStageLocation(e.target.checked ? "down" : "up")
-              }
-              className="toggle border-orange-500 bg-orange-400 hover:bg-orange-700"
-            />
-            <span>Aşağıda</span>
-          </div>
-        </div>
+        {isSeated ? (
+          <div className="">
+            <div className="flex gap-4 align-middle my-2">
+              <span className="font-bold text-lg">Sahne pozisyonu:</span>
+              <div className="flex justify-left align-middle self-center gap-2 ">
+                <span>Yukarıda</span>
+                <input
+                  type="checkbox"
+                  checked={stageLocation === "down"}
+                  onChange={(e) =>
+                    setStageLocation(e.target.checked ? "down" : "up")
+                  }
+                  className="toggle border-orange-500 bg-orange-400 hover:bg-orange-700 text-black"
+                />
+                <span>Aşağıda</span>
+              </div>
+            </div>
 
-        <div
-          onContextMenu={(e) => {
-            e.preventDefault();
-          }}
-          className="flex flex-col  items-left mt-2  "
-        >
-          <div className="relative overflow-auto border-2 bg-transparent">
-            <div data-theme="" className="px-5 bg-transparent">
-              <div className="min-w-max select-none">
-                <div className="h-16 my-4  flex justify-center">
-                  {stageLocation == "up" && (
-                    <div
-                      className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
+            <div
+              onContextMenu={(e) => {
+                e.preventDefault();
+              }}
+              className="flex flex-col  items-left mt-2  "
+            >
+              <div className="relative overflow-auto border-2 bg-transparent">
+                <div data-theme="" className="px-5 bg-transparent">
+                  <div className="min-w-max select-none">
+                    <div className="h-16 my-4  flex justify-center">
+                      {stageLocation == "up" && (
+                        <div
+                          className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(0%_0%,100%_0%,80%_100%,20%_100%)]"
-                    >
-                      SAHNE
+                        >
+                          SAHNE
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <DragDropContext onDragEnd={handleOnDragEnd}>
-                  <Droppable droppableId="rows" direction="vertical">
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.droppableProps}>
-                        {rows.map((row, index) => (
-                          <Draggable
-                            key={row.id}
-                            draggableId={row.id}
-                            index={index}
+                    <DragDropContext onDragEnd={handleOnDragEnd}>
+                      <Droppable droppableId="rows" direction="vertical">
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
                           >
-                            {(provided) => (
-                              <div
-                                className="flex"
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
+                            {rows.map((row, index) => (
+                              <Draggable
+                                key={row.id}
+                                draggableId={row.id}
+                                index={index}
                               >
-                                <Row
-                                  row={row}
-                                  index={index}
-                                  dragHandleProps={provided.dragHandleProps}
-                                  toggleCell={toggleCell}
-                                  deleteRow={deleteRow}
-                                  addCellToEnd={addCellToEnd}
-                                  deleteTheCell={deleteTheCell}
-                                  updateSeatLabel={updateSeatLabel}
-                                  updateRowLabel={updateRowLabel}
-                                  renumerateFromCell={renumerateFromCell}
-                                  addCellToLeft={addCellToLeft}
-                                  toggleHandicappedSeat={toggleHandicappedSeat}
-                                  copyRow={copyRow}
-                                  totalRows={rows.length}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
+                                {(provided) => (
+                                  <div
+                                    className="flex"
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                  >
+                                    <Row
+                                      row={row}
+                                      index={index}
+                                      dragHandleProps={provided.dragHandleProps}
+                                      toggleCell={toggleCell}
+                                      deleteRow={deleteRow}
+                                      addCellToEnd={addCellToEnd}
+                                      deleteTheCell={deleteTheCell}
+                                      updateSeatLabel={updateSeatLabel}
+                                      updateRowLabel={updateRowLabel}
+                                      renumerateFromCell={renumerateFromCell}
+                                      addCellToLeft={addCellToLeft}
+                                      toggleHandicappedSeat={
+                                        toggleHandicappedSeat
+                                      }
+                                      copyRow={copyRow}
+                                      totalRows={rows.length}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
 
-                <div className="h-16 my-4 flex justify-center">
-                  {stageLocation == "down" && (
-                    <div
-                      className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
+                    <div className="h-16 my-4 flex justify-center">
+                      {stageLocation == "down" && (
+                        <div
+                          className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(20%_0%,80%_0%,100%_100%,0%_100%)]"
-                    >
-                      SAHNE
+                        >
+                          SAHNE
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="font-semibold flex gap-4">
+              <span>
+                Toplam koltuklu sıra:{" "}
+                {rows.filter((r) => r.type === "seated").length}
+              </span>
+
+              <span>
+                Toplam koltuk:{" "}
+                {rows.reduce(
+                  (sum, r) =>
+                    r.type === "seated"
+                      ? sum + r.cells.filter((c) => c.type === "seat").length
+                      : sum,
+                  0,
+                )}
+              </span>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <div className="flex group bg-primary duration-200 rounded-md">
+                <div className=" px-2 rounded-l-md flex  items-center ">
+                  <input
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") addSeatedRow(numberOfSeats);
+                    }}
+                    type="number"
+                    value={numberOfSeats}
+                    onChange={(e) => SetNumberOfSeats(+e.target.value)}
+                    max={maxNum}
+                    min={1}
+                    className="w-10 h-6 pl-1 bg-white text-black rounded-md"
+                  />
+                </div>
+                <button
+                  onClick={() => addSeatedRow(numberOfSeats)}
+                  className="btn btn-primary rounded-l-none outline-none border-0 shadow-none translate-0"
+                >
+                  + Koltuklu Sıra
+                </button>
+              </div>
+              <button onClick={addEmptyRow} className="btn btn-secondary">
+                + Boş Sıra
+              </button>
+              <button
+                onClick={handleSave}
+                className="btn btn-success text-white"
+              >
+                Kaydet
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <div className="flex gap-4 my-4 align-middle">
+              <span className="font-semibold place-self-center">
+                Salon Kapasitesi:
+              </span>
 
-        <div className="font-semibold flex gap-4">
-          <span>
-            Toplam koltuklu sıra:{" "}
-            {rows.filter((r) => r.type === "seated").length}
-          </span>
-
-          <span>
-            Toplam koltuk:{" "}
-            {rows.reduce(
-              (sum, r) =>
-                r.type === "seated"
-                  ? sum + r.cells.filter((c) => c.type === "seat").length
-                  : sum,
-              0,
-            )}
-          </span>
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          <div className="flex group bg-[#4a00ff] hover:bg-[#3f00e7] dark:bg-[#7480ff] dark:hover:bg-[#646ee4] duration-200 rounded-md ">
-            <div className=" px-2 rounded-l-md flex  items-center ">
               <input
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addSeatedRow(numberOfSeats);
-                }}
                 type="number"
-                value={numberOfSeats}
-                onChange={(e) => SetNumberOfSeats(+e.target.value)}
-                max={50}
+                value={mapCapacity}
+                  onChange={(e) => {
+    const value = Number(e.target.value);
+
+    if (Number.isNaN(value)) return;
+
+    setMapCapacity(
+      Math.min(10000, Math.max(1, value))
+    );
+  }}
+                max={10000}
                 min={1}
-                className="w-10 h-6 pl-1 bg-white text-black rounded-md "
+                className="input input-secondary w-24"
               />
             </div>
+
             <button
-              onClick={() => addSeatedRow(numberOfSeats)}
-              className="btn btn-primary rounded-l-none outline-none border-0"
+              onClick={handleSave}
+              className="btn btn-success mt-4 text-white"
             >
-              + Koltuklu Sıra
+              Kaydet
             </button>
           </div>
-          <button onClick={addEmptyRow} className="btn btn-secondary">
-            + Boş Sıra
-          </button>
-          <button onClick={handleSave} className="btn btn-success text-white">
-            Kaydet
-          </button>
-        </div>
+        )}
       </div>
 
       <DialogModal
         open={dialogueOpen}
         onClose={() => {
           setDialogueOpen(false);
-          setEditDialogueOpen(false);
         }}
       >
         <div className="text-left">
@@ -566,7 +678,6 @@ export default function SeatMapCreatorPage({
                 <button
                   onClick={() => {
                     setDialogueOpen(false);
-                    setEditDialogueOpen(false);
                   }}
                   className="btn btn-warning"
                 >

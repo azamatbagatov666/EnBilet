@@ -5,8 +5,7 @@ import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import { useEventSeats } from "./useEventSeats";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import CellLegend from "@/src/components/seatMap/CellLegend";
-import { debounce } from 'lodash';
-
+import { debounce } from "lodash";
 
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import type { EventType } from "@/src/models/EventType";
@@ -50,6 +49,9 @@ export default function ticketPrices({
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [mapCapacity, setMapCapacity] = useState(0);
+  const [numberOfTickets, setNumberOfTickets] = useState(0);
+  const [isSeated, setIsSeated] = useState(true);
 
   //------------MAPS-------------
   const [stageLocation, setStageLocation] = useState<stageLocation>("up");
@@ -77,7 +79,6 @@ export default function ticketPrices({
   }, [theEvent]);
 
   useEffect(() => {
-
     if (theEvent?.mapID) {
       setSelectedMapId(String(theEvent.mapID));
     }
@@ -123,7 +124,7 @@ export default function ticketPrices({
     setDialogueOpen(false);
   };
 
-  const handleSavePrices =  debounce(async() => {
+  const handleSavePrices = debounce(async () => {
     const { valid, errors } = validatePrices();
 
     if (!valid) {
@@ -135,41 +136,32 @@ export default function ticketPrices({
         (seat) => seat.status === "available" || seat.status === "blocked",
       );
 
-      const res = await fetchWithAuth("/services/account/actions/eventSeats/saveSeats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventID: id,
-          mapID: Number(selectedMapId),
-          Seats: seatsToSave,
-        }),
-      });
+      const res = await fetchWithAuth(
+        "/services/account/actions/eventSeats/saveSeats",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventID: id,
+            mapID: Number(selectedMapId),
+            Seats: seatsToSave,
+          }),
+        },
+      );
 
       if (res.ok) {
-
         setAlertText("Koltuklar başarıyla güncellendi.");
         setAlertOpen(true);
 
-    getEventInfo();
-
-
+        getEventInfo();
       } else {
-        setDialogueText("Koltuklar kaydedilirken bir hata oluştu.")
-        setDialogueOpen(true)
+        setDialogueText("Koltuklar kaydedilirken bir hata oluştu.");
+        setDialogueOpen(true);
       }
-
-
     }
 
-
-
     setIsEditing(false);
-}, 2000);
-
-
-
-
-
+  }, 2000);
 
   const getMaps = async () => {
     const res = await fetchWithAuth(
@@ -190,10 +182,24 @@ export default function ticketPrices({
 
     const selected = maps.find((m) => m.mapID === Number(selectedMapId));
 
-    if (!selected?.mapName || !selected?.layoutJS) {
+    if(selected?.mapName){
+          setSelectedMapName(selected?.mapName);
+
+    }
+
+
+    if (selected?.isSeated == false && selected.maxCapacity) {
+      setIsSeated(false);
+      setMapCapacity(selected.maxCapacity);
       return;
     }
-    setSelectedMapName(selected?.mapName);
+
+    if (!selected?.layoutJS) {
+      return;
+    }
+    setIsSeated(true)
+    setMapCapacity(0)
+    setNumberOfTickets(0)
 
     try {
       const parsed = JSON.parse(selected.layoutJS);
@@ -281,8 +287,6 @@ export default function ticketPrices({
   return (
     <>
       <div className="px-6">
-
-
         <div className="">
           <div className="flex gap-4 text-xl font-bold my-4">
             <span>
@@ -302,7 +306,7 @@ export default function ticketPrices({
           </div>
         </div>
 
-        <label htmlFor="">
+        <label>
           <span>Oturma Planı Seç:</span>
           <select
             className="select select-info ml-5"
@@ -328,102 +332,164 @@ export default function ticketPrices({
           </div>
         )}
 
-        {seatMap && (<div>
-{isEditing && <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner !blur-0 !opacity-100 text-accent"></span>}
-
-          <div
-            className={` select-none ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
-            onContextMenu={(e) => {
-              e.preventDefault();
-            }}
-          >
-            
+        {(seatMap || !isSeated) && (
+          <div>
+            {isEditing && (
+              <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner !blur-0 !opacity-100 text-accent"></span>
+            )}
 
             <div className="mt-4 font-bold">
               <span>Şu Anda Düzenlenen Oturma Planı:</span>
               <span className="ml-4">{selectedMapName}</span>
-              
-              </div>
+            </div>
+            {isSeated ? (
+              <div
+                className={` select-none ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                <div className="flex flex-wrap gap-6 my-6 justify-center">
+                  <CellLegend
+                    variant="available"
+                    label="Müsait"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "available",
+                      ).length
+                    }
+                  />
+                  <CellLegend
+                    variant="blocked"
+                    label="Kapalı"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "blocked",
+                      ).length
+                    }
+                  />
 
-            <div className="flex flex-wrap gap-6 my-6 justify-center">
-   <CellLegend variant="available" label="Müsait" quantity={Object.values(eventSeats).filter((seat) => seat.status === "available").length}/>
-                <CellLegend variant="blocked" label="Kapalı" quantity={Object.values(eventSeats).filter((seat) => seat.status === "blocked").length}/>
+                  <CellLegend
+                    variant="reserved"
+                    label="Rezerve"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "reserved",
+                      ).length
+                    }
+                  />
 
-              <CellLegend variant="reserved" label="Rezerve" quantity={Object.values(eventSeats).filter((seat) => seat.status === "reserved").length}/>
+                  <CellLegend
+                    variant="sold"
+                    label="Satıldı"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "sold",
+                      ).length
+                    }
+                  />
+                </div>
 
-              <CellLegend variant="sold" label="Satıldı" quantity={Object.values(eventSeats).filter((seat) => seat.status === "sold").length}/>
-
-</div>
-       
-            <div className="h-16 my-4  flex justify-center">
-              {stageLocation == "up" && (
-                <div
-                  className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
+                <div className="h-16 my-4  flex justify-center">
+                  {stageLocation == "up" && (
+                    <div
+                      className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(0%_0%,100%_0%,80%_100%,20%_100%)]"
-                >
-                  SAHNE
+                    >
+                      SAHNE
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex justify-center">
-              <div className="mt-10 flex flex-col items-left gap-4">
-                {seatMap.rows
-                  .sort((a: any, b: any) => a.order - b.order)
-                  .map((row: any) => (
-                    <Row
-                      key={row.id}
-                      row={row}
-                      eventSeats={eventSeats}
-                      onSeatClick={toggleSeat}
-                      toggleRow={toggleRow}
-                      setRowPrice={setRowPrice}
-                      setSeatPrice={setSeatPrice}
-                    />
-                  ))}
-              </div>
-            </div>
+                <div className="flex justify-center">
+                  <div className="mt-10 flex flex-col items-left gap-4">
+                    {seatMap.rows
+                      .sort((a: any, b: any) => a.order - b.order)
+                      .map((row: any) => (
+                        <Row
+                          key={row.id}
+                          row={row}
+                          eventSeats={eventSeats}
+                          onSeatClick={toggleSeat}
+                          toggleRow={toggleRow}
+                          setRowPrice={setRowPrice}
+                          setSeatPrice={setSeatPrice}
+                        />
+                      ))}
+                  </div>
+                </div>
 
-            <div className="h-16 my-8 flex justify-center">
-              {stageLocation == "down" && (
-                <div
-                  className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
+                <div className="h-16 my-8 flex justify-center">
+                  {stageLocation == "down" && (
+                    <div
+                      className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(20%_0%,80%_0%,100%_100%,0%_100%)]"
-                >
-                  SAHNE
+                    >
+                      SAHNE
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => {
-                  setDialogueOpen(true);
-                  setEditDialogueOpen(true);
-                }}
-                className="btn btn-primary "
-              >
-                Bütün Koltuklara Fiyat Gir
-              </button>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setDialogueOpen(true);
+                      setEditDialogueOpen(true);
+                    }}
+                    className="btn btn-primary "
+                  >
+                    Bütün Koltuklara Fiyat Gir
+                  </button>
 
-              <button
-                onClick={() => {
-                  toggleAll();
-                }}
-                className="btn btn-secondary"
-              >
-                Bütün Koltukları Aç/Kapat
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditing(true);
-                  handleSavePrices();
-                }}
-                className="btn btn-success text-white"
-              >
-                Kaydet
-              </button>
-            </div>
-          </div>
+                  <button
+                    onClick={() => {
+                      toggleAll();
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Bütün Koltukları Aç/Kapat
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      handleSavePrices();
+                    }}
+                    className="btn btn-success text-white"
+                  >
+                    Kaydet
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="my-4">
+
+                <div className="font-bold text-3xl">Salon Kapasitesi: {mapCapacity}</div>
+                <div className="flex gap-4 my-4 align-middle">
+
+                  <span className="font-semibold place-self-center">
+                    Satışa Çıkarmak İstenen Bilet Sayısı:
+                  </span>
+
+                  <input
+                    type="number"
+                    value={numberOfTickets}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+
+                      if (Number.isNaN(value)) return;
+
+                      setNumberOfTickets(Math.min(mapCapacity, Math.max(1, value)));
+                    }}
+                    max={10000}
+                    min={1}
+                    className="input input-secondary w-24"
+                  />
+                </div>
+
+                <button className="btn btn-success mt-4 text-white">
+                  Kaydet
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -510,9 +576,9 @@ export default function ticketPrices({
         )}
       </DialogModal>
 
-            <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-              {alertText}
-            </SuccessAlert>
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
+        {alertText}
+      </SuccessAlert>
     </>
   );
 }
