@@ -1,4 +1,6 @@
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
+import PriceInput from "@/src/components/forms/PriceInput";
+
 import { useState, useEffect, useRef } from "react";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import { createPortal } from "react-dom";
@@ -40,15 +42,12 @@ export function Cell({
   const isReserved = status === "reserved";
   const isSold = status === "sold";
 
-const statusTr = {
-    "available": "Müsait",
-    "blocked": "Kapalı",
-    "reserved": "Rezerve",
-    "sold": "Satıldı",
-};
-
-
-
+  const statusTr = {
+    available: "Müsait",
+    blocked: "Kapalı",
+    reserved: "Rezerve",
+    sold: "Satıldı",
+  };
 
   const formatPriceTR = (price: number) =>
     price.toLocaleString("tr-TR", {
@@ -56,45 +55,17 @@ const statusTr = {
       maximumFractionDigits: 2,
     });
 
-  const handlePriceChange = (value: string) => {
-    value = value.replace(".", ".");
+  const handleSavePrices = () => {
+    const price = Number(desiredPrice.replace(",", "."));
 
-    if (value === "") {
-      setDesiredPrice("");
+    if (!Number.isFinite(price) || price <= 0) {
+      setFormError("Lütfen geçerli bir fiyat giriniz.");
       return;
     }
-
-    if (!/^\d*\.?\d*$/.test(value)) return;
-
-    const [, decimals] = value.split(".");
-    if (decimals && decimals.length > 2) return;
-
-    setDesiredPrice(value);
+    setSeatPrice(cell.id, Number(desiredPrice));
+    setDesiredPrice("");
+    setDialogueOpen(false);
   };
-
-
-
-    const handleSavePrices = () => {
-      const price = Number(desiredPrice.replace(",", "."));
-
-  if (!Number.isFinite(price) || price <= 0) {
-    setFormError("Lütfen geçerli bir fiyat giriniz.");
-    return;
-  }
-      setSeatPrice(cell.id, Number(desiredPrice));
-      setDesiredPrice("");
-      setDialogueOpen(false);
-
-  };
-
-  const priceInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!dialogueOpen) return;
-
-    priceInputRef.current?.focus();
-    priceInputRef.current?.select();
-  }, [dialogueOpen]);
 
   useEffect(() => {
     const handleOutSideClick = (event: Event) => {
@@ -137,35 +108,36 @@ const statusTr = {
   return (
     <>
       <div className="relative ml-3">
-<div className="tooltip">
-  <div className="tooltip-content">
-    {seatState && <div> 
-      <div>{statusTr[status!]}</div>
-      <div>{formatPriceTR(seatState.price)}₺</div>
-      </div>}
-    
-  </div>
+        <div className="tooltip">
+          <div className="tooltip-content">
+            {seatState && (
+              <div>
+                <div>{statusTr[status!]}</div>
+                <div>{formatPriceTR(seatState.price)}₺</div>
+              </div>
+            )}
+          </div>
           <button
-          onClick={isAvailable || isBlocked ? onClick : undefined}
-          disabled={isSold || isReserved || !isSeat}
-          aria-label={
-            isHandicapped
-              ? `Engelli koltuğu ${rowLabel}${cell.label}`
-              : `Koltuk ${rowLabel}${cell.label}`
-          }
-          onContextMenu={
-            isAvailable || isBlocked
-              ? (e) => {
-                  e.preventDefault();
-                  setContextPos({
-                    x: e.pageX,
-                    y: e.pageY,
-                  });
-                  setMenuOpen(true);
-                }
-              : undefined
-          }
-          className={`
+            onClick={isAvailable || isBlocked ? onClick : undefined}
+            disabled={isSold || isReserved || !isSeat}
+            aria-label={
+              isHandicapped
+                ? `Engelli koltuğu ${rowLabel}${cell.label}`
+                : `Koltuk ${rowLabel}${cell.label}`
+            }
+            onContextMenu={
+              isAvailable || isBlocked
+                ? (e) => {
+                    e.preventDefault();
+                    setContextPos({
+                      x: e.pageX,
+                      y: e.pageY,
+                    });
+                    setMenuOpen(true);
+                  }
+                : undefined
+            }
+            className={`
   w-10 h-10 text-xs rounded border-2 
   flex items-center justify-center 
   transition-colors duration-200  text-black dark:text-neutral-100 border-black
@@ -174,25 +146,25 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
 
   ${bgClass}
 `}
-        >
-          <span className="font-bold text-xs">
-            {isSeat ? rowLabel + cell.label : ""}
-          </span>
+          >
+            <span className="font-bold text-xs">
+              {isSeat ? rowLabel + cell.label : ""}
+            </span>
 
-          {seatState && (
-            <span
-              className={`
+            {seatState && (
+              <span
+                className={`
         absolute top-10 font-bold text-[11px] text-ellipsis max-w-[51px]  overflow-hidden
         ${isAvailable ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400 line-through"}
       `}
-            >
-              {formatPriceTR(seatState.price)}₺
-            </span>
-          )}
+              >
+                {formatPriceTR(seatState.price)}₺
+              </span>
+            )}
 
-          {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
-        </button>
-</div>
+            {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
+          </button>
+        </div>
 
         {menuOpen && (
           <div
@@ -215,7 +187,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
                   openDialogue();
                 }}
               >
-                <a>Koltuk Fiyat ve Durumu</a>
+                <a>Koltuk Fiyatını Düzenle</a>
               </li>
             </ul>,
             document.body,
@@ -232,26 +204,12 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
           <div>
             <span>Lütfen bu koltuk için bir fiyat belirleyin.</span>
             <div className="flex justify-center mt-4">
-              <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
-                <input
-                  ref={priceInputRef}
-                  className="!outline-none w-20 text-right"
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={desiredPrice.replace(".", ",")}
-                  onChange={(e) =>
-                    handlePriceChange(e.target.value.replace(",", "."))
-                  }
-                  onBlur={() => {
-                    if (!desiredPrice) return;
-                    setDesiredPrice(Number(desiredPrice).toFixed(2));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSavePrices();
-                  }}
-                />
-                <span className=" self-center text-lg select-none">₺</span>
-              </div>
+              <PriceInput
+                value={desiredPrice}
+                onChange={setDesiredPrice}
+                onEnter={handleSavePrices}
+                autoFocus
+              />
             </div>
             <div className="flex justify-center mt-4">
               <button

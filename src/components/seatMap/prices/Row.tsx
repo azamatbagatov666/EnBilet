@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { seatState } from "@/src/models/seatMap/seatState";
+import PriceInput from "@/src/components/forms/PriceInput";
 
 interface Props {
   row: SeatRow;
@@ -30,45 +31,17 @@ export default function Row({
 
   const [formError, setFormError] = useState("");
 
-  const handlePriceChange = (value: string) => {
-    value = value.replace(",", ".");
+  const handleSavePrices = () => {
+    const price = Number(desiredPrice.replace(",", "."));
 
-    if (value === "") {
-      setDesiredPrice("");
+    if (!Number.isFinite(price) || price <= 0) {
+      setFormError("Lütfen geçerli bir fiyat giriniz.");
       return;
     }
-
-    if (!/^\d*\.?\d*$/.test(value)) return;
-
-    const [, decimals] = value.split(".");
-    if (decimals && decimals.length > 2) return;
-
-    setDesiredPrice(value);
+    setRowPrice(row, Number(desiredPrice));
+    setDesiredPrice("");
+    setDialogueOpen(false);
   };
-
-
-
-      const handleSavePrices = () => {
-      const price = Number(desiredPrice.replace(",", "."));
-
-  if (!Number.isFinite(price) || price <= 0) {
-    setFormError("Lütfen geçerli bir fiyat giriniz.");
-    return;
-  }
-      setRowPrice(row, Number(desiredPrice));
-      setDesiredPrice("");
-      setDialogueOpen(false);
-
-  };
-
-
-  const priceInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!dialogueOpen) return;
-
-    priceInputRef.current?.focus();
-  }, [dialogueOpen]);
 
   const openDialogue = () => {
     setFormError("");
@@ -170,26 +143,12 @@ export default function Row({
           <div>
             <span>Lütfen bu koltuk için bir fiyat belirleyin.</span>
             <div className="flex justify-center mt-4">
-              <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
-                <input
-                  ref={priceInputRef}
-                  className="!outline-none w-20 text-right"
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={desiredPrice.replace(".", ",")}
-                  onChange={(e) =>
-                    handlePriceChange(e.target.value.replace(",", "."))
-                  }
-                  onBlur={() => {
-                    if (!desiredPrice) return;
-                    setDesiredPrice(Number(desiredPrice).toFixed(2));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSavePrices();
-                  }}
-                />
-                <span className=" self-center text-lg select-none">₺</span>
-              </div>
+              <PriceInput
+                value={desiredPrice}
+                onChange={setDesiredPrice}
+                onEnter={handleSavePrices}
+                autoFocus
+              />
             </div>
             <div className="flex justify-center mt-4">
               <button

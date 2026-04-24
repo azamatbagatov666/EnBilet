@@ -2,6 +2,7 @@
 
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
+import PriceInput from "@/src/components/forms/PriceInput";
 import { useEventSeats } from "./useEventSeats";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import CellLegend from "@/src/components/seatMap/CellLegend";
@@ -96,22 +97,6 @@ export default function ticketPrices({
     setTheEvent(data);
   };
 
-  const handlePriceChange = (value: string) => {
-    value = value.replace(",", ".");
-
-    if (value === "") {
-      setDesiredPrice("");
-      return;
-    }
-
-    if (!/^\d*\.?\d*$/.test(value)) return;
-
-    const [, decimals] = value.split(".");
-    if (decimals && decimals.length > 2) return;
-
-    setDesiredPrice(value);
-  };
-
   const handleChangeAllPrices = () => {
     const price = Number(desiredPrice.replace(",", "."));
 
@@ -182,11 +167,9 @@ export default function ticketPrices({
 
     const selected = maps.find((m) => m.mapID === Number(selectedMapId));
 
-    if(selected?.mapName){
-          setSelectedMapName(selected?.mapName);
-
+    if (selected?.mapName) {
+      setSelectedMapName(selected?.mapName);
     }
-
 
     if (selected?.isSeated == false && selected.maxCapacity) {
       setIsSeated(false);
@@ -197,9 +180,9 @@ export default function ticketPrices({
     if (!selected?.layoutJS) {
       return;
     }
-    setIsSeated(true)
-    setMapCapacity(0)
-    setNumberOfTickets(0)
+    setIsSeated(true);
+    setMapCapacity(0);
+    setNumberOfTickets(0);
 
     try {
       const parsed = JSON.parse(selected.layoutJS);
@@ -275,14 +258,6 @@ export default function ticketPrices({
 
     setEventSeats(normalized);
   };
-
-  const priceInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!dialogueOpen) return;
-
-    priceInputRef.current?.focus();
-  }, [dialogueOpen]);
 
   return (
     <>
@@ -461,10 +436,10 @@ export default function ticketPrices({
               </div>
             ) : (
               <div className="my-4">
-
-                <div className="font-bold text-3xl">Salon Kapasitesi: {mapCapacity}</div>
+                <div className="font-bold text-3xl">
+                  Salon Kapasitesi: {mapCapacity}
+                </div>
                 <div className="flex gap-4 my-4 align-middle">
-
                   <span className="font-semibold place-self-center">
                     Satışa Çıkarmak İstenen Bilet Sayısı:
                   </span>
@@ -477,7 +452,9 @@ export default function ticketPrices({
 
                       if (Number.isNaN(value)) return;
 
-                      setNumberOfTickets(Math.min(mapCapacity, Math.max(1, value)));
+                      setNumberOfTickets(
+                        Math.min(mapCapacity, Math.max(1, value)),
+                      );
                     }}
                     max={10000}
                     min={1}
@@ -537,26 +514,12 @@ export default function ticketPrices({
             <div>
               <span>Lütfen koltuklar için bir fiyat belirleyin.</span>
               <div className="flex justify-center mt-4">
-                <div className="flex gap-1 input input-accent h-9 w-32 !outline-none ">
-                  <input
-                    className="!outline-none w-20 text-right"
-                    inputMode="decimal"
-                    ref={priceInputRef}
-                    placeholder="0,00"
-                    value={desiredPrice.replace(".", ",")}
-                    onChange={(e) =>
-                      handlePriceChange(e.target.value.replace(",", "."))
-                    }
-                    onBlur={() => {
-                      if (!desiredPrice) return;
-                      setDesiredPrice(Number(desiredPrice).toFixed(2));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleChangeAllPrices();
-                    }}
-                  />
-                  <span className=" self-center text-lg select-none">₺</span>
-                </div>
+                <PriceInput
+                  value={desiredPrice}
+                  onChange={setDesiredPrice}
+                  onEnter={handleChangeAllPrices}
+                  autoFocus
+                />
               </div>
               <div className="flex justify-center mt-4">
                 <button

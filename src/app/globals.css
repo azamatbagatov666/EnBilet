@@ -18,7 +18,14 @@
         stroke 300ms ease;
     }
   }
+
+    button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
 }
+
+
 
 html {
   overflow-y: scroll;

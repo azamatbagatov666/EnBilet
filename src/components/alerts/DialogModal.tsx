@@ -24,6 +24,21 @@ export default function DialogModal({
 
     if (open) {
       dialog.showModal();
+
+  requestAnimationFrame(() => {
+      const target = dialog.querySelector<HTMLElement>(
+        "[data-focus-target]"
+      );
+
+      if (target instanceof HTMLElement) {
+        target.focus();
+
+        // optional: select text if it's an input
+        if (target instanceof HTMLInputElement) {
+          target.select();
+        }
+      }
+    });
     } else {
       dialog.close();
     }
