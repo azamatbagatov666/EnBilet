@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { titleConfig } from "@/src/hooks/config/titleConfig";
+import { titleConfig } from "@/src/config/titleConfig";
 
 
 

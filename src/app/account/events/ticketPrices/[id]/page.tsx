@@ -1,6 +1,7 @@
 "use client";
 
 import DialogModal from "@/src/components/alerts/DialogModal";
+import { formatPrice } from "@/src/lib/formatPrice";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import PriceInput from "@/src/components/forms/PriceInput";
 import { useEventSeats } from "./useEventSeats";
@@ -36,6 +37,7 @@ export default function ticketPrices({
   } = useEventSeats(eventSeats, setEventSeats);
 
   const [desiredPrice, setDesiredPrice] = useState("");
+  const [nonSeatedPrices, setNonSeatedPrices] = useState("");
 
   const { id } = use(params);
   const router = useRouter();
@@ -68,6 +70,13 @@ export default function ticketPrices({
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertText, setAlertText] = useState("");
   const [formError, setFormError] = useState("");
+  const [nonSeatedError, setNonSeatedError] = useState("");
+
+  const immutableCount = Object.values(eventSeats).filter(
+    (s) => s.status === "sold" || s.status === "reserved",
+  ).length;
+
+  const maxSelectable = Math.max(0, mapCapacity - immutableCount);
 
   useEffect(() => {
     getEventInfo();
@@ -148,6 +157,113 @@ export default function ticketPrices({
     setIsEditing(false);
   }, 2000);
 
+  const handleNonSeatedPrices = debounce(async () => {
+    const price = Number(nonSeatedPrices.replace(",", "."));
+
+    if (!Number.isFinite(price) || price <= 0) {
+      setNonSeatedError("Lütfen geçerli bir fiyat giriniz.");
+      setIsEditing(false);
+      return;
+    }
+
+
+
+    setNonSeatedError("");
+
+    let seatsToSave;
+
+    if (Object.values(eventSeats).length == 0) {
+      //create
+      seatsToSave = Array.from({ length: mapCapacity }).map((_, index) => ({
+        cellID: crypto.randomUUID(),
+        price: price,
+        status: index < numberOfTickets ? "available" : "blocked",
+      }));
+    } else {
+      const seats = Object.values(eventSeats) as seatState[];
+
+      const sold = seats.filter((s) => s.status === "sold");
+      const reserved = seats.filter((s) => s.status === "reserved");
+      const available = seats.filter((s) => s.status === "available");
+      const blocked = seats.filter((s) => s.status === "blocked");
+
+      const immutableCount = sold.length + reserved.length;
+      const maxSelectable = mapCapacity - immutableCount;
+
+      const targetAvailable = Math.min(numberOfTickets, maxSelectable);
+      const currentAvailable = available.length;
+
+      let newAvailable = [...available];
+      let newBlocked = [...blocked];
+
+      if (targetAvailable > currentAvailable) {
+        const diff = targetAvailable - currentAvailable;
+
+        const toOpen = newBlocked.slice(0, diff);
+
+        newAvailable = [
+          ...newAvailable,
+          ...toOpen.map((s) => ({
+            ...s,
+            status: "available" as const,
+            price,
+          })),
+        ];
+
+        newBlocked = newBlocked.slice(diff);
+      }
+
+      if (targetAvailable < currentAvailable) {
+        const diff = currentAvailable - targetAvailable;
+
+        const toBlock = newAvailable.slice(0, diff);
+
+        newBlocked = [
+          ...newBlocked,
+          ...toBlock.map((s) => ({
+            ...s,
+            status: "blocked" as const,
+            price,
+          })),
+        ];
+
+        newAvailable = newAvailable.slice(diff);
+      }
+
+      seatsToSave = [
+        ...sold,
+        ...reserved,
+        ...newAvailable.map((s) => ({ ...s, price })),
+        ...newBlocked.map((s) => ({ ...s, price })),
+      ];
+    }
+
+    const res = await fetchWithAuth(
+      "/services/account/actions/eventSeats/saveSeats",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventID: id,
+          mapID: Number(selectedMapId),
+          Seats: seatsToSave,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      setAlertText("Koltuklar başarıyla güncellendi.");
+      setAlertOpen(true);
+
+      getEventInfo();
+    } else {
+      setDialogueText("Koltuklar kaydedilirken bir hata oluştu.");
+      setDialogueOpen(true);
+    }
+
+    setIsEditing(false);
+  }, 2000);
+
   const getMaps = async () => {
     const res = await fetchWithAuth(
       `/services/account/get/getMaps?venueID=${theEvent?.venueID}`,
@@ -171,9 +287,14 @@ export default function ticketPrices({
       setSelectedMapName(selected?.mapName);
     }
 
+
+
     if (selected?.isSeated == false && selected.maxCapacity) {
       setIsSeated(false);
+          setNumberOfTickets(0);
+    setNonSeatedPrices("0");
       setMapCapacity(selected.maxCapacity);
+      loadNonSeated();
       return;
     }
 
@@ -259,13 +380,76 @@ export default function ticketPrices({
     setEventSeats(normalized);
   };
 
+  const loadNonSeated = async () => {
+    const res = await fetchWithAuth(
+      `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (data.length == 0) {
+      return;
+    }
+
+    const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
+    setLockSeatMap(hasSoldSeat);
+
+    if (theEvent?.mapID != Number(selectedMapId)) {
+      return;
+    }
+
+    setEventSeats(data);
+
+    if (data.length > 0) {
+      const firstAvailable = data.find((s: any) => s.status === "available");
+      const firstBlocked = data.find((s: any) => s.status === "blocked");
+      const firstReserved = data.find((s: any) => s.status === "reserved");
+      const firstSold = data.find((s: any) => s.status === "sold");
+
+      if (firstAvailable) {
+      const thePrice = firstAvailable.price.toString();
+      setNonSeatedPrices(formatPrice(thePrice));
+
+
+      } else if (firstBlocked) {
+
+      const thePrice = firstBlocked.price.toString();
+      setNonSeatedPrices(formatPrice(thePrice));
+
+
+      } else if (firstReserved) {
+
+              const thePrice = firstReserved.price.toString();
+      setNonSeatedPrices(formatPrice(thePrice));
+
+      }
+      else {
+
+                      const thePrice = firstSold.price.toString();
+      setNonSeatedPrices(formatPrice(thePrice));
+
+
+      }
+
+
+    }
+
+    setNumberOfTickets(
+      data.filter((s: any) => s.status === "available").length,
+    );
+  };
+
   return (
     <>
       <div className="px-6">
         <div className="">
           <div className="flex gap-4 text-xl font-bold my-4">
             <span>
-              Tarih: <span className="font-semibold">{theEvent?.date}</span>
+              Tarih:{" "}
+              <span className="font-semibold w-40 inline-block">
+                {theEvent?.date}
+              </span>
             </span>
             <span>
               Gösteri:{" "}
@@ -435,7 +619,49 @@ export default function ticketPrices({
                 </div>
               </div>
             ) : (
-              <div className="my-4">
+              <div
+                className={` my-4 ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
+              >
+                <div className="flex flex-wrap gap-6 my-6 justify-center">
+                  <CellLegend
+                    variant="available"
+                    label="Müsait"
+                    quantity={numberOfTickets}
+                  />
+                  <CellLegend
+                    variant="blocked"
+                    label="Kapalı"
+                    quantity={
+                      mapCapacity -
+                      numberOfTickets -
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "reserved",
+                      ).length -                 Object.values(eventSeats).filter(
+                        (seat) => seat.status === "sold",
+                      ).length
+                    }
+                  />
+
+                  <CellLegend
+                    variant="reserved"
+                    label="Rezerve"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "reserved",
+                      ).length
+                    }
+                  />
+
+                  <CellLegend
+                    variant="sold"
+                    label="Satıldı"
+                    quantity={
+                      Object.values(eventSeats).filter(
+                        (seat) => seat.status === "sold",
+                      ).length
+                    }
+                  />
+                </div>
                 <div className="font-bold text-3xl">
                   Salon Kapasitesi: {mapCapacity}
                 </div>
@@ -449,20 +675,37 @@ export default function ticketPrices({
                     value={numberOfTickets}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-
                       if (Number.isNaN(value)) return;
 
                       setNumberOfTickets(
-                        Math.min(mapCapacity, Math.max(1, value)),
+                        Math.min(maxSelectable, Math.max(0, value)),
                       );
                     }}
-                    max={10000}
-                    min={1}
+                    max={maxSelectable}
+                    min={0}
                     className="input input-secondary w-24"
                   />
                 </div>
 
-                <button className="btn btn-success mt-4 text-white">
+                <div className="flex gap-4 my-4 align-middle">
+                  <span className="font-semibold place-self-center">
+                    Bilet Fiyatı:
+                  </span>
+                  <PriceInput
+                    value={nonSeatedPrices}
+                    onChange={setNonSeatedPrices}
+                  />
+                </div>
+
+                <div className="font-bold text-error">{nonSeatedError}</div>
+
+                <button
+                  className="btn btn-success mt-4 text-white"
+                  onClick={() => {
+                    setIsEditing(true);
+                    handleNonSeatedPrices();
+                  }}
+                >
                   Kaydet
                 </button>
               </div>

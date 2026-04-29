@@ -6,6 +6,8 @@ import DialogModal from "@/src/components/alerts/DialogModal";
 import { createPortal } from "react-dom";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import HandiSvg from "@/src/components/svg/HandiSvg";
+import { formatPrice } from "@/src/lib/formatPrice";
+
 import { stat } from "fs";
 
 interface Props {
@@ -87,7 +89,7 @@ export function Cell({
   const openDialogue = () => {
     setFormError("");
     setMenuOpen(false);
-    setDesiredPrice(Number(seatState?.price.toString()).toFixed(2));
+    setDesiredPrice(formatPrice(Number(seatState?.price)));
     setDialogueOpen(true);
   };
 
