@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DataTable from "@/src/components/DataTable";
+import { generateId } from "@/src/lib/generateId";
+
 
 import type { ShowType } from "@/src/models/ShowType";
 import type { Column } from "@/src/models/dataTable/Column";
@@ -254,9 +256,9 @@ export default function shows() {
     );
 
     const { uploadUrl, sasToken } = await sasRes.json();
-
+    const UUID = generateId()
     const ext = file.name.split(".").pop();
-    const fileName = `show-covers/${showID}/${crypto.randomUUID()}.${ext}`;
+    const fileName = `show-covers/${showID}/${UUID}.${ext}`;
 
     const res = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
       method: "PUT",

@@ -2,7 +2,7 @@
 
 
 import { useAuth } from "@/src/hooks/useAuth";
-import ThemeToggle from "@/src/components/navBar/ThemeToggle";
+import ThemeToggle from "@/src/components/layout/ThemeToggle";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -42,7 +42,7 @@ export default function NavBar({ isLoggedIn }: Props) {
       <div className="navbar bg-base-100 shadow-sm dark:shadow-white sticky top-0 z-[55]">
         <div className="">
           <Link className="btn btn-ghost text-xl w-max" href="/">
-            Çocuk Aklı
+            EnBilet
           </Link>
         </div>
         <div className="w-full flex justify-between px-2">

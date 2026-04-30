@@ -15,7 +15,7 @@ export default function List() {
 
   return (
     <>
-
+    <div className='flex justify-center text-6xl items-center p-4 h-[60vh]'>Welcome Page for the Customer</div>
     </>
   );
 }

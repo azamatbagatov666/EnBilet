@@ -474,7 +474,7 @@ export default function List() {
                 </div>
               </div>
               <div>Tarih ve Saat Seçiniz:</div>
-
+<div className="flex justify-center">
               <input
                 className="select select-accent w-52"
                 type="datetime-local"
@@ -486,6 +486,7 @@ export default function List() {
                   )
                 }
               ></input>
+              </div>
 
               <div className="flex justify-center w-full mt-6">
                 <button

@@ -3,10 +3,12 @@ import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
 import type { SeatMap, stageLocation } from "@/src/models/seatMap/SeatMap";
 import { count } from "console";
+import { generateId } from "@/src/lib/generateId";
+
 
 function createSeat(label: string): SeatCell {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     type: "seat",
     label,
     seatKind: "regular",
@@ -20,7 +22,7 @@ type SeatMapValidationResult = {
 
 export default function useSeatMapCreator() {
   const [seatMap, setSeatMap] = useState<SeatMap>({
-    id: crypto.randomUUID(),
+    id: generateId(),
 
     rows: [],
     stageLocation: "up",
@@ -155,7 +157,7 @@ for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
       const rowLabel = getNextRowLabel(prev.rows);
 
       const newRow: SeatRow = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         type: "seated",
         label: rowLabel,
         order: prev.rows.length,
@@ -176,7 +178,7 @@ for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
       rows: [
         ...prev.rows,
         {
-          id: crypto.randomUUID(),
+          id: generateId(),
           type: "empty",
           label: "",
           order: prev.rows.length,
@@ -231,11 +233,11 @@ for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
 
       const copiedRow: SeatRow = {
         ...sourceRow,
-        id: crypto.randomUUID(),
+        id: generateId(),
         label: newLabel,
         cells: sourceRow.cells.map((cell) => ({
           ...cell,
-          id: crypto.randomUUID(),
+          id: generateId(),
         })),
       };
 
@@ -267,7 +269,7 @@ for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
 
         const cells = [...row.cells];
         cells.splice(index, 0, {
-          id: crypto.randomUUID(),
+          id: generateId(),
           type: "space",
         });
 
@@ -488,7 +490,7 @@ for (let i = lastSeatIndex + 1; i < row.cells.length; i++) {
 
   function clearMap() {
     setSeatMap({
-      id: crypto.randomUUID(),
+      id: generateId(),
 
       rows: [],
       stageLocation: "up",

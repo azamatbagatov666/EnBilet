@@ -349,8 +349,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
     return (
       <>
         {/* Search */}
-        <div className=" my-8">
-          <div className="flex justify-center  ">
+<div className="my-8 overflow-x-auto w-full">
+  <div className="min-w-max md:flex md:justify-center">
             <div className=" ">
               <div className="rounded-t-xl grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black dark:border-white p-2  text-black dark:text-white dark:bg-gray-700">
                 <div></div>

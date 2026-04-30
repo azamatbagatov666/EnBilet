@@ -310,7 +310,7 @@ if (editType === "create") {
   const [menuVersion, setMenuVersion] = useState(0);
 
   return (
-    <div className="px-6">
+    <div className="px-2 md:px-6">
       <div className="">
         <div className="flex gap-4 text-xl font-bold my-4">
           <span>
@@ -326,7 +326,7 @@ if (editType === "create") {
         </div>
       </div>
 
-      <div className="flex w-max flex-col bg-base-300 p-4 rounded-box">
+      <div className="flex md:w-max flex-col bg-base-300 px-1 md:p-4 rounded-box">
         <div className="flex">
           <label className="flex items-center align-middle gap-2 cursor-pointer">
             <input
@@ -371,7 +371,7 @@ if (editType === "create") {
             />
             Yeni Plan Oluştur:
           </label>
-          <div className=" bg-base-300 rounded-box  h-20 px-4 place-items-center flex justify-end">
+          <div className=" bg-base-300 rounded-box  h-24 px-4 place-items-center flex justify-end">
             <div className="grid align-middle items-center gap-2 ">
               <input
                 disabled={editType !== "create"}
@@ -381,7 +381,7 @@ if (editType === "create") {
                 placeholder="Planın Adı"
                 className="input input-info"
               />
-              <span className="font-normal text-xs w-48 h-0">
+              <span className="font-normal text-xs md:w-48 md:h-0">
                 "Küçük Sahne", "Ana Sahne" gibi
               </span>
             </div>

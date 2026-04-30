@@ -2,6 +2,7 @@
 
 import DialogModal from "@/src/components/alerts/DialogModal";
 import { formatPrice } from "@/src/lib/formatPrice";
+import { generateId } from "@/src/lib/generateId";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import PriceInput from "@/src/components/forms/PriceInput";
 import { useEventSeats } from "./useEventSeats";
@@ -18,6 +19,9 @@ import Row from "@/src/components/seatMap/prices/Row";
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
+
+
+
 
 export default function ticketPrices({
   params,
@@ -175,7 +179,7 @@ export default function ticketPrices({
     if (Object.values(eventSeats).length == 0) {
       //create
       seatsToSave = Array.from({ length: mapCapacity }).map((_, index) => ({
-        cellID: crypto.randomUUID(),
+        cellID: generateId(),
         price: price,
         status: index < numberOfTickets ? "available" : "blocked",
       }));
@@ -447,7 +451,7 @@ export default function ticketPrices({
           <div className="flex gap-4 text-xl font-bold my-4">
             <span>
               Tarih:{" "}
-              <span className="font-semibold w-40 inline-block">
+              <span className="font-semibold">
                 {theEvent?.date}
               </span>
             </span>
@@ -502,13 +506,8 @@ export default function ticketPrices({
               <span className="ml-4">{selectedMapName}</span>
             </div>
             {isSeated ? (
-              <div
-                className={` select-none ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                <div className="flex flex-wrap gap-6 my-6 justify-center">
+              <div>
+                         <div className="flex flex-wrap gap-6 my-6 justify-center">
                   <CellLegend
                     variant="available"
                     label="Müsait"
@@ -548,6 +547,13 @@ export default function ticketPrices({
                     }
                   />
                 </div>
+              <div
+                className={` select-none overflow-auto border-2  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                }}
+              >
+       
 
                 <div className="h-16 my-4  flex justify-center">
                   {stageLocation == "up" && (
@@ -588,6 +594,9 @@ export default function ticketPrices({
                   )}
                 </div>
 
+              </div>
+
+              
                 <div className="mt-4 flex gap-2">
                   <button
                     onClick={() => {
