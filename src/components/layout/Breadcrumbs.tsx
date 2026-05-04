@@ -12,6 +12,8 @@ export default function Breadcrumbs() {
 
   const pathname = usePathname();
 
+  if (pathname === "/account") return <div className="h-9"></div>;
+
   const segments = pathname
     .split("/")
     .filter(Boolean)

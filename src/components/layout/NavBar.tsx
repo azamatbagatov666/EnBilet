@@ -66,10 +66,10 @@ export default function NavBar({ isLoggedIn }: Props) {
               <div
                 onMouseOver={(e) => toggleDropdown(e, "regular")}
                 onMouseLeave={(e) => toggleDropdown(e, "regular")}
-                className=" dropdown dropdown-hover h-full w-48 "
+                className=" dropdown dropdown-hover h-full w-48 group"
               >
                 <div
-                  className={`btn btn-ghost h-full w-full rounded-none ${menuOpen ? "bg-error" : ""}`}
+                      className={`btn btn-ghost h-full w-full rounded-none  group-hover:bg-error`}
                 >
                   Menü {"\u25BC"}
                 </div>
@@ -84,12 +84,12 @@ export default function NavBar({ isLoggedIn }: Props) {
               {isLoggedIn && (
                 <>
                   <div
-                    className="dropdown dropdown-hover h-full w-52 "
+                    className="dropdown dropdown-hover h-full w-52 group "
                     onMouseOver={(e) => toggleDropdown(e, "admin")}
                     onMouseLeave={(e) => toggleDropdown(e, "admin")}
                   >
                     <div
-                      className={`btn btn-ghost h-full w-full rounded-none  ${adminOpen ? "bg-error" : ""}`}
+                      className={`btn btn-ghost h-full w-full rounded-none  group-hover:bg-error`}
                     >
                       Yönetici {"\u25BC"}
                     </div>

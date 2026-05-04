@@ -7,6 +7,11 @@ import { titleConfig } from "@/src/config/titleConfig";
 
 export default function PageTitle() {
 
+  const pathTitleOverrides: Record<string, string> = {
+  "/account": "Giriş Yap",
+  "/account/register": "Kayıt Ol",
+};
+
 
 
   const pathname = usePathname();
@@ -17,10 +22,12 @@ export default function PageTitle() {
     .filter((s) => !/^\d+$/.test(s)); // ignore ID
 
 const pageTitle =
+  pathTitleOverrides[pathname] ??
   [...segments]
     .reverse()
     .map((segment) => titleConfig[segment]?.title)
-    .find(Boolean) ?? "Uygulama";
+    .find(Boolean) ??
+  "Uygulama";
 
     
 
