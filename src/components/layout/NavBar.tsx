@@ -124,11 +124,11 @@ export default function NavBar({ isLoggedIn }: Props) {
 
       
       </div>
-      {mobileOpen &&         <div className="absolute collapse-content bg-base-200 w-full lg:hidden z-999" style={{contentVisibility:"visible"}}>
-          <div className="menu">
-            <li>
+      {mobileOpen &&         <div className="absolute shadow-sm   dark:shadow-white collapse-content bg-base-200 w-full lg:hidden z-999" style={{contentVisibility:"visible"}}>
+          <div className="menu w-full">
+            <li className="w-full">
               <div>Menü</div>
-              <ul>
+              <ul className="w-full">
                 <li onClick={() => {setMobileOpen(false)}}>
                   <Link href="/account/">Giriş Yap</Link>
                 </li>
@@ -136,8 +136,8 @@ export default function NavBar({ isLoggedIn }: Props) {
             </li>
 
                       {isLoggedIn && (          <li>
-              <div>Yönetici</div>
-              <ul>
+              <div className="w-full">Yönetici</div>
+              <ul className="w-full">
                 <li onClick={() => {setMobileOpen(false)}}>
                   <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
                 </li>

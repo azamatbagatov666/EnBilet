@@ -819,9 +819,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           )}
 
                           {col.filterType === "date" && (
-                            <label className="flex h-9 input input-sm !outline-none ">
+                            <label className="flex h-9  input input-sm !outline-none ">
                               <input
-                                className="!outline-none w"
+                                className="!outline-none"
                                 type="date"
                                 value={dateFilters[col.key as string] ?? ""}
                                 onChange={(e) =>
