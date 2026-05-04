@@ -73,8 +73,8 @@ export default function List() {
       showID: editedEvent.showID,
       venueID: editedEvent.venueID,
       date: toDateTimeLocal(editedEvent.date),
-      ticketsale: editedEvent.ticketsale,
-      ispublic: editedEvent.ispublic,
+      ticketSale: editedEvent.ticketSale,
+      isPublic: editedEvent.isPublic,
     };
 
     await fetchWithAuth("/services/account/actions/editEvent", {
@@ -265,16 +265,18 @@ export default function List() {
     },
     { key: "city", label: "Şehir", searchable: true, filterType: "multi" },
     { key: "venueName", label: "Salon", searchable: true, filterType: "multi" },
-    { key: "ticketsale", label: "Satışa Açık", filterType: "boolean" },
+    { key: "ticketSale", label: "Satışa Açık", filterType: "boolean" },
     {
-      key: "ispublic",
+      key: "isPublic",
       label: "Görünür",
       filterType: "boolean",
       reactKey: "ticket-price",
     },
+    { key: "soldTickets", label: "Satılan Biletler", searchable: false, filterType: "none" },
+
     {
       key: "eventID",
-      label: "Koltuk Durumu",
+      label: "Bilet Durumu",
       filterType: "none",
       reactKey: "edit",
       render: (row) => (
@@ -451,10 +453,10 @@ export default function List() {
                   <input
                     type="checkbox"
                     className="checkbox checkbox-success"
-                    checked={editedEvent?.ticketsale ?? false}
+                    checked={editedEvent?.ticketSale ?? false}
                     onChange={(e) =>
                       setEditedEvent((prev) =>
-                        prev ? { ...prev, ticketsale: e.target.checked } : prev,
+                        prev ? { ...prev, ticketSale: e.target.checked } : prev,
                       )
                     }
                   />
@@ -464,10 +466,10 @@ export default function List() {
                   <input
                     type="checkbox"
                     className="checkbox checkbox-success"
-                    checked={editedEvent?.ispublic ?? false}
+                    checked={editedEvent?.isPublic ?? false}
                     onChange={(e) =>
                       setEditedEvent((prev) =>
-                        prev ? { ...prev, ispublic: e.target.checked } : prev,
+                        prev ? { ...prev, isPublic: e.target.checked } : prev,
                       )
                     }
                   />

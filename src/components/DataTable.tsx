@@ -349,13 +349,13 @@ if (dateValueFilters.size > 0 && dateColumn) {
     return (
       <>
         {/* Search */}
-<div className="my-8 overflow-x-auto w-full">
-  <div className="min-w-max md:flex md:justify-center">
+<div className="my-8 px-2 flex justify-center">
+  <div className="border-2 border-black dark:border-white rounded-xl w-fit max-w-full">
             <div className=" ">
-              <div className="rounded-t-xl grid grid-flow-col grid-cols-3  bg-gray-300 border-2 border-b-0 border-black dark:border-white p-2  text-black dark:text-white dark:bg-gray-700">
+              <div className="rounded-t-xl grid md:grid-flow-col md:grid-cols-3 bg-gray-300   p-2  text-black dark:text-white dark:bg-gray-700">
                 <div></div>
             <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150"> {title}</span></div>
-                <div className="flex justify-end">
+                <div className="flex justify-center md:justify-end">
               
                   <label className="flex gap-1 input input-sm h-9 w-64 !outline-none ">
                     <div className="flex justify-center items-center">
@@ -378,8 +378,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
                 </div>
               </div>
               {/* Table */}
-              <div className="flex justify-center">
-                <table className={`${styles.table} table table-auto  `}>
+              <div className=" overflow-auto  ">
+                <table className={`${styles.table} table table-auto w-fit `}>
                   <thead className='text-black dark:text-white'>
                     <tr className={`${styles.tr} bg-gray-300 font-bold text-lg text-black dark:text-white dark:bg-gray-700`}>
                       {columns.map((col) => (
@@ -893,7 +893,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                   </tbody>
                 </table>
               </div>
-              <div className="rounded-b-xl flex justify-end bg-gray-300 dark:bg-gray-700 border-2 border-t-0 border-black p-2 dark:border-white">
+              <div className="rounded-b-xl flex justify-end bg-gray-300 dark:bg-gray-700 p-2 ">
                 <button
                   className="btn btn-sm btn-error"
                   onClick={() => {

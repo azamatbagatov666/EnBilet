@@ -3,11 +3,11 @@
 .table {
   border-collapse: collapse;
   border: 2px solid black;
+  border-left: none;
+  border-right: none;
 }
 
-.tr {
-  border: 2px solid black;
-}
+
 
 .th {
   border: 2px solid black;
@@ -16,6 +16,22 @@
 .td {
   border: 2px solid black;
   color: black;
+}
+
+.td:first-child {
+  border-left: none;
+}
+
+.td:last-child {
+  border-right: none;
+}
+
+.th:first-child {
+  border-left: none;
+}
+
+.th:last-child {
+  border-right: none;
 }
 
 .tr:nth-child(even) {

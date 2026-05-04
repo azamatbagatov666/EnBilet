@@ -28,6 +28,7 @@ export default function CellLegendItem({ label, variant, quantity }: Props) {
       : "";
 
   return (
+    <div className="flex justify-center">
     <div className="grid gap-2">
     <div className="flex items-center gap-2">
       <div
@@ -49,6 +50,7 @@ export default function CellLegendItem({ label, variant, quantity }: Props) {
     </div>
     {quantity != undefined && <div className="text-center flex justify-center"><div className={` rounded-box w-12 border ${bgClass} no-underline border-black`}>{quantity}</div></div>}
     
+    </div>
     </div>
   );
 }

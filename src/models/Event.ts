@@ -3,6 +3,6 @@ export interface Event {
   showID?: number;
   venueID?: number;
   date?: string;
-  ticketsale?: boolean;
-  ispublic?: boolean;
+  ticketSale?: boolean;
+  isPublic?: boolean;
 }

@@ -448,7 +448,7 @@ export default function ticketPrices({
     <>
       <div className="px-6">
         <div className="">
-          <div className="flex gap-4 text-xl font-bold my-4">
+          <div className="grid lg:flex gap-4 text-xl font-bold my-4">
             <span>
               Tarih:{" "}
               <span className="font-semibold">
@@ -507,7 +507,7 @@ export default function ticketPrices({
             </div>
             {isSeated ? (
               <div>
-                         <div className="flex flex-wrap gap-6 my-6 justify-center">
+                         <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
                   <CellLegend
                     variant="available"
                     label="Müsait"
@@ -603,7 +603,8 @@ export default function ticketPrices({
 </div>
 </div>
               
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 grid justify-center sm:justify-start text-center sm:flex gap-2">
+                  <div>
                   <button
                     onClick={() => {
                       setDialogueOpen(true);
@@ -613,6 +614,8 @@ export default function ticketPrices({
                   >
                     Bütün Koltuklara Fiyat Gir
                   </button>
+</div>
+                  <div>
 
                   <button
                     onClick={() => {
@@ -622,6 +625,9 @@ export default function ticketPrices({
                   >
                     Bütün Koltukları Aç/Kapat
                   </button>
+                  </div>
+                  <div>
+
                   <button
                     onClick={() => {
                       setIsEditing(true);
@@ -631,6 +637,7 @@ export default function ticketPrices({
                   >
                     Kaydet
                   </button>
+                  </div>
                 </div>
               </div>
               </div>
@@ -639,7 +646,7 @@ export default function ticketPrices({
               <div
                 className={` my-4 ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
               >
-                <div className="flex flex-wrap gap-6 my-6 justify-center">
+                         <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
                   <CellLegend
                     variant="available"
                     label="Müsait"

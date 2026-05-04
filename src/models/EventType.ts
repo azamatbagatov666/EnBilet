@@ -5,11 +5,12 @@ export interface EventType  {
   venueID: number;
   city: string;
   date: string;
-  ticketsale: boolean;
-  ispublic: boolean;
+  ticketSale: boolean;
+  isPublic: boolean;
 
   // display-only
   showName?: string;
   venueName?: string;
+  soldTickets?: string;
 };
 

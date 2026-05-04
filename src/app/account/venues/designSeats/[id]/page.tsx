@@ -394,7 +394,7 @@ if (editType === "create") {
       >
         {editType === "create" && (
           <div className="flex gap-4 align-middle my-4">
-            <span className="font-bold text-lg">
+            <span className="font-bold text-sm sm:text-lg">
               Sabit ve numaralı bir oturma düzeni mevcut mu?
             </span>
             <div className="flex justify-left align-middle self-center gap-2 ">
@@ -455,7 +455,7 @@ if (editType === "create") {
         {isSeated ? (
           <div className="">
             <div className="flex gap-4 align-middle my-2">
-              <span className="font-bold text-lg">Sahne pozisyonu:</span>
+              <span className="font-bold text-sm sm:text-lg">Sahne pozisyonu:</span>
               <div className="flex justify-left align-middle self-center gap-2 ">
                 <span>Yukarıda</span>
                 <input
@@ -571,7 +571,7 @@ if (editType === "create") {
               </span>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 grid justify-center sm:justify-start text-center sm:flex gap-2">
               <div className="flex group bg-primary duration-200 rounded-md">
                 <div className=" px-2 rounded-l-md flex  items-center ">
                   <input
@@ -593,15 +593,21 @@ if (editType === "create") {
                   + Koltuklu Sıra
                 </button>
               </div>
+              <div>
               <button onClick={addEmptyRow} className="btn btn-secondary">
                 + Boş Sıra
               </button>
+              </div>
+              <div>
+
               <button
                 onClick={handleSave}
                 className="btn btn-success text-white"
               >
                 Kaydet
               </button>
+
+            </div>
             </div>
           </div>
         ) : (
