@@ -27,7 +27,7 @@ const pageTitle =
 
   return (
     <div className="flex justify-center px-2">
-<h1 className="text-2xl md:text-3xl pl-2 my-2 border-l-8  font-sans font-bold border-teal-400  dark:text-gray-200">
+<h1 className="text-2xl md:text-3xl pl-2 my-2 border-l-8 break-all  font-sans font-bold border-teal-400  dark:text-gray-200">
     {pageTitle}
 </h1></div>
   );

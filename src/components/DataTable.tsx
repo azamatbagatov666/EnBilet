@@ -357,7 +357,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
             <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150"> {title}</span></div>
                 <div className="flex justify-center md:justify-end">
               
-                  <label className="flex gap-1 input input-sm h-9 w-64 !outline-none ">
+                  <label className="flex gap-1 input input-sm h-9 w-full sm:w-64 !outline-none ">
                     <div className="flex justify-center items-center">
 <SearchSvg/>
                     </div>
