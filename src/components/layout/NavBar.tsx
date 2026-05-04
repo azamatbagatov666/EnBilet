@@ -21,7 +21,7 @@ export default function NavBar({ isLoggedIn }: Props) {
     e: React.MouseEvent,
     type: "regular" | "admin"
   ) => {
-    const isEnter = e.type === "mouseenter";
+    const isEnter = e.type === "mouseover";
     const isLeaveOrClick =
       e.type === "mouseleave" || e.type === "click";
 
@@ -49,7 +49,7 @@ export default function NavBar({ isLoggedIn }: Props) {
           <div className="flex">
                        <div 
                        
-                         onMouseEnter={(e) => toggleDropdown(e, "regular")}
+                         onMouseOver={(e) => toggleDropdown(e, "regular")}
   onMouseLeave={(e) => toggleDropdown(e, "regular")}
   className=" dropdown dropdown-hover">
             <div  className="btn btn-ghost">Menü {"\u25BC"}</div>
@@ -62,14 +62,15 @@ export default function NavBar({ isLoggedIn }: Props) {
             </ul> }
             </div>
            {isLoggedIn &&  <>
-           <div className="dropdown dropdown-hover "                          onMouseEnter={(e) => toggleDropdown(e, "admin")}
+           <div className="dropdown dropdown-hover "                          onMouseOver={(e) => toggleDropdown(e, "admin")}
   onMouseLeave={(e) => toggleDropdown(e, "admin")}>
             <div className="btn btn-ghost">Yönetici {"\u25BC"}</div>
  {adminOpen && 
             <ul className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border">
-              <li>
+              {!isLoggedIn &&               <li>
                 <Link href="/account/">Giriş Yap</Link>
-              </li>
+              </li>}
+
               <li>
                 <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
               </li>

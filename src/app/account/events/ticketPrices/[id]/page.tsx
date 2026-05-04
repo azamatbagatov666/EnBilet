@@ -547,12 +547,17 @@ export default function ticketPrices({
                     }
                   />
                 </div>
+                <div className="flex flex-col  items-left mt-2 ">
               <div
-                className={` select-none overflow-auto border-2  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
+                className={`  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
                 onContextMenu={(e) => {
                   e.preventDefault();
                 }}
               >
+                <div className="relative overflow-auto border-2 bg-transparent select-none">
+
+                         <div data-theme="" className="px-5 bg-transparent">
+                  <div className="min-w-max select-none">
        
 
                 <div className="h-16 my-4  flex justify-center">
@@ -595,7 +600,8 @@ export default function ticketPrices({
                 </div>
 
               </div>
-
+</div>
+</div>
               
                 <div className="mt-4 flex gap-2">
                   <button
@@ -626,6 +632,8 @@ export default function ticketPrices({
                     Kaydet
                   </button>
                 </div>
+              </div>
+              </div>
               </div>
             ) : (
               <div

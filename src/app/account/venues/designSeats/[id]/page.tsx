@@ -477,6 +477,7 @@ if (editType === "create") {
               className="flex flex-col  items-left mt-2  "
             >
               <div className="relative overflow-auto border-2 bg-transparent">
+                
                 <div data-theme="" className="px-5 bg-transparent">
                   <div className="min-w-max select-none">
                     <div className="h-16 my-4  flex justify-center">
@@ -550,6 +551,7 @@ if (editType === "create") {
                 </div>
               </div>
             </div>
+            
 
             <div className="font-semibold flex gap-4">
               <span>
