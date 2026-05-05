@@ -19,7 +19,12 @@ export async function POST(request: Request) {
   });
 
   if (!backendRes.ok) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      const errorJson = await backendRes.json();
+
+  return NextResponse.json(
+    errorJson,
+    { status: backendRes.status }
+  );
   }
 
   const data: AuthenticateResponse = await backendRes.json();

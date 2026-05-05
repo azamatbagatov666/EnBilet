@@ -17,7 +17,6 @@ export default function NavBar({ isLoggedIn }: Props) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-
   const toggleDropdown = (e: React.MouseEvent, type: "regular" | "admin") => {
     const isEnter = e.type === "mouseover";
     const isLeaveOrClick = e.type === "mouseleave" || e.type === "click";
@@ -36,9 +35,7 @@ export default function NavBar({ isLoggedIn }: Props) {
   return (
     <>
       <div className="max-lg:collapse bg-base-200  shadow-sm w-full  dark:shadow-white sticky top-0 z-56 rounded-none">
-        <label
-          className="fixed inset-0 hidden max-lg:peer-checked:block"
-        ></label>
+        <label className="fixed inset-0 hidden max-lg:peer-checked:block"></label>
         <div className="collapse-title navbar justify-between !py-0 !min-h-auto h-12">
           <div className="navbar-start h-full">
             <label
@@ -69,7 +66,7 @@ export default function NavBar({ isLoggedIn }: Props) {
                 className=" dropdown dropdown-hover h-full w-48 group"
               >
                 <div
-                      className={`btn btn-ghost h-full w-full rounded-none  group-hover:bg-error`}
+                  className={`btn btn-ghost h-full w-full rounded-none  group-hover:bg-error`}
                 >
                   Menü {"\u25BC"}
                 </div>
@@ -121,42 +118,73 @@ export default function NavBar({ isLoggedIn }: Props) {
             <ThemeToggle></ThemeToggle>
           </div>
         </div>
-
-      
       </div>
-      {mobileOpen &&         <div className="absolute shadow-sm   dark:shadow-white collapse-content bg-base-200 w-full lg:hidden z-999" style={{contentVisibility:"visible"}}>
+      
+        <div
+        aria-hidden={!mobileOpen}
+          className={`absolute shadow-sm   dark:shadow-white collapse-content bg-base-200 w-full lg:hidden z-999 transition-all duration-300 ease-in-out
+${
+  mobileOpen
+    ? "opacity-100 translate-y-0"
+    : "opacity-0 translate-y-2 pointer-events-none"
+}             `}
+          style={{ contentVisibility: "visible" }}
+        >
           <div className="menu w-full">
             <li className="w-full">
               <div>Menü</div>
               <ul className="w-full">
-                <li onClick={() => {setMobileOpen(false)}}>
+                <li
+                  onClick={() => {
+                    setMobileOpen(false);
+                  }}
+                >
                   <Link href="/account/">Giriş Yap</Link>
                 </li>
               </ul>
             </li>
 
-                      {isLoggedIn && (          <li>
-              <div className="w-full">Yönetici</div>
-              <ul className="w-full">
-                <li onClick={() => {setMobileOpen(false)}}>
-                  <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
-                </li>
-                <li onClick={() => {setMobileOpen(false)}}>
-                  <Link href="/account/venues">Salonlar</Link>
-                </li>
-                <li onClick={() => {setMobileOpen(false)}}>
-                  <Link href="/account/shows">Gösteriler</Link>
-                </li>
-                <li onClick={() => {{logout(); setMobileOpen(false)}}}>
-                  <a>Çıkış Yap</a>
-                </li>
-              </ul>
-            </li>)}
-
-  
+            {isLoggedIn && (
+              <li>
+                <div className="w-full">Yönetici</div>
+                <ul className="w-full">
+                  <li
+                    onClick={() => {
+                      setMobileOpen(false);
+                    }}
+                  >
+                    <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
+                  </li>
+                  <li
+                    onClick={() => {
+                      setMobileOpen(false);
+                    }}
+                  >
+                    <Link href="/account/venues">Salonlar</Link>
+                  </li>
+                  <li
+                    onClick={() => {
+                      setMobileOpen(false);
+                    }}
+                  >
+                    <Link href="/account/shows">Gösteriler</Link>
+                  </li>
+                  <li
+                    onClick={() => {
+                      {
+                        logout();
+                        setMobileOpen(false);
+                      }
+                    }}
+                  >
+                    <a>Çıkış Yap</a>
+                  </li>
+                </ul>
+              </li>
+            )}
           </div>
-        </div>}
-
+        </div>
+      
     </>
   );
 }

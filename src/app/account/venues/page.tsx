@@ -153,16 +153,12 @@ export default function venues() {
             address: address,
           }),
         });
-        if (res.status === 409) {
-          setDialogueText(
-            "Seçtiğiniz şehirde belirttiğiniz isimde bir salon zaten bulunuyor.",
-          );
-          setDialogueOpen(true);
-
-          return;
-        } else if (!res.ok) {
-          throw new Error("Failed to add venue");
-        }
+        if (!res.ok) {
+  const { message } = await res.json();
+  setDialogueText(message);
+  setDialogueOpen(true);
+  return
+}
 
         setSelectedCity("");
         setVenueName("");

@@ -17,13 +17,14 @@ export async function POST(request: Request) {
       body: JSON.stringify(body),
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      return NextResponse.json(
-        { error: errorText },
-        { status: res.status }
-      );
-    }
+if (!res.ok) {
+  const errorJson = await res.json();
+
+  return NextResponse.json(
+    errorJson,
+    { status: res.status }
+  );
+}
 
     const data = await res.json().catch(() => null);
 

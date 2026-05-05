@@ -131,13 +131,12 @@ export default function shows() {
         }),
       });
 
-      if (res.status === 409) {
-        setDialogueText("Belirttiğiniz isimde bir gösteri zaten bulunuyor.");
-        setDialogueOpen(true);
-        return;
-      }
-
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+  const { message } = await res.json();
+  setDialogueText(message);
+        setDialogueOpen(true)
+        return
+}
 
       const { showID } = await res.json();
 

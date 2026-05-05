@@ -107,15 +107,12 @@ export default function List() {
             date: time,
           }),
         });
-        if (res.status === 409) {
-          setDialogueText(
-            "Seçtiğiniz tarihte ve salonda bir etkinlik zaten bulunuyor.",
-          );
-          setDialogueOpen(true);
-          return;
-        } else if (!res.ok) {
-          throw new Error("Failed to add event");
-        }
+        if (!res.ok) {
+  const { message } = await res.json();
+  setDialogueText(message);
+  setDialogueOpen(true)
+  return
+}
 
         clearForm();
 
