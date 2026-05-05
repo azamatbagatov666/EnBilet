@@ -352,12 +352,11 @@ if (dateValueFilters.size > 0 && dateColumn) {
 <div className="my-8 px-2 flex justify-center">
   <div className="border-2 border-black dark:border-white rounded-xl w-fit max-w-full">
             <div className=" ">
-              <div className="rounded-t-xl grid md:grid-flow-col md:grid-cols-3 bg-gray-300   p-2  text-black dark:text-white dark:bg-gray-700">
-                <div></div>
-            <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150"> {title}</span></div>
-                <div className="flex justify-center md:justify-end">
+              <div className="rounded-t-xl grid bg-gray-300  gap-4 p-2  text-black dark:text-white dark:bg-gray-700">
+            <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150 break-all"> {title}</span></div>
+                <div className="flex justify-center sm:justify-end ">
               
-                  <label className="flex gap-1 input input-sm h-9 w-full sm:w-64 !outline-none ">
+                  <label className="flex gap-1 input input-sm h-9 w-full sm:w-auto !outline-none ">
                     <div className="flex justify-center items-center">
 <SearchSvg/>
                     </div>

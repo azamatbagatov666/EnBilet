@@ -207,26 +207,48 @@ export default function shows() {
     setIsEditing(true);
     let updatedShow = { ...editedShow };
 
+        if (newImageFile && editedShow.showID) {
+      const uploadedPath = await uploadImage(newImageFile, editedShow.showID);
+      updatedShow.imageKey = uploadedPath;
+    }
+
+        const res = await fetchWithAuth("/services/account/actions/editShow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedShow),
+    });
+
+
+    if (!res.ok) {
+  const { message } = await res.json();
+  setDialogueText(message);
+    setEditDialogueOpen(false);
+    setIsEditing(false);
+
+     if (newImageFile) {
+
+          await fetchWithAuth("/services/account/cdn/deleteImage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageKey: updatedShow.imageKey }),
+      });}
+
+  setDialogueOpen(true);
+  return;
+}
+
     if (imageToDelete) {
       await fetchWithAuth("/services/account/cdn/deleteImage", {
         method: "POST",
-
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageKey: imageToDelete }),
       });
       updatedShow.imageKey = null;
     }
 
-    if (newImageFile && editedShow.showID) {
-      const uploadedPath = await uploadImage(newImageFile, editedShow.showID);
-      updatedShow.imageKey = uploadedPath;
-    }
 
-    await fetchWithAuth("/services/account/actions/editShow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedShow),
-    });
+
+
 
     setIsEditing(false);
     setDialogueOpen(false);
@@ -311,6 +333,7 @@ export default function shows() {
           open={dialogueOpen}
           onClose={() => {
             setDialogueOpen(false);
+            setDialogueText("");
             setEditDialogueOpen(false);
           }}
           disableClose={isEditing}
