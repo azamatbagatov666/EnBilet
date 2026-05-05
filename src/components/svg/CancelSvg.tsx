@@ -11,7 +11,7 @@
                   
                           <svg
                             fill="#000000"
-                            className={`${className != "" ? `${className}` : `size-7`} dark:fill-white`}
+                            className={`${className != "" ? `${className}` : `size-4 sm:size-6`} dark:fill-white`}
                             viewBox="0 0 32 32"
                             version="1.1"
                           >

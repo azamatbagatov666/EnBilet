@@ -7,6 +7,7 @@ type DialogModalProps = {
   disableClose?: boolean;
   onClose: () => void;
   children: ReactNode;
+  dialogueText?: string,
 };
 
 export default function DialogModal({
@@ -14,6 +15,7 @@ export default function DialogModal({
   onClose,
   children,
   disableClose,
+  dialogueText,
 }: DialogModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -94,6 +96,7 @@ export default function DialogModal({
               : ""
           }`}
         >
+          {dialogueText}
           {children}
         </div>
       </div>

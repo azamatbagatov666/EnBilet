@@ -39,7 +39,11 @@ export default function NavBar({ isLoggedIn }: Props) {
         <div className="collapse-title navbar justify-between !py-0 !min-h-auto h-12">
           <div className="navbar-start h-full">
             <label
-              className="btn btn-ghost lg:hidden"
+              className="size-10 content-center justify-items-center lg:hidden
+               [@media(hover:hover)_and_(pointer:fine)]:hover:bg-gray-300
+               active:bg-gray-300
+              
+              "
               onClick={() => setMobileOpen((v) => !v)}
             >
               <svg
@@ -56,7 +60,9 @@ export default function NavBar({ isLoggedIn }: Props) {
                 />
               </svg>
             </label>
-            <Link className="btn btn-ghost text-xl w-max" href="/">
+            <Link className="btn btn-ghost text-xl w-max" href="/" onClick={() => {
+                    setMobileOpen(false);
+                  }}>
               EnBilet
             </Link>
             <div className="w-full hidden lg:flex h-full  px-2">

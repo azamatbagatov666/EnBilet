@@ -11,12 +11,31 @@
 
 .th {
   border: 2px solid black;
+    padding-block: 8px;
+  padding-inline: 8px;
 }
 
 .td {
   border: 2px solid black;
   color: black;
+  padding-block: 3px;
+  padding-inline: 3px;
+  height: 46px;
 }
+
+@media (width >= 40rem) { 
+  
+  .td {
+  padding-block: .75rem !important;
+  padding-inline: 1rem !important;
+}
+
+.th {
+  padding-block: .75rem !important;
+  padding-inline: 1rem !important;
+}
+
+ }
 
 .td:first-child {
   border-left: none;
@@ -36,6 +55,19 @@
 
 .tr:nth-child(even) {
   background-color: #e2e8f0; /* slate-200 */
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
 }
 
 /* Dark mode via data-theme or .dark */

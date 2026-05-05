@@ -5,6 +5,7 @@ export type Column<T> = {
   searchable?: boolean;
   filterType?: "boolean" | "multi" | "date" | "none";
   render?: (row: T) => React.ReactNode;
+  overflow?: boolean;
 
   reactKey?: string;
 };

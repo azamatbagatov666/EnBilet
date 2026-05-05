@@ -261,8 +261,9 @@ export default function ticketPrices({
 
       getEventInfo();
     } else {
-      setDialogueText("Koltuklar kaydedilirken bir hata oluştu.");
-      setDialogueOpen(true);
+  const { message } = await res.json();
+  setDialogueText(message);
+        setDialogueOpen(true)
     }
 
     setIsEditing(false);
@@ -766,6 +767,7 @@ export default function ticketPrices({
 
       <DialogModal
         open={dialogueOpen}
+        dialogueText = {dialogueText}
         onClose={() => {
           setDialogueOpen(false);
           setEditDialogueOpen(false);
@@ -774,7 +776,6 @@ export default function ticketPrices({
           setDesiredPrice("");
         }}
       >
-        {dialogueText}
 
         {editDialogueOpen && (
           <div className="flex justify-center">

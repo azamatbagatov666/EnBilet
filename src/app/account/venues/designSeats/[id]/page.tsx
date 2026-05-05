@@ -304,6 +304,13 @@ if (editType === "create") {
 
         return true;
       }
+      else {
+  const { message } = await res.json();
+        cleanUp();
+
+  setDialogueText(message);
+  setDialogueOpen(true);
+}
     }
   };
 
@@ -649,6 +656,7 @@ if (editType === "create") {
         open={dialogueOpen}
         onClose={() => {
           setDialogueOpen(false);
+          setDialogueText("")
         }}
       >
         <div className="text-left">

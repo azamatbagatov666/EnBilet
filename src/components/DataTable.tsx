@@ -353,10 +353,10 @@ if (dateValueFilters.size > 0 && dateColumn) {
   <div className="border-2 border-black dark:border-white rounded-xl w-fit max-w-full">
             <div className=" ">
               <div className="rounded-t-xl grid bg-gray-300  gap-4 p-2  text-black dark:text-white dark:bg-gray-700">
-            <div className="flex justify-center text-3xl font-bold "> <span className="   dark:text-white duration-150 break-all"> {title}</span></div>
+            <div className="flex justify-center text-xl sm:text-3xl font-bold "> <span className="   dark:text-white duration-150 break-all"> {title}</span></div>
                 <div className="flex justify-center sm:justify-end ">
               
-                  <label className="flex gap-1 input input-sm h-9 w-full sm:w-auto !outline-none ">
+                  <label className="flex gap-1 input input-xs sm:input-sm h-7 sm:h-9 w-full sm:w-auto !outline-none ">
                     <div className="flex justify-center items-center">
 <SearchSvg/>
                     </div>
@@ -366,7 +366,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                       value={globalSearch}
                       onChange={(e) => setGlobalSearch(e.target.value)}
                     />
-                    <div className="size-7 self-center">
+                    <div className="size-4 sm:size-6 self-center content-center">
                       {globalSearch != "" && (
                         <button onClick={() => setGlobalSearch("")}>
                           <CancelSvg/>
@@ -380,9 +380,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
               <div className=" overflow-auto  ">
                 <table className={`${styles.table} table table-auto w-fit `}>
                   <thead className='text-black dark:text-white'>
-                    <tr className={`${styles.tr} bg-gray-300 font-bold text-lg text-black dark:text-white dark:bg-gray-700`}>
+                    <tr className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}>
                       {columns.map((col) => (
-<th className={styles.th} key={col.reactKey ?? String(col.key)}>
+<th className={`${styles.th}`} key={col.reactKey ?? String(col.key)}>
                             <div className="inline-flex items-center relative">
                             <span>{col.label}</span>
                             {col.filterType != "none" && (
@@ -400,7 +400,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                   <svg
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    className={`size-6
+                                    className={`size-5 sm:size-6
     ${
       selectedFilter == col.key
         ? "fill-black dark:fill-green-500"
@@ -439,7 +439,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                             }))
                                           }
                                         />
-                              <div className="size-5 self-center">
+                              <div className="size-5 self-center content-center">
                                 {panelSearch[col.key as string] !== "" &&
                                   panelSearch[col.key as string] != null && (
                                     <button
@@ -739,7 +739,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                       {columns.map((col) => (
 <th className={styles.th} key={col.reactKey ?? String(col.key)}>
                             {col.searchable && (
-                            <label className="flex gap-1 input input-sm h-9 !outline-none ">
+                            <label className="flex min-w-24 input input-xs sm:input-sm h-7 sm:h-9 !outline-none gap-px px-2 sm:px-2">
                               <div className="flex justify-center items-center">
 <SearchSvg/>
                               </div>
@@ -754,7 +754,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                   }))
                                 }
                               />
-                              <div className="size-7 self-center">
+                              <div className="size-4 sm:size-6 self-center content-center">
                                 {columnSearch[col.key as string] !== "" &&
                                   columnSearch[col.key as string] != null && (
                                     <button
@@ -774,9 +774,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           )}
 
                           {col.filterType === "boolean" && (
-                            <label className="flex justify-between h-9 input input-sm !outline-none ">
+                            <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max !outline-none ">
                               <select
-                                className="!outline-none bg-transparent "
+                                className="!outline-none bg-transparent max-w-8 sm:max-w-max"
                                 value={
                                   boolFilters[col.key as string] === null ||
                                   boolFilters[col.key as string] === undefined
@@ -797,7 +797,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                 <option className='text-black' value="true">Evet</option>
                                 <option className='text-black' value="false">Hayır</option>
                               </select>
-                              <div className="size-7 self-center">
+                              <div className="size-4 sm:size-6 content-center self-center">
                                 {boolFilters[col.key as string] !== null &&
                                   boolFilters[col.key as string] !==
                                     undefined && (
@@ -818,9 +818,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
                           )}
 
                           {col.filterType === "date" && (
-                            <label className="flex h-9  input input-sm !outline-none ">
+                            <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max !outline-none ">
                               <input
-                                className="!outline-none"
+                                className={`!outline-none w-23 sm:max-w-max ${styles.input}`}
                                 type="date"
                                 value={dateFilters[col.key as string] ?? ""}
                                 onChange={(e) =>
@@ -831,7 +831,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                 }
                               />
 
-                              <div className="size-7 self-center">
+                              <div className="size-4 sm:size-6 self-center content-center">
                                 {Boolean(dateFilters[col.key as string]) && (
                                   <button
                                     onClick={() =>
@@ -855,9 +855,9 @@ if (dateValueFilters.size > 0 && dateColumn) {
 
                   <tbody>
                     {filteredData.map((row, i) => (
-                      <tr key={i} className={styles.tr}>
+                      <tr key={i} className={`${styles.tr}  text-xs sm:text-sm `}>
                         {columns.map((col) => (
-<td className={styles.td} key={col.reactKey ?? String(col.key)}>
+<td className={`${styles.td} ${col.overflow ? "whitespace-nowrap overflow-hidden text-ellipsis max-w-50 sm:max-w-100":""}`} key={col.reactKey ?? String(col.key)}>
                               {col.render ? (
                               <div className="flex justify-center">
                                 {col.render(row)}
@@ -868,7 +868,7 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                   type="checkbox"
                                   checked={Boolean(row[col.key])}
                                   readOnly
-                                  className="checkbox checkbox-success cursor-default"
+                                  className="checkbox checkbox-success checkbox-sm sm:checkbox-md  cursor-default"
                                 />
                               </div>
                             ) : (

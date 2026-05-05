@@ -77,13 +77,14 @@ export default function List() {
       isPublic: editedEvent.isPublic,
     };
 
-    await fetchWithAuth("/services/account/actions/editEvent", {
+    const res = await fetchWithAuth("/services/account/actions/editEvent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedEvent),
     });
 
-    setIsEditing(false);
+    if (res.ok) {
+          setIsEditing(false);
     setDialogueOpen(false);
     setEditDialogueOpen(false);
     setEditedEvent(undefined);
@@ -91,6 +92,23 @@ export default function List() {
 
     setAlertText("Etkinlik başarıyla düzenlendi.");
     setAlertOpen(true);
+
+
+    } else {
+
+  const { message } = await res.json();
+
+    setIsEditing(false);
+    setEditDialogueOpen(false);
+    setEditedEvent(undefined);
+
+
+  setDialogueText(message);
+  setDialogueOpen(true)
+
+    }
+
+
   };
 
   const createEvent = async () => {
@@ -283,7 +301,7 @@ export default function List() {
           }
           className="bg-white dark:bg-zinc-700 p-1 rounded-md hover:!bg-red-500 duration-200 transition-colors border border-black"
         >
-          <svg  viewBox="0 0 24 24" className="size-8 fill-black dark:fill-white">
+          <svg  viewBox="0 0 24 24" className="size-6 sm:size-8 fill-black dark:fill-white">
             <path d="m13.817 5.669 4.504 4.501-8.15 8.15-4.501-4.504zm-3.006 13.944 8.8-8.8c.166-.163.27-.389.27-.64s-.103-.477-.269-.64l-5.156-5.156c-.166-.158-.392-.255-.64-.255s-.474.097-.64.256l-8.8 8.8c-.166.163-.27.389-.27.64s.103.477.269.64l5.156 5.156c.166.158.392.255.64.255s.474-.097.64-.256zm12.663-9.073-12.918 12.933c-.332.326-.787.527-1.289.527s-.957-.201-1.289-.527l-1.794-1.793c.477-.492.77-1.164.77-1.905 0-1.513-1.227-2.74-2.74-2.74-.74 0-1.412.294-1.905.771l.001-.001-1.781-1.794c-.326-.332-.527-.787-.527-1.289s.201-.957.527-1.289l12.919-12.906c.332-.326.787-.527 1.289-.527s.957.201 1.289.527l1.781 1.781c-.515.499-.835 1.197-.835 1.969 0 1.513 1.227 2.74 2.74 2.74.773 0 1.471-.32 1.969-.835l.001-.001 1.794 1.781c.326.332.527.787.527 1.289s-.201.957-.527 1.289z"></path>
           </svg>
         </button>
@@ -300,7 +318,7 @@ export default function List() {
           }}
           className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:!bg-red-500 duration-200 transition-colors border border-black"
         >
-          <svg width="32px" height="32px" viewBox="0 0 24 24" className=" stroke-black dark:stroke-white  fill-transparent">
+          <svg  viewBox="0 0 24 24" className=" stroke-black dark:stroke-white  fill-transparent size-6 sm:size-8">
             <path
               d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
               strokeWidth="2"
@@ -381,8 +399,7 @@ export default function List() {
       </FormContainer>
       <DataTable data={events} columns={eventColumns} title="Etkinlikler" />
 
-      <DialogModal open={dialogueOpen} onClose={() => setDialogueOpen(false)}>
-        {dialogueText}
+      <DialogModal open={dialogueOpen} dialogueText={dialogueText} onClose={() => {setDialogueOpen(false); setDialogueText("")}}>
         {editDialogueOpen && (
           <>
             <div className={`grid gap-2 w-[500px]`}>

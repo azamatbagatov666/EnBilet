@@ -3,7 +3,7 @@
   return (
                   
                   
-                  <svg className="size-4 opacity-50" viewBox="0 0 24 24">
+                  <svg className="size-3 sm:size-4 opacity-50" viewBox="0 0 24 24">
                     <g
                       strokeLinejoin="round"
                       strokeLinecap="round"
