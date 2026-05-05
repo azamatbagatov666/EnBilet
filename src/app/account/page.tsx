@@ -39,11 +39,11 @@ export default function List() {
             ÜYE GİRİŞİ
           </div>
           <div className="grid grid-rows-3 gap-5">
-            <div className="flex items-center group justify-left   focus-within:border-black dark:focus-within:border-white border-b-2 border-[rgb(128,128,128)]">
+            <div className="flex relative items-center group justify-left   focus-within:border-black dark:focus-within:border-white border-b-2 border-[rgb(128,128,128)]">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
-                className="size-6  fill-current text-gray-400  group-focus-within:text-black dark:group-focus-within:text-white "
+                className="size-6 absolute left-2 z-10 fill-current text-gray-400  group-focus-within:text-black dark:group-focus-within:text-white "
               >
                 <path d="M12 1C8.96243 1 6.5 3.46243 6.5 6.5C6.5 9.53757 8.96243 12 12 12C15.0376 12 17.5 9.53757 17.5 6.5C17.5 3.46243 15.0376 1 12 1Z"></path>
                 <path d="M7 14C4.23858 14 2 16.2386 2 19V22C2 22.5523 2.44772 23 3 23H21C21.5523 23 22 22.5523 22 22V19C22 16.2386 19.7614 14 17 14H7Z"></path>
@@ -54,7 +54,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group h-14 w-full border-0 rounded-none !outline-none   bg-base-300 px-2   "
+                className="input group h-14 w-full border-0 rounded-none !outline-none  pl-10  bg-base-300 pr-2   "
                 placeholder="Kullanıcı Adı"
               />
             </div>
@@ -62,7 +62,7 @@ export default function List() {
             <div className="relative flex items-center group justify-left   focus-within:border-black dark:focus-within:border-white border-b-2 border-[rgb(128,128,128)]">
               <svg
                 viewBox="0 0 16 16"
-                className="size-6  fill-current text-gray-400  group-focus-within:text-black dark:group-focus-within:text-white "
+                className="size-6 absolute z-10 left-2 fill-current text-gray-400  group-focus-within:text-black dark:group-focus-within:text-white "
               >
                 <path
                   fillRule="evenodd"
@@ -75,7 +75,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group w-full h-14 border-0  pr-12 rounded-none !outline-none   bg-base-300 px-2   "
+                className="input group w-full h-14 border-0  pr-12 rounded-none !outline-none   bg-base-300 pl-10   "
                 type={passType}
                 placeholder="Parola"
               />
