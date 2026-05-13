@@ -5,7 +5,6 @@ import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DataTable from "@/src/components/DataTable";
 import { generateId } from "@/src/lib/generateId";
 
-
 import type { ShowType } from "@/src/models/ShowType";
 import type { Column } from "@/src/models/dataTable/Column";
 import DialogModal from "@/src/components/alerts/DialogModal";
@@ -20,14 +19,26 @@ export default function shows() {
   //ADD Show
   const [showName, setShowName] = useState("");
   const [description, setDescription] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<{
+    original: File;
+    thumbnail: File;
+  } | null>(null);
+
+  const [newImageFiles, setNewImageFiles] = useState<{
+    original: File;
+    thumbnail: File;
+  } | null>(null);
 
   //EditShow
   const [isEditing, setIsEditing] = useState(false);
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [editedShow, setEditedShow] = useState<ShowType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState("");
+  const [imagesToDelete, setImagesToDelete] = useState({
+    original: "",
+    thumbnail: "",
+  });
+
   const [originalShow, setOriginalShow] = useState<ShowType | null>(null);
 
   //Alerts
@@ -51,16 +62,21 @@ export default function shows() {
       searchable: true,
       filterType: "multi",
     },
-    { key: "description", label: "Gösteri Açıklaması", filterType: "none", overflow: true,},
+    {
+      key: "description",
+      label: "Gösteri Açıklaması",
+      filterType: "none",
+      overflow: true,
+    },
     {
       key: "imageKey",
-      label: "Kapak Fotğrafı",
+      label: "Kapak Fotoğrafı",
       filterType: "none",
       render: (row) =>
-        row.imageKey ? (
+        row.imageThumbKey ? (
           <img
             className="w-full sm:max-w-64 h-auto"
-            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageKey}`}
+            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageThumbKey}`}
             alt="Gösteri Fotoğrafı"
           />
         ) : null,
@@ -94,8 +110,8 @@ export default function shows() {
     setIsEditing(false);
     setEditedShow({ ...showInfo });
     setOriginalShow({ ...showInfo });
-    setImageToDelete("");
-    setNewImageFile(null);
+    setImagesToDelete({ original: "", thumbnail: "" });
+    setNewImageFiles(null);
     setEditDialogueOpen(true);
     setDialogueOpen(true);
   };
@@ -128,23 +144,28 @@ export default function shows() {
           showName,
           description,
           imageKey: null,
+          imageThumbKey: null,
         }),
       });
 
       if (!res.ok) {
-  const { message } = await res.json();
-  setDialogueText(message);
-        setDialogueOpen(true)
-        return
-}
+        const { message } = await res.json();
+        setDialogueText(message);
+        setDialogueOpen(true);
+        return;
+      }
 
       const { showID } = await res.json();
 
       // 2️⃣ Upload image (if exists)
       let uploadedPath: string | null = null;
 
-      if (imageFile) {
-        uploadedPath = await uploadImage(imageFile, showID);
+      if (imageFiles?.original) {
+        const { imageKey, imageThumbKey } = await uploadImage(
+          imageFiles.original,
+          imageFiles.thumbnail,
+          showID,
+        );
 
         // 3️⃣ Update show with imageKey
         await fetchWithAuth("/services/account/actions/editShow", {
@@ -154,7 +175,8 @@ export default function shows() {
             showID,
             showName,
             description,
-            imageKey: uploadedPath,
+            imageKey,
+            imageThumbKey,
           }),
         });
       }
@@ -163,7 +185,7 @@ export default function shows() {
       resetForm();
       setShowName("");
       setDescription("");
-      setImageFile(null);
+      setImageFiles(null);
 
       setAlertText("Gösteri başarıyla eklendi.");
       setAlertOpen(true);
@@ -174,18 +196,20 @@ export default function shows() {
     }
   };
 
-  
-
   const hasShowChanged = (
     original: ShowType,
     updated: ShowType,
-    imageToDelete: string,
-    newImageFile: File | null,
+    imagesToDelete: { original: string; thumbnail: string },
+    newImageFiles: { original: File; thumbnail: File } | null,
   ) => {
     if (original.showName !== updated.showName) return true;
     if (original.description !== updated.description) return true;
-    if (imageToDelete) return true;
-    if (newImageFile) return true;
+
+    if (newImageFiles !== null) return true;
+
+    if (imagesToDelete.original !== "" || imagesToDelete.thumbnail !== "") {
+      return true;
+    }
 
     return false;
   };
@@ -195,7 +219,7 @@ export default function shows() {
       return;
 
     if (
-      !hasShowChanged(originalShow, editedShow, imageToDelete, newImageFile)
+      !hasShowChanged(originalShow, editedShow, imagesToDelete, newImageFiles)
     ) {
       setDialogueOpen(false);
       setEditDialogueOpen(false);
@@ -207,55 +231,66 @@ export default function shows() {
     setIsEditing(true);
     let updatedShow = { ...editedShow };
 
-        if (newImageFile && editedShow.showID) {
-      const uploadedPath = await uploadImage(newImageFile, editedShow.showID);
-      updatedShow.imageKey = uploadedPath;
+    if (newImageFiles?.original && editedShow.showID) {
+      const { imageKey, imageThumbKey } = await uploadImage(
+        newImageFiles!.original,
+        newImageFiles!.thumbnail,
+        editedShow.showID,
+      );
+
+      updatedShow.imageKey = imageKey;
+      updatedShow.imageThumbKey = imageThumbKey;
     }
 
-        const res = await fetchWithAuth("/services/account/actions/editShow", {
+    const res = await fetchWithAuth("/services/account/actions/editShow", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedShow),
     });
 
-
     if (!res.ok) {
-  const { message } = await res.json();
-  setDialogueText(message);
-    setEditDialogueOpen(false);
-    setIsEditing(false);
+      const { message } = await res.json();
+      setDialogueText(message);
+      setEditDialogueOpen(false);
+      setIsEditing(false);
 
-     if (newImageFile) {
+      if (newImageFiles?.original) {
+        await fetchWithAuth("/services/account/cdn/deleteImage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageKeys: [updatedShow.imageKey, updatedShow.imageThumbKey].filter(
+              Boolean,
+            ),
+          }),
+        });
+      }
 
-          await fetchWithAuth("/services/account/cdn/deleteImage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageKey: updatedShow.imageKey }),
-      });}
+      setDialogueOpen(true);
+      return;
+    }
 
-  setDialogueOpen(true);
-  return;
-}
-
-    if (imageToDelete) {
+    if (imagesToDelete.original != "") {
       await fetchWithAuth("/services/account/cdn/deleteImage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageKey: imageToDelete }),
+        body: JSON.stringify({
+          imageKeys: [imagesToDelete.original, imagesToDelete.thumbnail].filter(
+            Boolean,
+          ),
+        }),
       });
       updatedShow.imageKey = null;
+      updatedShow.imageThumbKey = null;
     }
-
-
-
-
 
     setIsEditing(false);
     setDialogueOpen(false);
     setEditDialogueOpen(false);
     setEditedShow(undefined);
     setImageToDelete("");
-    setNewImageFile(null);
+    setImagesToDelete({ original: "", thumbnail: "" });
+    setNewImageFiles(null);
     getShows();
 
     setAlertText("Gösteri başarıyla düzenlendi.");
@@ -268,7 +303,11 @@ export default function shows() {
     }
   }, [dialogueOpen]);
 
-  const uploadImage = async (file: File, showID: number): Promise<string> => {
+  const uploadImage = async (
+    original: File,
+    thumbnail: File,
+    showID: number,
+  ): Promise<{ imageKey: string; imageThumbKey: string }> => {
     const sasRes = await fetchWithAuth(
       "/services/account/cdn/getImageUploadSas",
       {
@@ -277,21 +316,36 @@ export default function shows() {
     );
 
     const { uploadUrl, sasToken } = await sasRes.json();
-    const UUID = generateId()
+    const UUID = generateId();
     const fileName = `show-covers/${showID}/${UUID}.webp`;
+    const thumbName = `show-covers/${showID}/${UUID}_thumb.webp`;
 
-    const res = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
+    const oriRes = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
       method: "PUT",
       headers: {
         "x-ms-blob-type": "BlockBlob",
-        "Content-Type": file.type,
+        "Content-Type": original.type,
       },
-      body: file,
+      body: original,
     });
 
-    if (!res.ok) throw new Error("Upload failed");
+    if (!oriRes.ok) throw new Error("Upload failed");
 
-    return fileName;
+    const thumbRes = await fetch(`${uploadUrl}/${thumbName}?${sasToken}`, {
+      method: "PUT",
+      headers: {
+        "x-ms-blob-type": "BlockBlob",
+        "Content-Type": thumbnail.type,
+      },
+      body: thumbnail,
+    });
+
+    if (!thumbRes.ok) throw new Error("Upload failed");
+
+    return {
+      imageKey: fileName,
+      imageThumbKey: thumbName,
+    };
   };
 
   return (
@@ -313,12 +367,15 @@ export default function shows() {
 
         <FileDropzone
           ref={dropzoneRef}
-          file={imageFile}
-          onChange={(file) => setImageFile(file)}
+          file={imageFiles}
+          onChange={setImageFiles}
           MAX_SIZE_MB={50}
         />
         <div className="flex justify-center mt-10">
-          <button className="btn btn-success text-white " onClick={() => createShow()}>
+          <button
+            className="btn btn-success text-white "
+            onClick={() => createShow()}
+          >
             GÖSTERİ EKLE
           </button>
         </div>
@@ -326,12 +383,10 @@ export default function shows() {
 
       <DataTable data={shows} columns={showColumns} title="Gösteriler" />
 
-
-
       {dialogueOpen && (
         <DialogModal
           open={dialogueOpen}
-          dialogueText = {dialogueText}
+          dialogueText={dialogueText}
           onClose={() => {
             setDialogueOpen(false);
             setDialogueText("");
@@ -352,7 +407,13 @@ export default function shows() {
                 value={editedShow?.showName ?? ""}
                 onChange={(e) =>
                   setEditedShow((prev) =>
-                    prev ? { ...prev, showName: e.target.value } : prev,
+                    prev
+                      ? {
+                          ...prev,
+                          imageKey: null,
+                          imageThumbKey: null,
+                        }
+                      : prev,
                   )
                 }
               ></input>
@@ -374,9 +435,18 @@ export default function shows() {
                     <div>
                       <button
                         onClick={() => {
-                          setImageToDelete(editedShow?.imageKey ?? "");
+                          setImagesToDelete({
+                            original: editedShow?.imageKey ?? "",
+                            thumbnail: editedShow?.imageThumbKey ?? "",
+                          });
                           setEditedShow((prev) =>
-                            prev ? { ...prev, imageKey: null } : prev,
+                            prev
+                              ? {
+                                  ...prev,
+                                  imageKey: null,
+                                  imageThumbKey: null,
+                                }
+                              : prev,
                           );
                         }}
                         className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
@@ -393,13 +463,12 @@ export default function shows() {
                 </div>
               ) : (
                 <div className="flex justify-center">
-                <FileDropzone
-                  ref={dropzoneRef}
-                  file={newImageFile}
-                  onChange={(file) => setNewImageFile(file)}
-                  MAX_SIZE_MB={50}
-
-                />
+                  <FileDropzone
+                    ref={dropzoneRef}
+                    file={newImageFiles}
+                    onChange={setNewImageFiles}
+                    MAX_SIZE_MB={50}
+                  />
                 </div>
               )}
 

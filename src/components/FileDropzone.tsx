@@ -1,17 +1,34 @@
 "use client";
-import { useState, useRef, forwardRef, useImperativeHandle, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
 import { compressImage } from "@/src/lib/compressImage";
-
 
 export type FileDropzoneRef = {
   cleanUp: () => void;
 };
 
-const FileDropzone = forwardRef<FileDropzoneRef, {
-  file: File | null;
-  onChange: (file: File | null) => void;
-  MAX_SIZE_MB?: number,
-}>(({ file, onChange, MAX_SIZE_MB}, ref) => {
+const FileDropzone = forwardRef<
+  FileDropzoneRef,
+  {
+file: {
+  original: File | null;
+  thumbnail: File | null;
+} | null;
+
+onChange: (
+  data: {
+    original: File;
+    thumbnail: File;
+  } | null
+) => void;
+    MAX_SIZE_MB?: number;
+  }
+>(({ file, onChange, MAX_SIZE_MB }, ref) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,7 +39,7 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
   const [error, setError] = useState("");
 
- function cleanUp() {
+  function cleanUp() {
     if (preview) {
       URL.revokeObjectURL(preview);
     }
@@ -37,7 +54,7 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
     }
   }
 
-    useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     cleanUp,
   }));
 
@@ -50,54 +67,71 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
     setIsDragging(false);
   }
 
-const onDrop = async (e: React.DragEvent): Promise<void> => {
-  e.preventDefault();
-  setIsDragging(false);
+  const onDrop = async (e: React.DragEvent): Promise<void> => {
+    e.preventDefault();
+    setIsDragging(false);
 
-  const file = e.dataTransfer.files?.[0];
-  if (!file) return;
-
-  if (!validate(file)) return;
-
-  const compressed = await compressImage(file, {
-    maxWidth: 1600,
-    quality: 0.8,
-  });
-
-  onChange(compressed);
-  setPreview(URL.createObjectURL(compressed));
-};
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      const check = validate(file);
-
-      if (!check) {
-        return;
-      }
-    }
+    const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    onChange(file);
-    setPreview(URL.createObjectURL(file));
-  }
+    if (!validate(file)) return;
+
+    const compressed = await compressImage(file, {
+      maxWidth: 1600,
+      quality: 0.8,
+    });
+
+    const thumb = await compressImage(file, {
+      maxWidth: 400,
+      quality: 0.6,
+    });
+
+    onChange({
+      original: compressed,
+      thumbnail: thumb,
+    });
+
+    setPreview(URL.createObjectURL(compressed));
+  };
+
+  const onFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!validate(file)) return;
+
+    const compressed = await compressImage(file, {
+      maxWidth: 1600,
+      quality: 0.8,
+    });
+
+    const thumb = await compressImage(file, {
+      maxWidth: 400,
+      quality: 0.6,
+    });
+
+onChange({
+  original: compressed,
+  thumbnail: thumb,
+});
+
+    setPreview(URL.createObjectURL(compressed));
+  };
 
   function validate(file: File): boolean {
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError("Sadece JPG, PNG, GIF veya WEBP dosyaları kabul edilir.");
       return false;
     }
-    
+
     if (MAX_SIZE_MB && file.size > MAX_SIZE_MB * 1024 * 1024) {
       setError(`Dosya boyutu ${MAX_SIZE_MB}MB'dan büyük olamaz.`);
       return false;
-    }
-    else if (!MAX_SIZE_MB && file.size > DEFAULT_MAX_SIZE_MB * 1024 * 1024) {
+    } else if (!MAX_SIZE_MB && file.size > DEFAULT_MAX_SIZE_MB * 1024 * 1024) {
       setError(`Dosya boyutu ${DEFAULT_MAX_SIZE_MB}MB'dan büyük olamaz.`);
       return false;
-
-
     }
 
     return true;
@@ -118,10 +152,22 @@ const onDrop = async (e: React.DragEvent): Promise<void> => {
   }
 
   useEffect(() => {
-  return () => {
-    if (preview) URL.revokeObjectURL(preview);
-  };
-}, [preview]);
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  useEffect(() => {
+  if (!file?.original) {
+    setPreview(null);
+    return;
+  }
+
+  const url = URL.createObjectURL(file.original);
+  setPreview(url);
+
+  return () => URL.revokeObjectURL(url);
+}, [file]);
 
   return (
     <>
@@ -169,7 +215,8 @@ const onDrop = async (e: React.DragEvent): Promise<void> => {
                   Dosya Seçin
                 </button>
                 <div className="text-xs text-center">
-                  En fazla {MAX_SIZE_MB ? `${MAX_SIZE_MB}` : `${DEFAULT_MAX_SIZE_MB}`}MB
+                  En fazla{" "}
+                  {MAX_SIZE_MB ? `${MAX_SIZE_MB}` : `${DEFAULT_MAX_SIZE_MB}`}MB
                 </div>
               </div>
             </div>
@@ -187,7 +234,11 @@ const onDrop = async (e: React.DragEvent): Promise<void> => {
                 >
                   ✕
                 </button>
-                <img src={preview!} className="rounded-3xl" alt="Önizleme" />
+                <img
+                  src={preview!}
+                  className="rounded-3xl"
+                  alt="Önizleme"
+                />
               </div>
             </div>
           </div>
@@ -195,6 +246,6 @@ const onDrop = async (e: React.DragEvent): Promise<void> => {
       </div>
     </>
   );
-})
+});
 
 export default FileDropzone;
