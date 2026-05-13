@@ -1,5 +1,7 @@
 "use client";
 import { useState, useRef, forwardRef, useImperativeHandle, useEffect } from "react";
+import { compressImage } from "@/src/lib/compressImage";
+
 
 export type FileDropzoneRef = {
   cleanUp: () => void;
@@ -8,14 +10,15 @@ export type FileDropzoneRef = {
 const FileDropzone = forwardRef<FileDropzoneRef, {
   file: File | null;
   onChange: (file: File | null) => void;
-}>(({ file, onChange }, ref) => {
+  MAX_SIZE_MB?: number,
+}>(({ file, onChange, MAX_SIZE_MB}, ref) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [preview, setPreview] = useState<string | null>(null);
 
-  const MAX_SIZE_MB = 5;
+  const DEFAULT_MAX_SIZE_MB = 5;
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
   const [error, setError] = useState("");
 
@@ -47,22 +50,23 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
     setIsDragging(false);
   }
 
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setIsDragging(false);
+const onDrop = async (e: React.DragEvent): Promise<void> => {
+  e.preventDefault();
+  setIsDragging(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const check = validate(file);
-      if (!check) {
-        return;
-      }
-    }
-    if (!file) return;
+  const file = e.dataTransfer.files?.[0];
+  if (!file) return;
 
-    onChange(file);
-    setPreview(URL.createObjectURL(file));
-  }
+  if (!validate(file)) return;
+
+  const compressed = await compressImage(file, {
+    maxWidth: 1600,
+    quality: 0.8,
+  });
+
+  onChange(compressed);
+  setPreview(URL.createObjectURL(compressed));
+};
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -84,10 +88,16 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
       setError("Sadece JPG, PNG, GIF veya WEBP dosyaları kabul edilir.");
       return false;
     }
-
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    
+    if (MAX_SIZE_MB && file.size > MAX_SIZE_MB * 1024 * 1024) {
       setError(`Dosya boyutu ${MAX_SIZE_MB}MB'dan büyük olamaz.`);
       return false;
+    }
+    else if (!MAX_SIZE_MB && file.size > DEFAULT_MAX_SIZE_MB * 1024 * 1024) {
+      setError(`Dosya boyutu ${DEFAULT_MAX_SIZE_MB}MB'dan büyük olamaz.`);
+      return false;
+
+
     }
 
     return true;
@@ -159,7 +169,7 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
                   Dosya Seçin
                 </button>
                 <div className="text-xs text-center">
-                  En fazla {MAX_SIZE_MB}MB
+                  En fazla {MAX_SIZE_MB ? `${MAX_SIZE_MB}` : `${DEFAULT_MAX_SIZE_MB}`}MB
                 </div>
               </div>
             </div>

@@ -278,8 +278,7 @@ export default function shows() {
 
     const { uploadUrl, sasToken } = await sasRes.json();
     const UUID = generateId()
-    const ext = file.name.split(".").pop();
-    const fileName = `show-covers/${showID}/${UUID}.${ext}`;
+    const fileName = `show-covers/${showID}/${UUID}.webp`;
 
     const res = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
       method: "PUT",
@@ -316,6 +315,7 @@ export default function shows() {
           ref={dropzoneRef}
           file={imageFile}
           onChange={(file) => setImageFile(file)}
+          MAX_SIZE_MB={50}
         />
         <div className="flex justify-center mt-10">
           <button className="btn btn-success text-white " onClick={() => createShow()}>
@@ -397,6 +397,8 @@ export default function shows() {
                   ref={dropzoneRef}
                   file={newImageFile}
                   onChange={(file) => setNewImageFile(file)}
+                  MAX_SIZE_MB={50}
+
                 />
                 </div>
               )}
