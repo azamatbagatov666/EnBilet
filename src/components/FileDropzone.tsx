@@ -145,7 +145,7 @@ const FileDropzone = forwardRef<FileDropzoneRef, {
                 ref={inputRef}
                 onChange={onFileChange}
               />
-              <div className="text-lg ">
+              <div className="text-lg px-4 ">
                 {" "}
                 Fotoğrafınızı bu alana sürükleyip bırakabilirsiniz{" "}
               </div>

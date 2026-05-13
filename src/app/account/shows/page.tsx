@@ -337,6 +337,7 @@ export default function shows() {
             setDialogueText("");
             setEditDialogueOpen(false);
           }}
+          width={700}
           disableClose={isEditing}
         >
           {editDialogueOpen && (
@@ -357,7 +358,7 @@ export default function shows() {
               ></input>
               <div>Gösteri Açıklaması:</div>
               <textarea
-                className="input input-accent w-full h-28"
+                className="input input-accent w-full h-56"
                 value={editedShow?.description ?? ""}
                 onChange={(e) =>
                   setEditedShow((prev) =>
@@ -391,11 +392,13 @@ export default function shows() {
                   </div>
                 </div>
               ) : (
+                <div className="flex justify-center">
                 <FileDropzone
                   ref={dropzoneRef}
                   file={newImageFile}
                   onChange={(file) => setNewImageFile(file)}
                 />
+                </div>
               )}
 
               <div className="flex justify-center mt-10">

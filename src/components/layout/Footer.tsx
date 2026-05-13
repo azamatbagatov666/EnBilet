@@ -74,9 +74,9 @@ export default function Footer() {
         <a className="link link-hover">KVKK</a>
       </nav>
       <nav>
-        <h6 className="footer-title">İletişim</h6>
+        <h6 className="footer-title">İLETİŞİM</h6>
         <a className="link link-hover flex gap-2 items-center">
-          <svg viewBox="0 0 24 24" fill="none" className="size-8 fill-black">
+          <svg viewBox="0 0 24 24" fill="none" className="size-8 fill-current">
             <path
               d="M10.0376 5.31617L10.6866 6.4791C11.2723 7.52858 11.0372 8.90532 10.1147 9.8278C10.1147 9.8278 10.1147 9.8278 10.1147 9.8278C10.1146 9.82792 8.99588 10.9468 11.0245 12.9755C13.0525 15.0035 14.1714 13.8861 14.1722 13.8853C14.1722 13.8853 14.1722 13.8853 14.1722 13.8853C15.0947 12.9628 16.4714 12.7277 17.5209 13.3134L18.6838 13.9624C20.2686 14.8468 20.4557 17.0692 19.0628 18.4622C18.2258 19.2992 17.2004 19.9505 16.0669 19.9934C14.1588 20.0658 10.9183 19.5829 7.6677 16.3323C4.41713 13.0817 3.93421 9.84122 4.00655 7.93309C4.04952 6.7996 4.7008 5.77423 5.53781 4.93723C6.93076 3.54428 9.15317 3.73144 10.0376 5.31617Z"
             ></path>{" "}
@@ -92,12 +92,11 @@ export default function Footer() {
           <span>+90 555 555 55 55</span>
         </a>
         <a className="link link-hover flex gap-2 items-center">
-          <svg viewBox="0 0 24 24" fill="none" className="size-8">
+          <svg viewBox="0 0 24 24" fill="none" className="size-8 fill-current">
             <path
               fillRule="evenodd"
               clipRule="evenodd"
               d="M2.54433 5.16792C3.0468 4.46923 3.86451 4 4.8 4H19.2C20.1355 4 20.9532 4.46923 21.4557 5.16792C21.7993 5.64567 22 6.235 22 6.86667V17.1333C22 18.682 20.7804 20 19.2 20H4.8C3.21964 20 2 18.682 2 17.1333V6.86667C2 6.23499 2.20074 5.64567 2.54433 5.16792ZM4.9327 6L11.2598 12.9647C11.6566 13.4015 12.3434 13.4015 12.7402 12.9647L19.0673 6H4.9327ZM20 7.94766L14.2205 14.3096C13.0301 15.6199 10.9699 15.6199 9.77948 14.3096L4 7.94766V17.1333C4 17.6466 4.39214 18 4.8 18H19.2C19.6079 18 20 17.6466 20 17.1333V7.94766Z"
-              fill="#000000"
             ></path>
           </svg>
           <span>info@enbilet.com</span>
@@ -106,20 +105,18 @@ export default function Footer() {
           <svg
             viewBox="0 0 24 24"
             fill="none"
-            className="size-8"
+            className="size-8 stroke-current"
           >
 
 
               <path
                 d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z"
-                stroke="#000000"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               ></path>{" "}
               <path
                 d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
-                stroke="#000000"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
