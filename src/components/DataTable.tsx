@@ -21,6 +21,17 @@
     title,
   }: Props<T>) {
 
+    const initialDataRef = useRef(data);
+    const [hasLoaded, setHasLoaded] = useState(data.length > 0);
+
+    useEffect(() => {
+      if (!hasLoaded && data !== initialDataRef.current) {
+        setHasLoaded(true);
+      }
+    }, [data, hasLoaded]);
+
+    const loading = !hasLoaded;
+
 
     // 🔹 BASIC FILTER STATES
     const [globalSearch, setGlobalSearch] = useState("");
@@ -854,40 +865,54 @@ if (dateValueFilters.size > 0 && dateColumn) {
                   </thead>
 
                   <tbody>
-                    {filteredData.map((row, i) => (
-                      <tr key={i} className={`${styles.tr}  text-xs sm:text-sm `}>
-                        {columns.map((col) => (
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className={`${styles.tr}`}>
+                          {columns.map((_, j) => (
+                            <td key={j} className={`${styles.td} p-2`}>
+                              <div className="h-6 skeleton border-dashed border" />
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : (
+                      <>
+                        {filteredData.map((row, i) => (
+                          <tr key={i} className={`${styles.tr}  text-xs sm:text-sm `}>
+                            {columns.map((col) => (
 <td className={`${styles.td} ${col.overflow ? "whitespace-nowrap overflow-hidden text-ellipsis max-w-50 sm:max-w-100":""}`} key={col.reactKey ?? String(col.key)}>
-                              {col.render ? (
-                              <div className="flex justify-center">
-                                {col.render(row)}
-                              </div>
-                            ) : col.filterType === "boolean" ? (
-                              <div className="flex justify-center">
-                                <input
-                                  type="checkbox"
-                                  checked={Boolean(row[col.key])}
-                                  readOnly
-                                  className="checkbox checkbox-success checkbox-sm sm:checkbox-md  cursor-default"
-                                />
-                              </div>
-                            ) : (
-                              String(row[col.key] ?? "")
-                            )}
-                          </td>
+                                  {col.render ? (
+                                  <div className="flex justify-center">
+                                    {col.render(row)}
+                                  </div>
+                                ) : col.filterType === "boolean" ? (
+                                  <div className="flex justify-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(row[col.key])}
+                                      readOnly
+                                      className="checkbox checkbox-success checkbox-sm sm:checkbox-md  cursor-default"
+                                    />
+                                  </div>
+                                ) : (
+                                  String(row[col.key] ?? "")
+                                )}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
 
-                    {filteredData.length === 0 && (
-                      <tr className={styles.tr}>
-                        <td
-                          colSpan={columns.length}
-                           className={` ${styles.td} text-center py-6 text-black text-xl dark:text-white font-bold`}
-                        >
-                          Sonuç bulunamadı
-                        </td>
-                      </tr>
+                        {filteredData.length === 0 && (
+                          <tr className={styles.tr}>
+                            <td
+                              colSpan={columns.length}
+                               className={` ${styles.td} text-center py-6 text-black text-xl dark:text-white font-bold`}
+                            >
+                              Sonuç bulunamadı
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )}
                   </tbody>
                 </table>
