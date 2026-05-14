@@ -512,6 +512,7 @@ export default function DataTable<T extends object>({
                                                 type="checkbox"
                                                 className="checkbox checkbox-sm"
                                                 checked={
+                                                  (uniqueColumnValues[col.key as string]?.length ?? 0) > 0 &&
                                                   draftValueFilters[
                                                     col.key as string
                                                   ]?.size ===
