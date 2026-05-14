@@ -8,7 +8,9 @@
   import type { Column } from "@/src/models/dataTable/Column";
   import SearchSvg from "@/src/components/svg/SearchSvg";
   import CancelSvg from "@/src/components/svg/CancelSvg";
+  import { createPortal } from 'react-dom';
 
+ 
   type Props<T> = {
     data: T[];
     columns: Column<T>[];
@@ -247,6 +249,12 @@ const handleFilter = (key: string) => {
     if (key === dateColumn?.key) {
       // ✅ sync draft with saved when opening
       setDraftDateValueFilters(new Set(dateValueFilters));
+    } else {
+      // ✅ sync draft with saved when opening
+      setDraftValueFilters((prevDraft) => ({
+        ...prevDraft,
+        [key]: new Set(valueFilters[key] ?? []),
+      }));
     }
 
     return key;
@@ -349,13 +357,21 @@ if (dateValueFilters.size > 0 && dateColumn) {
 
         if (clickedButton) return;
 
-        // 3️⃣ Real outside click → close
+        // 3️⃣ Real outside click → reset drafts & close
+        setDraftValueFilters((prev) => {
+          const reset: Record<string, Set<string>> = {};
+          for (const key of Object.keys(prev)) {
+            reset[key] = new Set(valueFilters[key] ?? []);
+          }
+          return reset;
+        });
+        setDraftDateValueFilters(new Set(dateValueFilters));
         setSelectedFilter("");
       };
 
       window.addEventListener("mousedown", handleOutsideClick);
       return () => window.removeEventListener("mousedown", handleOutsideClick);
-    }, []);
+    }, [valueFilters, dateValueFilters]);
 
     return (
       <>
@@ -583,6 +599,11 @@ if (dateValueFilters.size > 0 && dateColumn) {
                                         </button>
                                         <button
                                           onClick={() => {
+                                            // Reset draft back to saved state
+                                            setDraftValueFilters((prev) => ({
+                                              ...prev,
+                                              [col.key as string]: new Set(valueFilters[col.key as string] ?? []),
+                                            }));
                                             setSelectedFilter("");
                                           }}
                                           className="btn btn-sm btn-error"
@@ -725,6 +746,8 @@ if (dateValueFilters.size > 0 && dateColumn) {
   </button>
                                         <button
                                           onClick={() => {
+                                            // Reset draft back to saved state
+                                            setDraftDateValueFilters(new Set(dateValueFilters));
                                             setSelectedFilter("");
                                           }}
                                           className="btn btn-sm btn-error"
