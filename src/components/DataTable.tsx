@@ -4,7 +4,7 @@
 import styles from './DataTable.module.css'
 
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { Column } from "@/src/models/dataTable/Column";
 import SearchSvg from "@/src/components/svg/SearchSvg";
 import CancelSvg from "@/src/components/svg/CancelSvg";
@@ -59,6 +59,13 @@ export default function DataTable<T extends object>({
 
   // 🔹 PANEL POSITION (for portal)
   const [panelPosition, setPanelPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollState, setScrollState] = useState({
+    left: false,
+    right: false,
+  });
 
 
   const isColumnFiltered = (col: Column<T>) => {
@@ -354,10 +361,39 @@ export default function DataTable<T extends object>({
     dateColumn,
   ]);
 
+  const updateScrollShadows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
 
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const hasOverflow = scrollWidth - clientWidth > 1;
+
+    setScrollState({
+      left: hasOverflow && scrollLeft > 1,
+      right: hasOverflow && scrollLeft + clientWidth < scrollWidth - 1,
+    });
+  }, []);
 
   useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    updateScrollShadows();
+
+    el.addEventListener("scroll", updateScrollShadows, { passive: true });
+    const ro = new ResizeObserver(updateScrollShadows);
+    ro.observe(el);
+    const table = el.querySelector("table");
+    if (table) ro.observe(table);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollShadows);
+      ro.disconnect();
+    };
+  }, [updateScrollShadows, filteredData, loading]);
+
+    useEffect(() => {
+      const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
 
       // 1️⃣ Click inside panel → ignore
@@ -417,344 +453,200 @@ export default function DataTable<T extends object>({
               </div>
             </div>
             {/* Table */}
-            <div className=" overflow-auto  ">
-              <table className={`${styles.table} table table-auto w-fit `}>
-                <thead className='text-black dark:text-white'>
-                  <tr className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}>
-                    {columns.map((col) => (
-                      <th className={`${styles.th}`} key={col.reactKey ?? String(col.key)}>
-                        <div className="inline-flex items-center relative">
-                          <span>{col.label}</span>
-                          {col.filterType != "none" && (
-                            <>
-                              <button
-                                className="ml-1"
-                                onClick={() => {
-                                  handleFilter(col.key.toString());
-                                }}
-                                ref={(el) => {
-                                  filterButtonRefs.current[col.key as string] =
-                                    el;
-                                }}
-                              >
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  className={`size-5 sm:size-6
-    ${selectedFilter == col.key
-                                      ? "fill-black dark:fill-green-500"
-                                      : isColumnFiltered(col)
-                                        ? "fill-red-600"
-                                        : "fill-gray-400"
-                                    }
-  `}
+            <div
+              className={`${styles.tablewrapper}${scrollState.left ? ` ${styles.shadowLeft}` : ""}${scrollState.right ? ` ${styles.shadowRight}` : ""}`}
+            >
+              <div ref={scrollRef} className={styles.tablescroll}>
+                <table className={`${styles.table} table table-auto w-fit `}>
+                  <thead className='text-black dark:text-white'>
+                    <tr className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}>
+                      {columns.map((col) => (
+                        <th className={`${styles.th}`} key={col.reactKey ?? String(col.key)}>
+                          <div className="inline-flex items-center relative">
+                            <span>{col.label}</span>
+                            {col.filterType != "none" && (
+                              <>
+                                <button
+                                  className="ml-1"
+                                  onClick={() => {
+                                    handleFilter(col.key.toString());
+                                  }}
+                                  ref={(el) => {
+                                    filterButtonRefs.current[col.key as string] =
+                                      el;
+                                  }}
                                 >
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M2 5C2 3.34315 3.34315 2 5 2H19C20.6569 2 22 3.34315 22 5V6.17157C22 6.96722 21.6839 7.73028 21.1213 8.29289L15.2929 14.1213C15.1054 14.3089 15 14.5632 15 14.8284V17.1716C15 17.9672 14.6839 18.7303 14.1213 19.2929L11.9193 21.4949C10.842 22.5722 9 21.8092 9 20.2857V14.8284C9 14.5632 8.89464 14.3089 8.70711 14.1213L2.87868 8.29289C2.31607 7.73028 2 6.96722 2 6.17157V5Z"
-                                  ></path>
-                                </svg>
-                              </button>
-                              {selectedFilter == col.key && (createPortal(
-                                <div className="" ref={ref}>
-                                  <div
-                                    className="absolute z-[9999] bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
-                                    style={{ top: panelPosition.top, left: panelPosition.left }}
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    className={`size-5 sm:size-6
+    ${selectedFilter == col.key
+                                        ? "fill-black dark:fill-green-500"
+                                        : isColumnFiltered(col)
+                                          ? "fill-red-600"
+                                          : "fill-gray-400"
+                                      }
+  `}
                                   >
-                                    {col.filterType != "date" ? <div>
-                                      {col.searchable && (
-                                        <label className="flex gap-1 mb-2 input input-xs !outline-none ">
-                                          <div className="flex justify-center items-center">
-                                            <SearchSvg />
-                                          </div>
-                                          <input
-                                            className=" !outline-none"
-                                            placeholder="Ara"
-                                            value={
-                                              panelSearch[col.key as string] ?? ""
-                                            }
-                                            onChange={(e) =>
-                                              setPanelSearch((prev) => ({
-                                                ...prev,
-                                                [col.key as string]: e.target.value,
-                                              }))
-                                            }
-                                          />
-                                          <div className="size-5 self-center content-center">
-                                            {panelSearch[col.key as string] !== "" &&
-                                              panelSearch[col.key as string] != null && (
-                                                <button
-                                                  onClick={() =>
-                                                    setPanelSearch((prev) => ({
-                                                      ...prev,
-                                                      [col.key as string]: "",
-                                                    }))
-                                                  }
-                                                >
-                                                  <CancelSvg className='size-5' />
-
-                                                </button>
-                                              )}
-                                          </div>
-                                        </label>
-
-
-
-
-                                      )}
-                                      <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
-                                        {!Boolean(
-                                          panelSearch[col.key as string],
-                                        ) && (
-                                            <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
-                                              <input
-                                                type="checkbox"
-                                                className="checkbox checkbox-sm"
-                                                checked={
-                                                  (uniqueColumnValues[col.key as string]?.length ?? 0) > 0 &&
-                                                  draftValueFilters[
-                                                    col.key as string
-                                                  ]?.size ===
-                                                  uniqueColumnValues[
-                                                    col.key as string
-                                                  ]?.length
-                                                }
-                                                onChange={(e) => {
-                                                  if (e.target.checked) {
-                                                    handleSelectAll(
-                                                      col.key as string,
-                                                      uniqueColumnValues[
-                                                      col.key as string
-                                                      ],
-                                                    );
-                                                  } else {
-                                                    setDraftValueFilters(
-                                                      (prev) => ({
-                                                        ...prev,
-                                                        [col.key as string]:
-                                                          new Set<string>(),
-                                                      }),
-                                                    );
-                                                  }
-                                                }}
-                                              />
-                                              <span>Hepsini Seç</span>
-                                            </label>
-                                          )}
-                                        {uniqueColumnValues[col.key as string]
-                                          ?.filter((value) =>
-                                            value
-                                              .toLowerCase()
-                                              .includes(
-                                                (
-                                                  panelSearch[
-                                                  col.key as string
-                                                  ] ?? ""
-                                                ).toLowerCase(),
-                                              ),
-                                          )
-                                          .map((value) => (
-                                            <label
-                                              className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0"
-                                              key={value}
-                                            >
-                                              <input
-                                                type="checkbox"
-                                                className="checkbox checkbox-sm"
-                                                checked={
-                                                  draftValueFilters[
-                                                    col.key as string
-                                                  ]?.has(value) ?? false
-                                                }
-                                                onChange={(e) =>
-                                                  setDraftValueFilters((prev) => {
-                                                    const next = new Set(
-                                                      prev[col.key as string] ??
-                                                      [],
-                                                    );
-
-                                                    e.target.checked
-                                                      ? next.add(value)
-                                                      : next.delete(value);
-
-                                                    return {
-                                                      ...prev,
-                                                      [col.key]: next,
-                                                    };
-                                                  })
-                                                }
-                                              />
-                                              <span>
-                                                {value == "false" &&
-                                                  !col.searchable
-                                                  ? "Hayır"
-                                                  : value == "true" &&
-                                                    !col.searchable
-                                                    ? "Evet"
-                                                    : value}
-                                              </span>
-                                            </label>
-                                          ))}
-                                      </div>
-                                      <div className="flex justify-around mt-2">
-                                        <button
-                                          className="btn btn-sm btn-success text-white"
-                                          onClick={() => {
-                                            setValueFilters((prev) => ({
-                                              ...prev,
-                                              [col.key as string]:
-                                                draftValueFilters[
-                                                col.key as string
-                                                ] ?? new Set(),
-                                            }));
-                                            setSelectedFilter("");
-                                          }}
-                                        >
-                                          Kaydet
-                                        </button>
-                                        <button
-                                          onClick={() => {
-                                            // Reset draft back to saved state
-                                            setDraftValueFilters((prev) => ({
-                                              ...prev,
-                                              [col.key as string]: new Set(valueFilters[col.key as string] ?? []),
-                                            }));
-                                            setSelectedFilter("");
-                                          }}
-                                          className="btn btn-sm btn-error"
-                                        >
-                                          İptal
-                                        </button>
-                                      </div>
-                                    </div> :
-
-
-                                      <div>
-
-                                        <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
-
-                                          <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
-                                            <input
-                                              type="checkbox"
-                                              className="checkbox checkbox-sm"
-                                              checked={isAllDatesSelected}
-                                              onChange={(e) => {
-                                                setDraftDateValueFilters(
-                                                  e.target.checked ? new Set(allDateKeys) : new Set()
-                                                );
-                                              }}
-                                            />
-                                            <span>Hepsini Seç</span>
-                                          </label>
-                                          {col.filterType === "date" && (
-                                            <div className="max-h-64 min-w-48  text-sm">
-                                              {Object.entries(dateTree).map(([year, months]) => (
-                                                <details
-                                                  key={year}
-                                                  ref={(el) => {
-                                                    dateAccordionRefs.current[String(year)] = el;
-                                                  }}
-                                                  className="mb-1"
-                                                >
-                                                  <summary className="cursor-pointer list-item list-inside pl-1">
-                                                    <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
-                                                      <input
-                                                        type="checkbox"
-                                                        className="checkbox checkbox-sm"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        checked={isYearChecked(year)}
-                                                        onChange={(e) => {
-                                                          setDraftDateValueFilters((prev) => {
-                                                            const next = new Set(prev);
-                                                            const keys = getYearKeys(year);
-
-                                                            e.target.checked
-                                                              ? keys.forEach((k) => next.add(k))
-                                                              : keys.forEach((k) => next.delete(k));
-
-                                                            return next;
-                                                          });
-                                                        }}
-                                                      />
-                                                      <span>{year}</span>
-                                                    </div>
-                                                  </summary>
-
-
-                                                  <div className="ml-3">
-                                                    {Object.entries(months).map(([month, days]) => (
-                                                      <details
-                                                        key={month}
-                                                        ref={(el) => {
-                                                          dateAccordionRefs.current[`${year}-${month}`] = el;
-                                                        }}
-                                                        className="ml-3 mb-1"
-                                                      >
-                                                        <summary className="cursor-pointer list-item list-inside pl-1">
-                                                          <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
-                                                            <input
-                                                              type="checkbox"
-                                                              className="checkbox checkbox-sm"
-                                                              onClick={(e) => e.stopPropagation()}
-                                                              checked={isMonthChecked(year, month, days)}
-                                                              onChange={(e) => {
-                                                                setDraftDateValueFilters((prev) => {
-                                                                  const next = new Set(prev);
-                                                                  const keys = getMonthKeys(year, month, days);
-
-                                                                  e.target.checked
-                                                                    ? keys.forEach((k) => next.add(k))
-                                                                    : keys.forEach((k) => next.delete(k));
-
-                                                                  return next;
-                                                                });
-                                                              }}
-                                                            />
-                                                            <span>
-                                                              {new Date(+year, +month - 1).toLocaleString("tr", { month: "long" })}
-                                                            </span>
-                                                          </div>
-                                                        </summary>
-
-                                                        <div className="ml-10 mt-1 space-y-2">
-                                                          {days.map((day) => {
-                                                            const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-                                                            return (
-                                                              <label key={key} className="flex items-center gap-2 translate-y-[5px]">
-                                                                <input
-                                                                  type="checkbox"
-                                                                  className="checkbox checkbox-sm"
-                                                                  checked={draftDateValueFilters.has(key)}
-                                                                  onChange={(e) => {
-                                                                    setDraftDateValueFilters((prev) => {
-                                                                      const next = new Set(prev);
-                                                                      e.target.checked ? next.add(key) : next.delete(key);
-                                                                      return next;
-                                                                    });
-                                                                  }}
-                                                                />
-                                                                <span>{day}</span>
-                                                              </label>
-                                                            );
-                                                          })}
-                                                        </div>
-                                                      </details>
-                                                    ))}
-                                                  </div>
-                                                </details>
-                                              ))}
+                                    <path
+                                      fillRule="evenodd"
+                                      clipRule="evenodd"
+                                      d="M2 5C2 3.34315 3.34315 2 5 2H19C20.6569 2 22 3.34315 22 5V6.17157C22 6.96722 21.6839 7.73028 21.1213 8.29289L15.2929 14.1213C15.1054 14.3089 15 14.5632 15 14.8284V17.1716C15 17.9672 14.6839 18.7303 14.1213 19.2929L11.9193 21.4949C10.842 22.5722 9 21.8092 9 20.2857V14.8284C9 14.5632 8.89464 14.3089 8.70711 14.1213L2.87868 8.29289C2.31607 7.73028 2 6.96722 2 6.17157V5Z"
+                                    ></path>
+                                  </svg>
+                                </button>
+                                {selectedFilter == col.key && (createPortal(
+                                  <div className="" ref={ref}>
+                                    <div
+                                      className="absolute z-[9999] bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
+                                      style={{ top: panelPosition.top, left: panelPosition.left }}
+                                    >
+                                      {col.filterType != "date" ? <div>
+                                        {col.searchable && (
+                                          <label className="flex gap-1 mb-2 input input-xs !outline-none ">
+                                            <div className="flex justify-center items-center">
+                                              <SearchSvg />
                                             </div>
-                                          )}
+                                            <input
+                                              className=" !outline-none"
+                                              placeholder="Ara"
+                                              value={
+                                                panelSearch[col.key as string] ?? ""
+                                              }
+                                              onChange={(e) =>
+                                                setPanelSearch((prev) => ({
+                                                  ...prev,
+                                                  [col.key as string]: e.target.value,
+                                                }))
+                                              }
+                                            />
+                                            <div className="size-5 self-center content-center">
+                                              {panelSearch[col.key as string] !== "" &&
+                                                panelSearch[col.key as string] != null && (
+                                                  <button
+                                                    onClick={() =>
+                                                      setPanelSearch((prev) => ({
+                                                        ...prev,
+                                                        [col.key as string]: "",
+                                                      }))
+                                                    }
+                                                  >
+                                                    <CancelSvg className='size-5' />
+
+                                                  </button>
+                                                )}
+                                            </div>
+                                          </label>
 
 
+
+
+                                        )}
+                                        <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
+                                          {!Boolean(
+                                            panelSearch[col.key as string],
+                                          ) && (
+                                              <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
+                                                <input
+                                                  type="checkbox"
+                                                  className="checkbox checkbox-sm"
+                                                  checked={
+                                                    (uniqueColumnValues[col.key as string]?.length ?? 0) > 0 &&
+                                                    draftValueFilters[
+                                                      col.key as string
+                                                    ]?.size ===
+                                                    uniqueColumnValues[
+                                                      col.key as string
+                                                    ]?.length
+                                                  }
+                                                  onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                      handleSelectAll(
+                                                        col.key as string,
+                                                        uniqueColumnValues[
+                                                        col.key as string
+                                                        ],
+                                                      );
+                                                    } else {
+                                                      setDraftValueFilters(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          [col.key as string]:
+                                                            new Set<string>(),
+                                                        }),
+                                                      );
+                                                    }
+                                                  }}
+                                                />
+                                                <span>Hepsini Seç</span>
+                                              </label>
+                                            )}
+                                          {uniqueColumnValues[col.key as string]
+                                            ?.filter((value) =>
+                                              value
+                                                .toLowerCase()
+                                                .includes(
+                                                  (
+                                                    panelSearch[
+                                                    col.key as string
+                                                    ] ?? ""
+                                                  ).toLowerCase(),
+                                                ),
+                                            )
+                                            .map((value) => (
+                                              <label
+                                                className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0"
+                                                key={value}
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  className="checkbox checkbox-sm"
+                                                  checked={
+                                                    draftValueFilters[
+                                                      col.key as string
+                                                    ]?.has(value) ?? false
+                                                  }
+                                                  onChange={(e) =>
+                                                    setDraftValueFilters((prev) => {
+                                                      const next = new Set(
+                                                        prev[col.key as string] ??
+                                                        [],
+                                                      );
+
+                                                      e.target.checked
+                                                        ? next.add(value)
+                                                        : next.delete(value);
+
+                                                      return {
+                                                        ...prev,
+                                                        [col.key]: next,
+                                                      };
+                                                    })
+                                                  }
+                                                />
+                                                <span>
+                                                  {value == "false" &&
+                                                    !col.searchable
+                                                    ? "Hayır"
+                                                    : value == "true" &&
+                                                      !col.searchable
+                                                      ? "Evet"
+                                                      : value}
+                                                </span>
+                                              </label>
+                                            ))}
                                         </div>
                                         <div className="flex justify-around mt-2">
                                           <button
                                             className="btn btn-sm btn-success text-white"
                                             onClick={() => {
-                                              setDateValueFilters(new Set(draftDateValueFilters));
+                                              setValueFilters((prev) => ({
+                                                ...prev,
+                                                [col.key as string]:
+                                                  draftValueFilters[
+                                                  col.key as string
+                                                  ] ?? new Set(),
+                                              }));
                                               setSelectedFilter("");
                                             }}
                                           >
@@ -763,7 +655,10 @@ export default function DataTable<T extends object>({
                                           <button
                                             onClick={() => {
                                               // Reset draft back to saved state
-                                              setDraftDateValueFilters(new Set(dateValueFilters));
+                                              setDraftValueFilters((prev) => ({
+                                                ...prev,
+                                                [col.key as string]: new Set(valueFilters[col.key as string] ?? []),
+                                              }));
                                               setSelectedFilter("");
                                             }}
                                             className="btn btn-sm btn-error"
@@ -771,47 +666,267 @@ export default function DataTable<T extends object>({
                                             İptal
                                           </button>
                                         </div>
-                                      </div>
+                                      </div> :
 
 
-                                    }
+                                        <div>
 
-                                  </div>
-                                </div>, document.body)
-                              )}
-                            </>
+                                          <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
+
+                                            <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
+                                              <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-sm"
+                                                checked={isAllDatesSelected}
+                                                onChange={(e) => {
+                                                  setDraftDateValueFilters(
+                                                    e.target.checked ? new Set(allDateKeys) : new Set()
+                                                  );
+                                                }}
+                                              />
+                                              <span>Hepsini Seç</span>
+                                            </label>
+                                            {col.filterType === "date" && (
+                                              <div className="max-h-64 min-w-48  text-sm">
+                                                {Object.entries(dateTree).map(([year, months]) => (
+                                                  <details
+                                                    key={year}
+                                                    ref={(el) => {
+                                                      dateAccordionRefs.current[String(year)] = el;
+                                                    }}
+                                                    className="mb-1"
+                                                  >
+                                                    <summary className="cursor-pointer list-item list-inside pl-1">
+                                                      <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
+                                                        <input
+                                                          type="checkbox"
+                                                          className="checkbox checkbox-sm"
+                                                          onClick={(e) => e.stopPropagation()}
+                                                          checked={isYearChecked(year)}
+                                                          onChange={(e) => {
+                                                            setDraftDateValueFilters((prev) => {
+                                                              const next = new Set(prev);
+                                                              const keys = getYearKeys(year);
+
+                                                              e.target.checked
+                                                                ? keys.forEach((k) => next.add(k))
+                                                                : keys.forEach((k) => next.delete(k));
+
+                                                              return next;
+                                                            });
+                                                          }}
+                                                        />
+                                                        <span>{year}</span>
+                                                      </div>
+                                                    </summary>
+
+
+                                                    <div className="ml-3">
+                                                      {Object.entries(months).map(([month, days]) => (
+                                                        <details
+                                                          key={month}
+                                                          ref={(el) => {
+                                                            dateAccordionRefs.current[`${year}-${month}`] = el;
+                                                          }}
+                                                          className="ml-3 mb-1"
+                                                        >
+                                                          <summary className="cursor-pointer list-item list-inside pl-1">
+                                                            <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
+                                                              <input
+                                                                type="checkbox"
+                                                                className="checkbox checkbox-sm"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                checked={isMonthChecked(year, month, days)}
+                                                                onChange={(e) => {
+                                                                  setDraftDateValueFilters((prev) => {
+                                                                    const next = new Set(prev);
+                                                                    const keys = getMonthKeys(year, month, days);
+
+                                                                    e.target.checked
+                                                                      ? keys.forEach((k) => next.add(k))
+                                                                      : keys.forEach((k) => next.delete(k));
+
+                                                                    return next;
+                                                                  });
+                                                                }}
+                                                              />
+                                                              <span>
+                                                                {new Date(+year, +month - 1).toLocaleString("tr", { month: "long" })}
+                                                              </span>
+                                                            </div>
+                                                          </summary>
+
+                                                          <div className="ml-10 mt-1 space-y-2">
+                                                            {days.map((day) => {
+                                                              const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+                                                              return (
+                                                                <label key={key} className="flex items-center gap-2 translate-y-[5px]">
+                                                                  <input
+                                                                    type="checkbox"
+                                                                    className="checkbox checkbox-sm"
+                                                                    checked={draftDateValueFilters.has(key)}
+                                                                    onChange={(e) => {
+                                                                      setDraftDateValueFilters((prev) => {
+                                                                        const next = new Set(prev);
+                                                                        e.target.checked ? next.add(key) : next.delete(key);
+                                                                        return next;
+                                                                      });
+                                                                    }}
+                                                                  />
+                                                                  <span>{day}</span>
+                                                                </label>
+                                                              );
+                                                            })}
+                                                          </div>
+                                                        </details>
+                                                      ))}
+                                                    </div>
+                                                  </details>
+                                                ))}
+                                              </div>
+                                            )}
+
+
+                                          </div>
+                                          <div className="flex justify-around mt-2">
+                                            <button
+                                              className="btn btn-sm btn-success text-white"
+                                              onClick={() => {
+                                                setDateValueFilters(new Set(draftDateValueFilters));
+                                                setSelectedFilter("");
+                                              }}
+                                            >
+                                              Kaydet
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                // Reset draft back to saved state
+                                                setDraftDateValueFilters(new Set(dateValueFilters));
+                                                setSelectedFilter("");
+                                              }}
+                                              className="btn btn-sm btn-error"
+                                            >
+                                              İptal
+                                            </button>
+                                          </div>
+                                        </div>
+
+
+                                      }
+
+                                    </div>
+                                  </div>, document.body)
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className={`${styles.tr} !bg-gray-300 dark:!bg-gray-700`}>
+                      {columns.map((col) => (
+                        <th className={styles.th} key={col.reactKey ?? String(col.key)}>
+                          {col.searchable && (
+                            <label className="flex min-w-24 input input-xs sm:input-sm h-7 sm:h-9 !outline-none gap-px px-2 sm:px-2">
+                              <div className="flex justify-center items-center">
+                                <SearchSvg />
+                              </div>
+                              <input
+                                className=" !outline-none "
+                                placeholder="Ara"
+                                value={columnSearch[col.key as string] ?? ""}
+                                onChange={(e) =>
+                                  setColumnSearch((prev) => ({
+                                    ...prev,
+                                    [col.key]: e.target.value,
+                                  }))
+                                }
+                              />
+                              <div className="size-4 sm:size-6 self-center content-center">
+                                {columnSearch[col.key as string] !== "" &&
+                                  columnSearch[col.key as string] != null && (
+                                    <button
+                                      onClick={() =>
+                                        setColumnSearch((prev) => ({
+                                          ...prev,
+                                          [col.key]: "",
+                                        }))
+                                      }
+                                    >
+                                      <CancelSvg />
+
+                                    </button>
+                                  )}
+                              </div>
+                            </label>
                           )}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                  <tr className={`${styles.tr} !bg-gray-300 dark:!bg-gray-700`}>
-                    {columns.map((col) => (
-                      <th className={styles.th} key={col.reactKey ?? String(col.key)}>
-                        {col.searchable && (
-                          <label className="flex min-w-24 input input-xs sm:input-sm h-7 sm:h-9 !outline-none gap-px px-2 sm:px-2">
-                            <div className="flex justify-center items-center">
-                              <SearchSvg />
-                            </div>
-                            <input
-                              className=" !outline-none "
-                              placeholder="Ara"
-                              value={columnSearch[col.key as string] ?? ""}
-                              onChange={(e) =>
-                                setColumnSearch((prev) => ({
-                                  ...prev,
-                                  [col.key]: e.target.value,
-                                }))
-                              }
-                            />
-                            <div className="size-4 sm:size-6 self-center content-center">
-                              {columnSearch[col.key as string] !== "" &&
-                                columnSearch[col.key as string] != null && (
+
+                          {col.filterType === "boolean" && (
+                            <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max !outline-none ">
+                              <select
+                                className="!outline-none bg-transparent max-w-8 sm:max-w-max"
+                                value={
+                                  boolFilters[col.key as string] === null ||
+                                    boolFilters[col.key as string] === undefined
+                                    ? ""
+                                    : String(boolFilters[col.key as string])
+                                }
+                                onChange={(e) =>
+                                  setBoolFilters((prev) => ({
+                                    ...prev,
+                                    [col.key]:
+                                      e.target.value === ""
+                                        ? null
+                                        : e.target.value === "true",
+                                  }))
+                                }
+                              >
+                                <option className='text-black' value="">Hepsi</option>
+                                <option className='text-black' value="true">Evet</option>
+                                <option className='text-black' value="false">Hayır</option>
+                              </select>
+                              <div className="size-4 sm:size-6 content-center self-center">
+                                {boolFilters[col.key as string] !== null &&
+                                  boolFilters[col.key as string] !==
+                                  undefined && (
+                                    <button
+                                      onClick={() =>
+                                        setBoolFilters((prev) => ({
+                                          ...prev,
+                                          [col.key as string]: null,
+                                        }))
+                                      }
+                                    >
+                                      <CancelSvg />
+
+                                    </button>
+                                  )}
+                              </div>
+                            </label>
+                          )}
+
+                          {col.filterType === "date" && (
+                            <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max !outline-none ">
+                              <input
+                                className={`!outline-none w-23 sm:max-w-max ${styles.input}`}
+                                type="date"
+                                value={dateFilters[col.key as string] ?? ""}
+                                onChange={(e) =>
+                                  setDateFilters((prev) => ({
+                                    ...prev,
+                                    [col.key as string]: e.target.value,
+                                  }))
+                                }
+                              />
+
+                              <div className="size-4 sm:size-6 self-center content-center">
+                                {Boolean(dateFilters[col.key as string]) && (
                                   <button
                                     onClick={() =>
-                                      setColumnSearch((prev) => ({
+                                      setDateFilters((prev) => ({
                                         ...prev,
-                                        [col.key]: "",
+                                        [col.key as string]: "",
                                       }))
                                     }
                                   >
@@ -819,143 +934,68 @@ export default function DataTable<T extends object>({
 
                                   </button>
                                 )}
-                            </div>
-                          </label>
-                        )}
+                              </div>
+                            </label>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
 
-                        {col.filterType === "boolean" && (
-                          <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max !outline-none ">
-                            <select
-                              className="!outline-none bg-transparent max-w-8 sm:max-w-max"
-                              value={
-                                boolFilters[col.key as string] === null ||
-                                  boolFilters[col.key as string] === undefined
-                                  ? ""
-                                  : String(boolFilters[col.key as string])
-                              }
-                              onChange={(e) =>
-                                setBoolFilters((prev) => ({
-                                  ...prev,
-                                  [col.key]:
-                                    e.target.value === ""
-                                      ? null
-                                      : e.target.value === "true",
-                                }))
-                              }
-                            >
-                              <option className='text-black' value="">Hepsi</option>
-                              <option className='text-black' value="true">Evet</option>
-                              <option className='text-black' value="false">Hayır</option>
-                            </select>
-                            <div className="size-4 sm:size-6 content-center self-center">
-                              {boolFilters[col.key as string] !== null &&
-                                boolFilters[col.key as string] !==
-                                undefined && (
-                                  <button
-                                    onClick={() =>
-                                      setBoolFilters((prev) => ({
-                                        ...prev,
-                                        [col.key as string]: null,
-                                      }))
-                                    }
-                                  >
-                                    <CancelSvg />
-
-                                  </button>
-                                )}
-                            </div>
-                          </label>
-                        )}
-
-                        {col.filterType === "date" && (
-                          <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max !outline-none ">
-                            <input
-                              className={`!outline-none w-23 sm:max-w-max ${styles.input}`}
-                              type="date"
-                              value={dateFilters[col.key as string] ?? ""}
-                              onChange={(e) =>
-                                setDateFilters((prev) => ({
-                                  ...prev,
-                                  [col.key as string]: e.target.value,
-                                }))
-                              }
-                            />
-
-                            <div className="size-4 sm:size-6 self-center content-center">
-                              {Boolean(dateFilters[col.key as string]) && (
-                                <button
-                                  onClick={() =>
-                                    setDateFilters((prev) => ({
-                                      ...prev,
-                                      [col.key as string]: "",
-                                    }))
-                                  }
-                                >
-                                  <CancelSvg />
-
-                                </button>
-                              )}
-                            </div>
-                          </label>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <tr key={i} className={`${styles.tr}`}>
-                        {columns.map((_, j) => (
-                          <td key={j} className={`${styles.td} p-2`}>
-                            <div className="h-6 skeleton border-dashed border" />
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  ) : (
-                    <>
-                      {filteredData.map((row, i) => (
-                        <tr key={i} className={`${styles.tr}  text-xs sm:text-sm `}>
-                          {columns.map((col) => (
-                            <td className={`${styles.td} ${col.overflow ? "whitespace-nowrap overflow-hidden text-ellipsis max-w-50 sm:max-w-100" : ""}`} key={col.reactKey ?? String(col.key)}>
-                              {col.render ? (
-                                <div className="flex justify-center">
-                                  {col.render(row)}
-                                </div>
-                              ) : col.filterType === "boolean" ? (
-                                <div className="flex justify-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(row[col.key])}
-                                    readOnly
-                                    className="checkbox checkbox-success checkbox-sm sm:checkbox-md  cursor-default"
-                                  />
-                                </div>
-                              ) : (
-                                String(row[col.key] ?? "")
-                              )}
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className={`${styles.tr}`}>
+                          {columns.map((_, j) => (
+                            <td key={j} className={`${styles.td} p-2`}>
+                              <div className="h-6 skeleton border-dashed border" />
                             </td>
                           ))}
                         </tr>
-                      ))}
+                      ))
+                    ) : (
+                      <>
+                        {filteredData.map((row, i) => (
+                          <tr key={i} className={`${styles.tr}  text-xs sm:text-sm `}>
+                            {columns.map((col) => (
+                              <td className={`${styles.td} ${col.overflow ? "whitespace-nowrap overflow-hidden text-ellipsis max-w-50 sm:max-w-100" : ""}`} key={col.reactKey ?? String(col.key)}>
+                                {col.render ? (
+                                  <div className="flex justify-center">
+                                    {col.render(row)}
+                                  </div>
+                                ) : col.filterType === "boolean" ? (
+                                  <div className="flex justify-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(row[col.key])}
+                                      readOnly
+                                      className="checkbox checkbox-success checkbox-sm sm:checkbox-md  cursor-default"
+                                    />
+                                  </div>
+                                ) : (
+                                  String(row[col.key] ?? "")
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
 
-                      {filteredData.length === 0 && (
-                        <tr className={styles.tr}>
-                          <td
-                            colSpan={columns.length}
-                            className={` ${styles.td} text-center py-6 text-black text-xl dark:text-white font-bold`}
-                          >
-                            Sonuç bulunamadı
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  )}
-                </tbody>
-              </table>
+                       
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
+ {filteredData.length === 0 && (
+                          <div>
+                            <div
+                              className={` text-center py-3 border-b-2 text-black text-xl dark:text-white font-bold`}
+                            >
+                              Sonuç bulunamadı
+                            </div>
+                          </div>
+                        )}
             <div className="rounded-b-xl flex justify-end bg-gray-300 dark:bg-gray-700 p-2 ">
               <button
                 className="btn btn-sm btn-error"
