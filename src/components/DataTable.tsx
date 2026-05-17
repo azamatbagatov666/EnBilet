@@ -432,12 +432,12 @@ export default function DataTable<T extends object>({
               <div className="flex justify-center text-xl sm:text-3xl font-bold "> <span className="   dark:text-white duration-150 break-all"> {title}</span></div>
               <div className="flex justify-center sm:justify-end ">
 
-                <label className="flex gap-1 input input-xs sm:input-sm h-7 sm:h-9 w-full sm:w-auto !outline-none ">
+                <label className="flex gap-1 input input-xs sm:input-sm h-7 sm:h-9 w-full sm:w-auto outline-none! ">
                   <div className="flex justify-center items-center">
                     <SearchSvg />
                   </div>
                   <input
-                    className="font-bold !outline-none"
+                    className="font-bold outline-none!"
                     placeholder="Genel Arama"
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
@@ -498,17 +498,17 @@ export default function DataTable<T extends object>({
                                 {selectedFilter == col.key && (createPortal(
                                   <div className="" ref={ref}>
                                     <div
-                                      className="absolute z-[9999] bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
+                                      className="absolute z-9999 bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
                                       style={{ top: panelPosition.top, left: panelPosition.left }}
                                     >
                                       {col.filterType != "date" ? <div>
                                         {col.searchable && (
-                                          <label className="flex gap-1 mb-2 input input-xs !outline-none ">
+                                          <label className="flex gap-1 mb-2 input input-xs outline-none! ">
                                             <div className="flex justify-center items-center">
                                               <SearchSvg />
                                             </div>
                                             <input
-                                              className=" !outline-none"
+                                              className=" outline-none!"
                                               placeholder="Ara"
                                               value={
                                                 panelSearch[col.key as string] ?? ""
@@ -824,16 +824,16 @@ export default function DataTable<T extends object>({
                         </th>
                       ))}
                     </tr>
-                    <tr className={`${styles.tr} !bg-gray-300 dark:!bg-gray-700`}>
+                    <tr className={`${styles.tr} bg-gray-300! dark:bg-gray-700!`}>
                       {columns.map((col) => (
                         <th className={styles.th} key={col.reactKey ?? String(col.key)}>
                           {col.searchable && (
-                            <label className="flex min-w-24 input input-xs sm:input-sm h-7 sm:h-9 !outline-none gap-px px-2 sm:px-2">
+                            <label className="flex min-w-24 input input-xs sm:input-sm h-7 sm:h-9 outline-none! gap-px px-2 sm:px-2">
                               <div className="flex justify-center items-center">
                                 <SearchSvg />
                               </div>
                               <input
-                                className=" !outline-none "
+                                className=" outline-none! "
                                 placeholder="Ara"
                                 value={columnSearch[col.key as string] ?? ""}
                                 onChange={(e) =>
@@ -863,9 +863,9 @@ export default function DataTable<T extends object>({
                           )}
 
                           {col.filterType === "boolean" && (
-                            <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max !outline-none ">
+                            <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max outline-none! ">
                               <select
-                                className="!outline-none bg-transparent max-w-8 sm:max-w-max"
+                                className="outline-none! bg-transparent max-w-8 sm:max-w-max"
                                 value={
                                   boolFilters[col.key as string] === null ||
                                     boolFilters[col.key as string] === undefined
@@ -907,9 +907,9 @@ export default function DataTable<T extends object>({
                           )}
 
                           {col.filterType === "date" && (
-                            <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max !outline-none ">
+                            <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max outline-none! ">
                               <input
-                                className={`!outline-none w-23 sm:max-w-max ${styles.input}`}
+                                className={`outline-none! w-23 sm:max-w-max ${styles.input}`}
                                 type="date"
                                 value={dateFilters[col.key as string] ?? ""}
                                 onChange={(e) =>

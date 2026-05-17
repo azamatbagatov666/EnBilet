@@ -246,7 +246,7 @@ export default function venues() {
           onClick={() =>
             router.push(`/account/venues/designSeats/${row.venueID}`)
           }
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:!bg-red-500 duration-200 transition-colors border border-black"
+          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
         >
           <svg
             viewBox="0 0 512 512"
@@ -267,7 +267,7 @@ export default function venues() {
           onClick={() => {
             handleOpenEdit(row);
           }}
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:!bg-red-500 duration-200 transition-colors border border-black"
+          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
         >
           <svg
             viewBox="0 0 24 24"
@@ -373,7 +373,7 @@ export default function venues() {
 
                 className={`input input-accent ${
                   editedVenue?.venueName == ""
-                    ? "!border-red-500 border-4 !outline-red-500"
+                    ? "border-red-500! border-4 outline-red-500!"
                     : ""
                 }`}
                 value={editedVenue?.venueName ?? ""}

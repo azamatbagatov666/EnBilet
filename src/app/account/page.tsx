@@ -56,7 +56,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group h-14 w-full border-0 rounded-none !outline-none  pl-10  bg-base-300 pr-2   "
+                className="input group h-14 w-full border-0 rounded-none outline-none!  pl-10  bg-base-300 pr-2   "
                 placeholder="Kullanıcı Adı"
               />
             </div>
@@ -77,7 +77,7 @@ export default function List() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleLogin();
                 }}
-                className="input group w-full h-14 border-0  pr-12 rounded-none !outline-none   bg-base-300 pl-10   "
+                className="input group w-full h-14 border-0  pr-12 rounded-none outline-none!   bg-base-300 pl-10   "
                 type={passType}
                 placeholder="Parola"
               />

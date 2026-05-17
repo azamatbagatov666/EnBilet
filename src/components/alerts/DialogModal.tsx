@@ -81,7 +81,7 @@ export default function DialogModal({
   return (
     <dialog ref={dialogRef} className="modal outline-none" onClose={onClose}>
       {/* Modal Box */}
-      <div className={`modal-box ${width? `w-[${width}px] max-w-max` : "w-96"} border`}>
+      <div className={`modal-box ${width? `w-[${width}px] max-w-max` : "sm:w-96"} border`}>
         <button
           className={`outline-none btn btn-sm btn-circle btn-ghost absolute right-2 top-2 ${
             disableClose ? "pointer-events-none  blur-sm opacity-35" : ""

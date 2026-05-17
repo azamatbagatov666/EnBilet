@@ -405,7 +405,7 @@ export default function shows() {
 
                 className={`input input-accent w-full ${
                   editedShow?.showName == ""
-                    ? "!border-red-500 border-4 !outline-red-500"
+                    ? "border-red-500! border-4 outline-red-500!"
                     : ""
                 }`}
                 value={editedShow?.showName ?? ""}

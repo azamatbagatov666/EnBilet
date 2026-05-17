@@ -34,11 +34,11 @@ const PriceInput = forwardRef<HTMLInputElement, PriceInputProps>(
     };
 
     return (
-      <div className="flex gap-1 input input-accent font-bold h-9 w-32 !outline-none">
+      <div className="flex gap-1 input input-accent font-bold h-9 w-32 outline-none!">
         <input
           data-focus-target
           ref={ref}
-          className="!outline-none w-20 text-right bg-transparent"
+          className="outline-none! w-20 text-right bg-transparent"
           inputMode="decimal"
           placeholder="0,00"
           value={value.replace(".", ",")}

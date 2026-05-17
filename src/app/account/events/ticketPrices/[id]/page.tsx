@@ -470,10 +470,10 @@ export default function ticketPrices({
           </div>
         </div>
 
-        <label>
+        <label className="grid items-center sm:flex gap-2 sm:gap-5">
           <span>Oturma Planı Seç:</span>
           <select
-            className="select select-info ml-5"
+            className="select select-info"
             disabled={lockSeatMap || isEditing}
             value={selectedMapId ?? ""}
             onChange={(e) => setSelectedMapId(e.target.value)}
@@ -499,7 +499,7 @@ export default function ticketPrices({
         {(seatMap || !isSeated) && (
           <div>
             {isEditing && (
-              <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner !blur-0 !opacity-100 text-accent"></span>
+              <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner blur-0! opacity-100! text-accent"></span>
             )}
 
             <div className="mt-4 font-bold">
@@ -755,7 +755,7 @@ export default function ticketPrices({
                       `/account/venues/designSeats/${theEvent?.venueID}`,
                     );
                   }}
-                  className="btn btn-neutral"
+                  className="btn btn-neutral mt-4"
                 >
                   Oluştur
                 </button>

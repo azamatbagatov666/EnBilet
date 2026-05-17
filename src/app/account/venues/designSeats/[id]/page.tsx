@@ -319,7 +319,7 @@ if (editType === "create") {
   return (
     <div className="px-2 md:px-6">
       <div className="">
-        <div className="flex gap-4 text-xl font-bold my-4">
+        <div className="grid lg:flex gap-4 text-xl font-bold my-4">
           <span>
             Salon Adı:{" "}
             <span className="font-semibold">{theVenue?.venueName}</span>
@@ -402,7 +402,7 @@ if (editType === "create") {
         className={`${editType === null || (editType === "edit" && (selectedMapId === "" || selectedMapId === null)) ? "0 blur-sm opacity-35  pointer-events-none select-none" : ""}`}
       >
         {editType === "create" && (
-          <div className="flex gap-4 align-middle my-4">
+          <div className="grid sm:flex gap-4 align-middle my-4">
             <span className="font-bold text-sm sm:text-lg">
               Sabit ve numaralı bir oturma düzeni mevcut mu?
             </span>
@@ -414,7 +414,6 @@ if (editType === "create") {
                 onChange={(e) => {
                   setIsSeated(e.target.checked ? true : false);
 
-                  console.log("sss");
                 }}
                 className="toggle bg-primary border-primary text-white"
               />
@@ -423,11 +422,13 @@ if (editType === "create") {
           </div>
         )}
 
-        <div className="">
-          <div className="font-bold text-3xl h-12 my-4 flex items-center ">
-            {"Plan Adı: "}
+        <div className="mt-2 sm:mt-0">
+          <div className="font-bold text-3xl sm:h-12 sm:my-4 grid gap-2 sm:flex items-center ">
+            
+              <span className=""> {"Plan Adı: "}</span>
+
             {editType === "create" ? (
-              <span className=" px-2 ml-2"> {newMapName}</span>
+              <span className="font-semibold sm:px-2 sm:ml-2 max-w-full min-h-9 break-all"> {newMapName}</span>
             ) : editType === "edit" && selectedMapId ? (
               <>
                 <div className="flex items-center">
@@ -435,7 +436,7 @@ if (editType === "create") {
           maxLength={50}
 
                     type="text"
-                    className="input input-accent leading-[48px] text-3xl px-2 w-64 ml-2"
+                    className="input input-accent leading-[48px] text-3xl sm:px-2 w-64 sm:ml-2"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                   />
@@ -460,7 +461,7 @@ if (editType === "create") {
               <></>
             )}
           </div>
-          <span className="font-bold">{isSeated ? "Numaralı Salon Düzeni" : "Numarasız Salon Düzeni"}</span>
+          <div className="font-bold mt-4 sm:mt-0">{isSeated ? "Numaralı Salon Düzeni" : "Numarasız Salon Düzeni"}</div>
         </div>
 
         {isSeated ? (
@@ -645,13 +646,14 @@ if (editType === "create") {
                 className="input input-secondary w-24"
               />
             </div>
-
+<div className="flex justify-center sm:block">
             <button
               onClick={handleSave}
               className="btn btn-success mt-4 text-white"
             >
               Kaydet
             </button>
+            </div>
           </div>
         )}
       </div>
