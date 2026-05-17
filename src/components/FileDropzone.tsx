@@ -236,7 +236,7 @@ onChange({
                 </button>
                 <img
                   src={preview!}
-                  className="rounded-3xl"
+                  className="rounded-3xl max-w-[330px]"
                   alt="Önizleme"
                 />
               </div>

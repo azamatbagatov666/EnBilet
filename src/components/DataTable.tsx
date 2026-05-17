@@ -987,7 +987,7 @@ export default function DataTable<T extends object>({
                 </table>
               </div>
             </div>
- {filteredData.length === 0 && (
+ {!loading && filteredData.length === 0 && (
                           <div>
                             <div
                               className={` text-center py-3 border-b-2 text-black text-xl dark:text-white font-bold`}

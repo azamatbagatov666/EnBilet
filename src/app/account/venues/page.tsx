@@ -310,6 +310,7 @@ export default function venues() {
           className="input input-accent w-full"
           value={venueName}
           onChange={(e) => setVenueName(e.target.value)}
+          maxLength={200}
         ></input>
         <div>Salonun Adresi:</div>
 
@@ -317,6 +318,8 @@ export default function venues() {
           className="input input-accent w-full"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
+          maxLength={500}
+
         ></input>
         <div className="flex justify-center mt-4">
           <button
@@ -366,6 +369,8 @@ export default function venues() {
               <div>Salon İsmi:</div>
 
               <input
+          maxLength={200}
+
                 className={`input input-accent ${
                   editedVenue?.venueName == ""
                     ? "!border-red-500 border-4 !outline-red-500"
@@ -381,6 +386,8 @@ export default function venues() {
               <div>Salonun Adresi:</div>
 
               <input
+          maxLength={500}
+
                 className="input input-accent  "
                 value={editedVenue?.address ?? ""}
                 onChange={(e) =>

@@ -353,6 +353,8 @@ export default function shows() {
       <FormContainer title="Yeni Gösteri Ekle">
         <div>Gösteri İsmi:</div>
         <input
+          maxLength={200}
+
           className="input input-accent  w-full"
           value={showName}
           onChange={(e) => setShowName(e.target.value)}
@@ -399,21 +401,17 @@ export default function shows() {
             <div className={`grid gap-2 w-[800px]`}>
               <div>Gösteri İsmi:</div>
               <input
+          maxLength={200}
+
                 className={`input input-accent w-full ${
                   editedShow?.showName == ""
                     ? "!border-red-500 border-4 !outline-red-500"
                     : ""
                 }`}
                 value={editedShow?.showName ?? ""}
-                onChange={(e) =>
+ onChange={(e) =>
                   setEditedShow((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          imageKey: null,
-                          imageThumbKey: null,
-                        }
-                      : prev,
+                    prev ? { ...prev, showName: e.target.value } : prev,
                   )
                 }
               ></input>
@@ -454,7 +452,7 @@ export default function shows() {
                         ✕
                       </button>
                       <img
-                        className="rounded-3xl"
+                        className="rounded-3xl max-w-[330px] "
                         src={`https://cocukakli.blob.core.windows.net/public-images/${editedShow?.imageKey}`}
                         alt="Gösteri Fotoğrafı"
                       />
@@ -472,7 +470,7 @@ export default function shows() {
                 </div>
               )}
 
-              <div className="flex justify-center mt-10">
+              <div className="flex justify-center mt-2">
                 <button
                   className="btn btn-success text-white"
                   onClick={() => {

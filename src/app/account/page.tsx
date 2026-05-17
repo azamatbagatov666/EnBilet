@@ -49,6 +49,8 @@ export default function List() {
                 <path d="M7 14C4.23858 14 2 16.2386 2 19V22C2 22.5523 2.44772 23 3 23H21C21.5523 23 22 22.5523 22 22V19C22 16.2386 19.7614 14 17 14H7Z"></path>
               </svg>
               <input
+          maxLength={128}
+
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => {

@@ -381,6 +381,8 @@ if (editType === "create") {
           <div className=" bg-base-300 rounded-box  h-24 px-4 place-items-center flex justify-end">
             <div className="grid align-middle items-center gap-2 ">
               <input
+          maxLength={50}
+
                 disabled={editType !== "create"}
                 value={newMapName}
                 onChange={(e) => setNewMapName(e.target.value)}
@@ -430,6 +432,8 @@ if (editType === "create") {
               <>
                 <div className="flex items-center">
                   <input
+          maxLength={50}
+
                     type="text"
                     className="input input-accent leading-[48px] text-3xl px-2 w-64 ml-2"
                     value={editingName}
