@@ -232,8 +232,8 @@ export default function venues() {
   }, [dialogueOpen]);
 
   const venueColumns: Column<VenueType>[] = [
-    { key: "city", label: "Şehir", searchable: true, filterType: "multi" },
-    { key: "venueName", label: "Salon", searchable: true, filterType: "multi" },
+    { key: "city", label: "Şehir", searchable: true, filterType: "multi", sortable: true},
+    { key: "venueName", label: "Salon", searchable: true, filterType: "multi", sortable: true },
 
     { key: "address", label: "Adres", searchable: true, filterType: "none" },
     {

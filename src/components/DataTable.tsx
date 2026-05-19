@@ -1,15 +1,16 @@
 "use client";
 
 import styles from "./DataTable.module.css";
-import { debounce } from "lodash";
+import { debounce, throttle } from "lodash";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import type { Column } from "@/src/models/dataTable/Column";
 import SearchSvg from "@/src/components/svg/SearchSvg";
 import CancelSvg from "@/src/components/svg/CancelSvg";
 import RefreshSvg from "@/src/components/svg/RefreshSvg";
 import { createPortal } from "react-dom";
-import { on } from "events";
 
 type Props<T> = {
   data: T[];
@@ -279,7 +280,7 @@ export default function DataTable<T extends object>({
         const rect = btn.getBoundingClientRect();
         setPanelPosition({
           top: rect.bottom + window.scrollY,
-          left: rect.right + window.scrollX,
+          left: -9999, // Render offscreen initially to prevent horizontal scrollbar flicker
         });
       }
 
@@ -287,16 +288,88 @@ export default function DataTable<T extends object>({
     });
   };
 
-  const handleRefresh = async () => {
-    if (onRefresh) {
-      setIsRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
+  // 📐 Reposition filter panel to fit the viewport and not overflow horizontally
+  useIsomorphicLayoutEffect(() => {
+    if (!selectedFilter) return;
+
+    const btn = filterButtonRefs.current[selectedFilter];
+    const panelEl = ref.current?.firstElementChild as HTMLElement;
+
+    if (btn && panelEl) {
+      const btnRect = btn.getBoundingClientRect();
+      const panelRect = panelEl.getBoundingClientRect();
+
+      const viewportWidth = window.innerWidth;
+
+      // Start by aligning the left edge of the panel with the left edge of the button
+      let left = btnRect.left + window.scrollX;
+      let top = btnRect.bottom + window.scrollY;
+
+      // If panel overflows the right edge of the screen, align panel's right edge with button's right edge
+      if (left + panelRect.width > viewportWidth + window.scrollX) {
+        left = btnRect.right + window.scrollX - panelRect.width;
       }
+
+      // Hard boundary: keep panel at least 8px away from left edge
+      if (left < window.scrollX + 8) {
+        left = window.scrollX + 8;
+      }
+
+      // Hard boundary: keep panel at least 8px away from right edge
+      if (left + panelRect.width > viewportWidth + window.scrollX - 8) {
+        left = viewportWidth + window.scrollX - panelRect.width - 8;
+      }
+
+      setPanelPosition({ top, left });
     }
-  };
+  }, [selectedFilter]);
+
+  // 📜 Close filter panel when the table is scrolled
+  useEffect(() => {
+    if (!selectedFilter) return;
+
+    const tableEl = scrollRef.current;
+    if (!tableEl) return;
+
+    const handleScroll = () => {
+      setSelectedFilter("");
+    };
+
+    tableEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      tableEl.removeEventListener("scroll", handleScroll);
+    };
+  }, [selectedFilter]);
+
+  // 🔹 THROTTLED REFRESH (2000ms)
+  const throttledRefresh = useMemo(
+    () =>
+      throttle(
+        async (cb: () => Promise<void> | void) => {
+          setIsRefreshing(true);
+          try {
+            await cb();
+          } finally {
+            setIsRefreshing(false);
+          }
+        },
+        2000,
+        { leading: true, trailing: false }
+      ),
+    []
+  );
+
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      await throttledRefresh(onRefresh);
+    }
+  }, [onRefresh, throttledRefresh]);
+
+  useEffect(() => {
+    return () => {
+      throttledRefresh.cancel();
+    };
+  }, [throttledRefresh]);
 
   const uniqueColumnValues = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -621,7 +694,6 @@ export default function DataTable<T extends object>({
                                                 </div>
                                                 <input
                                                   className=" outline-none!"
-                                                  autoFocus
                                                   placeholder="Ara"
                                                   value={
                                                     panelSearch[
@@ -824,7 +896,7 @@ export default function DataTable<T extends object>({
                                                 <span>Hepsini Seç</span>
                                               </label>
                                               {col.filterType === "date" && (
-                                                <div className="max-h-64 min-w-48  text-sm">
+                                                <div className="max-h-64 min-w-48 text-sm">
                                                   {Object.entries(dateTree).map(
                                                     ([year, months]) => (
                                                       <details
@@ -1077,7 +1149,7 @@ export default function DataTable<T extends object>({
                               </span>
                             )}
                             {sortConfig?.key !== col.key && (
-                              <span className="ml-1 hidden select-none group-hover:block text-gray-400">
+                              <span className="ml-1 hidden select-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:block text-gray-400">
                                 {"▼"}
                               </span>
                             )}

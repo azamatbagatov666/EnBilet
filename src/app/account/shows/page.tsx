@@ -61,6 +61,7 @@ export default function shows() {
       label: "Gösteri İsmi",
       searchable: true,
       filterType: "multi",
+      sortable: true,
     },
     {
       key: "description",
