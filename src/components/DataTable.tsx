@@ -948,7 +948,7 @@ export default function DataTable<T extends object>({
                         <tr key={i} className={`${styles.tr}`}>
                           {columns.map((_, j) => (
                             <td key={j} className={`${styles.td} p-2`}>
-                              <div className="h-6 skeleton border-dashed border" />
+                              <div className={`${styles.skeleton} h-6 border-dashed border`} />
                             </td>
                           ))}
                         </tr>

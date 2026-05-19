@@ -143,3 +143,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 :global([data-theme="dark"]) .tablewrapper::after {
   background: linear-gradient(to left, rgba(255, 255, 255, 0.40), transparent);
 }
+
+
+/* Skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+   border-radius: var(--radius-box) /* var(--radius-box) */;
+        background-color: var(--color-base-300) /* var(--color-base-300) */;
+ 
+        will-change: background-position;
+        background-image: linear-gradient( 105deg, #0000 0% 40%, var(--color-base-100) /* var(--color-base-100) */ 50%, #0000 60% 100% );
+        background-size: 200% auto;
+        background-position-x: -50%;
+}
+
+/* shimmer layer */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(128, 128, 128, 0.6),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
