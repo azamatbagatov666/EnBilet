@@ -36,7 +36,7 @@ export default function NavBar({ isLoggedIn }: Props) {
     <>
       <div className="max-lg:collapse bg-base-200  shadow-sm w-full  dark:shadow-white sticky top-0 z-56 rounded-none">
         <label className="fixed inset-0 hidden max-lg:peer-checked:block"></label>
-        <div className="collapse-title navbar justify-between !py-0 !min-h-auto h-12">
+        <div className="collapse-title navbar justify-between py-0! min-h-auto! h-12">
           <div className="navbar-start h-full">
             <label
               className="size-10 content-center justify-items-center lg:hidden
@@ -77,7 +77,7 @@ export default function NavBar({ isLoggedIn }: Props) {
                   Menü {"\u25BC"}
                 </div>
                 {menuOpen && (
-                  <ul className="dropdown-content menu bg-base-100 rounded-b-lg border border-t-0 z-[1] w-full p-2 ">
+                  <ul className="dropdown-content menu bg-base-100 rounded-b-lg border border-t-0 z-1 w-full p-2 ">
                     <li>
                       <Link href="/account/">Giriş Yap</Link>
                     </li>
@@ -97,7 +97,7 @@ export default function NavBar({ isLoggedIn }: Props) {
                       Yönetici {"\u25BC"}
                     </div>
                     {adminOpen && (
-                      <ul className="dropdown-content menu bg-base-100 rounded-b-lg border border-t-0 z-[1] w-full p-2 ">
+                      <ul className="dropdown-content menu bg-base-100 rounded-b-lg border border-t-0 z-1 w-full p-2 ">
                         <li>
                           <Link href="/account/events">
                             Etkinlik Ekle/Düzenle

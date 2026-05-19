@@ -108,7 +108,7 @@ export default function Row({
       )}
 
       <div className="tooltip inline-flex" data-tip="Sıra İsmi">
-        <div className=" text-black bg-white duration-200 font-bold h-10 flex w-10 text-2xl justify-center items-center border-2 border-gray-500 rounded-md !px-4">
+        <div className=" text-black bg-white duration-200 font-bold h-10 flex w-10 text-2xl justify-center items-center border-2 border-gray-500 rounded-md px-4!">
           {row.type != "empty" && <span>{row.label}</span>}
         </div>
       </div>

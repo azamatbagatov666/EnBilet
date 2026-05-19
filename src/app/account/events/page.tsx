@@ -397,7 +397,7 @@ export default function List() {
           </button>
         </div>
       </FormContainer>
-      <DataTable data={events} columns={eventColumns} title="Etkinlikler" />
+      <DataTable data={events} columns={eventColumns}  onRefresh={getEvents} title="Etkinlikler" />
 
       <DialogModal open={dialogueOpen} dialogueText={dialogueText} onClose={() => {setDialogueOpen(false); setDialogueText("")}}>
         {editDialogueOpen && (
