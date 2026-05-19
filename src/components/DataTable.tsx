@@ -15,7 +15,7 @@ type Props<T> = {
   data: T[];
   columns: Column<T>[];
   title?: string;
-  onRefresh?: () => void;
+  onRefresh?: () => Promise<void> | void;
 };
 
 export default function DataTable<T extends object>({
@@ -33,7 +33,8 @@ export default function DataTable<T extends object>({
     }
   }, [data, hasLoaded]);
 
-  const loading = !hasLoaded;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const loading = !hasLoaded || isRefreshing;
 
   // 🔹 BASIC FILTER STATES
   const [globalSearch, setGlobalSearch] = useState("");
@@ -279,9 +280,16 @@ export default function DataTable<T extends object>({
     });
   };
 
-  const handleRefresh = () => {
-      onRefresh?.();
-  }
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      setIsRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setIsRefreshing(false);
+      }
+    }
+  };
 
   const uniqueColumnValues = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -443,12 +451,16 @@ export default function DataTable<T extends object>({
               >
                 {onRefresh && (
                   <button
-                    className="btn h-7 sm:h-9 outline-none! border-gray-300"
+                    className={`btn h-7 sm:h-9 outline-none! border-gray-300 ${isRefreshing ? "pointer-events-none" : ""}`}
                     onClick={() => {
                       handleRefresh();
                     }}
                   >
-                    <RefreshSvg />
+                    {isRefreshing ? (
+                      <span className="loading loading-spinner loading-sm"></span>
+                    ) : (
+                      <RefreshSvg />
+                    )}
                     Veriyi Yenile
                   </button>
                 )}
@@ -460,6 +472,8 @@ export default function DataTable<T extends object>({
                   <input
                     className="font-bold outline-none!"
                     placeholder="Genel Arama"
+                    disabled={isRefreshing}
+
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
                   />
@@ -478,7 +492,7 @@ export default function DataTable<T extends object>({
               className={`${styles.tablewrapper}${scrollState.left ? ` ${styles.shadowLeft}` : ""}${scrollState.right ? ` ${styles.shadowRight}` : ""}`}
             >
               <div ref={scrollRef} className={styles.tablescroll}>
-                <table className={`${styles.table} table table-auto w-fit `}>
+                <table className={`${styles.table} table table-auto w-fit ${isRefreshing ? "opacity-55 blur-xs pointer-events-none " : ""}`}>
                   <thead className="text-black dark:text-white">
                     <tr
                       className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}
@@ -1117,7 +1131,7 @@ export default function DataTable<T extends object>({
                   </thead>
 
                   <tbody>
-                    {loading ? (
+                    {loading && !isRefreshing ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <tr key={i} className={`${styles.tr}`}>
                           {columns.map((_, j) => (
@@ -1167,10 +1181,11 @@ export default function DataTable<T extends object>({
                 </table>
               </div>
             </div>
-            {!loading && filteredData.length === 0 && (
+            {((!loading && filteredData.length === 0) || (isRefreshing && filteredData.length === 0))  && (
               <div>
                 <div
-                  className={` text-center py-3 border-b-2 text-black text-xl dark:text-white font-bold`}
+                  className={` text-center py-3 border-b-2 text-black text-xl dark:text-white font-bold ${isRefreshing ? "opacity-55 blur-xs pointer-events-none " : ""}`}
+
                 >
                   Sonuç bulunamadı
                 </div>
@@ -1182,6 +1197,8 @@ export default function DataTable<T extends object>({
                 onClick={() => {
                   clearAllFilters();
                 }}
+                                    disabled={isRefreshing}
+
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-[30px]">
                   <path
