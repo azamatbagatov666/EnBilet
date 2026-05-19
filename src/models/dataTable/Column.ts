@@ -3,6 +3,7 @@ export type Column<T> = {
   id?: string;
   label: string;
   searchable?: boolean;
+  sortable?: boolean;
   filterType?: "boolean" | "multi" | "date" | "none";
   render?: (row: T) => React.ReactNode;
   overflow?: boolean;

@@ -94,7 +94,7 @@ export default function NavBar({ isLoggedIn }: Props) {
                     <div
                       className={`btn btn-ghost h-full w-full rounded-none  group-hover:bg-error`}
                     >
-                      Yönetici {"\u25BC"}
+                      Yönetici {"▼"}
                     </div>
                     {adminOpen && (
                       <ul className="dropdown-content menu bg-base-100 rounded-b-lg border border-t-0 z-1 w-full p-2 ">

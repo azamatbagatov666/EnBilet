@@ -58,7 +58,7 @@ export default function shows() {
   const showColumns: Column<ShowType>[] = [
     {
       key: "showName",
-      label: "Gösteri Adı",
+      label: "Gösteri İsmi",
       searchable: true,
       filterType: "multi",
     },
@@ -131,7 +131,7 @@ export default function shows() {
 
   const createShow = async () => {
     if (!showName) {
-      setDialogueText("Lütfen gösteri adını girin.");
+      setDialogueText("Lütfen gösteri ismini girin.");
       setDialogueOpen(true);
       return;
     }

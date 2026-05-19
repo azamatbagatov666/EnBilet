@@ -321,7 +321,7 @@ if (editType === "create") {
       <div className="">
         <div className="grid lg:flex gap-4 text-xl font-bold my-4">
           <span>
-            Salon Adı:{" "}
+            Salon İsmi:{" "}
             <span className="font-semibold">{theVenue?.venueName}</span>
           </span>
           <span>
@@ -387,7 +387,7 @@ if (editType === "create") {
                 value={newMapName}
                 onChange={(e) => setNewMapName(e.target.value)}
                 type="text"
-                placeholder="Planın Adı"
+                placeholder="Planın İsni"
                 className="input input-info"
               />
               <span className="font-normal text-xs md:w-48 md:h-0">
@@ -425,7 +425,7 @@ if (editType === "create") {
         <div className="mt-2 sm:mt-0">
           <div className="font-bold text-3xl sm:h-12 sm:my-4 grid gap-2 sm:flex items-center ">
             
-              <span className=""> {"Plan Adı: "}</span>
+              <span className=""> {"Plan İsmi: "}</span>
 
             {editType === "create" ? (
               <span className="font-semibold sm:px-2 sm:ml-2 max-w-full min-h-9 break-all"> {newMapName}</span>
