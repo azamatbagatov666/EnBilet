@@ -3,9 +3,17 @@
 import styles from "./DataTable.module.css";
 import { debounce, throttle } from "lodash";
 
-import { useState, useMemo, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 
-const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import type { Column } from "@/src/models/dataTable/Column";
 import SearchSvg from "@/src/components/svg/SearchSvg";
 import CancelSvg from "@/src/components/svg/CancelSvg";
@@ -354,9 +362,9 @@ export default function DataTable<T extends object>({
           }
         },
         2000,
-        { leading: true, trailing: false }
+        { leading: true, trailing: false },
       ),
-    []
+    [],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -615,7 +623,9 @@ export default function DataTable<T extends object>({
                         <th
                           className={`${styles.th} group ${col.sortable ? "cursor-pointer" : ""}  `}
                           key={col.reactKey ?? String(col.key)}
-                           onClick={() => {col.sortable ?  setSortConfig((prev) => {
+                          onClick={() => {
+                            col.sortable
+                              ? setSortConfig((prev) => {
                                   if (!prev || prev.key !== col.key) {
                                     return {
                                       key: col.key as string,
@@ -629,16 +639,12 @@ export default function DataTable<T extends object>({
                                     };
                                   }
                                   return null; // third click = clear sort
-                                }) : undefined}}
+                                })
+                              : undefined;
+                          }}
                         >
                           <div className="inline-flex items-center relative">
-                            <span
-                              className="select-none"
-                      
-                             
-                            >
-                              {col.label}
-                            </span>
+                            <span className="select-none">{col.label}</span>
                             {col.filterType != "none" && (
                               <>
                                 <button
@@ -675,8 +681,10 @@ export default function DataTable<T extends object>({
                                 </button>
                                 {selectedFilter == col.key &&
                                   createPortal(
-                                    <div className="" ref={ref}
-                                     onClick={(e) => e.stopPropagation()}
+                                    <div
+                                      className=""
+                                      ref={ref}
+                                      onClick={(e) => e.stopPropagation()}
                                     >
                                       <div
                                         className="absolute z-9999 bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
@@ -787,9 +795,11 @@ export default function DataTable<T extends object>({
                                                       ).toLowerCase(),
                                                     ),
                                                 )
-                                                  .sort((a, b) =>
-    a.localeCompare(b, "tr", { sensitivity: "base" }),
-  )
+                                                .sort((a, b) =>
+                                                  a.localeCompare(b, "tr", {
+                                                    sensitivity: "base",
+                                                  }),
+                                                )
                                                 .map((value) => (
                                                   <label
                                                     className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0"
@@ -1142,19 +1152,20 @@ export default function DataTable<T extends object>({
                               </>
                             )}
 
-                            {col.sortable && <div className="w-5">
-                            {sortConfig?.key === col.key && (
-                              <span className="ml-1 select-none group-hover:text-black text-gray-700">
-                                {sortConfig.dir === "asc" ? "▲" : "▼"}
-                              </span>
+                            {col.sortable && (
+                              <div className="w-5">
+                                {sortConfig?.key === col.key && (
+                                  <span className="ml-1 select-none group-hover:text-black text-gray-700">
+                                    {sortConfig.dir === "asc" ? "▲" : "▼"}
+                                  </span>
+                                )}
+                                {sortConfig?.key !== col.key && (
+                                  <span className="ml-1 hidden select-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:block text-gray-400">
+                                    {"▼"}
+                                  </span>
+                                )}
+                              </div>
                             )}
-                            {sortConfig?.key !== col.key && (
-                              <span className="ml-1 hidden select-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:block text-gray-400">
-                                {"▼"}
-                              </span>
-                            )}
-                            </div>
-                            }
                           </div>
                         </th>
                       ))}
@@ -1202,7 +1213,7 @@ export default function DataTable<T extends object>({
                           )}
 
                           {col.filterType === "boolean" && (
-                            <label className="flex justify-between h-7 sm:h-9 input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max outline-none! ">
+                            <label className="flex justify-between h-7 sm:h-9 cursor-default input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max outline-none! ">
                               <select
                                 className="outline-none! bg-transparent max-w-8 sm:max-w-max"
                                 value={
@@ -1231,7 +1242,7 @@ export default function DataTable<T extends object>({
                                   Hayır
                                 </option>
                               </select>
-                              <div className="size-4 sm:size-6 content-center self-center">
+                              <div className="size-4 sm:size-6 content-center cursor-default self-center">
                                 {boolFilters[col.key as string] !== null &&
                                   boolFilters[col.key as string] !==
                                     undefined && (
@@ -1251,7 +1262,7 @@ export default function DataTable<T extends object>({
                           )}
 
                           {col.filterType === "date" && (
-                            <label className="flex h-7 sm:h-9  input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max outline-none! ">
+                            <div className="flex h-7 sm:h-9 cursor-default input input-xs gap-0.5 sm:gap-2 sm:input-sm max-w-32 sm:max-w-max outline-none! ">
                               <input
                                 className={`outline-none! w-23 sm:max-w-max ${styles.input}`}
                                 type="date"
@@ -1264,7 +1275,7 @@ export default function DataTable<T extends object>({
                                 }
                               />
 
-                              <div className="size-4 sm:size-6 self-center content-center">
+                              <div className="size-4 sm:size-6 self-center content-center cursor-default z-9999">
                                 {Boolean(dateFilters[col.key as string]) && (
                                   <button
                                     onClick={() =>
@@ -1278,7 +1289,7 @@ export default function DataTable<T extends object>({
                                   </button>
                                 )}
                               </div>
-                            </label>
+                            </div>
                           )}
                         </th>
                       ))}

@@ -1,4 +1,4 @@
-export interface SeatMapType  {
+export interface SeatMapType {
   mapID?: number;
   mapName?: string;
   venueID?: number;
@@ -6,7 +6,4 @@ export interface SeatMapType  {
   layoutJS?: string;
   venueName?: string;
   maxCapacity?: number;
-
-
-};
-
+}

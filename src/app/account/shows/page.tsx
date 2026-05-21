@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DataTable from "@/src/components/DataTable";
 import { generateId } from "@/src/lib/generateId";
+import { useImageUpload } from "@/src/hooks/useImageUpload";
 
 import type { ShowType } from "@/src/models/ShowType";
 import type { Column } from "@/src/models/dataTable/Column";
@@ -50,6 +51,8 @@ export default function shows() {
   //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const { uploadImage, deleteImages } = useImageUpload("show-covers");
 
   const resetForm = async () => {
     dropzoneRef.current?.cleanUp();
@@ -168,7 +171,6 @@ export default function shows() {
           showID,
         );
 
-        // 3️⃣ Update show with imageKey
         await fetchWithAuth("/services/account/actions/editShow", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -234,8 +236,8 @@ export default function shows() {
 
     if (newImageFiles?.original && editedShow.showID) {
       const { imageKey, imageThumbKey } = await uploadImage(
-        newImageFiles!.original,
-        newImageFiles!.thumbnail,
+        newImageFiles.original,
+        newImageFiles.thumbnail,
         editedShow.showID,
       );
 
@@ -256,15 +258,7 @@ export default function shows() {
       setIsEditing(false);
 
       if (newImageFiles?.original) {
-        await fetchWithAuth("/services/account/cdn/deleteImage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageKeys: [updatedShow.imageKey, updatedShow.imageThumbKey].filter(
-              Boolean,
-            ),
-          }),
-        });
+        await deleteImages([updatedShow.imageKey!, updatedShow.imageThumbKey!]);
       }
 
       setDialogueOpen(true);
@@ -272,15 +266,8 @@ export default function shows() {
     }
 
     if (imagesToDelete.original != "") {
-      await fetchWithAuth("/services/account/cdn/deleteImage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageKeys: [imagesToDelete.original, imagesToDelete.thumbnail].filter(
-            Boolean,
-          ),
-        }),
-      });
+      await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
+
       updatedShow.imageKey = null;
       updatedShow.imageThumbKey = null;
     }
@@ -304,58 +291,12 @@ export default function shows() {
     }
   }, [dialogueOpen]);
 
-  const uploadImage = async (
-    original: File,
-    thumbnail: File,
-    showID: number,
-  ): Promise<{ imageKey: string; imageThumbKey: string }> => {
-    const sasRes = await fetchWithAuth(
-      "/services/account/cdn/getImageUploadSas",
-      {
-        method: "POST",
-      },
-    );
-
-    const { uploadUrl, sasToken } = await sasRes.json();
-    const UUID = generateId();
-    const fileName = `show-covers/${showID}/${UUID}.webp`;
-    const thumbName = `show-covers/${showID}/${UUID}_thumb.webp`;
-
-    const oriRes = await fetch(`${uploadUrl}/${fileName}?${sasToken}`, {
-      method: "PUT",
-      headers: {
-        "x-ms-blob-type": "BlockBlob",
-        "Content-Type": original.type,
-      },
-      body: original,
-    });
-
-    if (!oriRes.ok) throw new Error("Upload failed");
-
-    const thumbRes = await fetch(`${uploadUrl}/${thumbName}?${sasToken}`, {
-      method: "PUT",
-      headers: {
-        "x-ms-blob-type": "BlockBlob",
-        "Content-Type": thumbnail.type,
-      },
-      body: thumbnail,
-    });
-
-    if (!thumbRes.ok) throw new Error("Upload failed");
-
-    return {
-      imageKey: fileName,
-      imageThumbKey: thumbName,
-    };
-  };
-
   return (
     <>
       <FormContainer title="Yeni Gösteri Ekle">
         <div>Gösteri İsmi:</div>
         <input
           maxLength={200}
-
           className="input input-accent  w-full"
           value={showName}
           onChange={(e) => setShowName(e.target.value)}
@@ -402,15 +343,14 @@ export default function shows() {
             <div className={`grid gap-2 w-[800px]`}>
               <div>Gösteri İsmi:</div>
               <input
-          maxLength={200}
-
+                maxLength={200}
                 className={`input input-accent w-full ${
                   editedShow?.showName == ""
                     ? "border-red-500! border-4 outline-red-500!"
                     : ""
                 }`}
                 value={editedShow?.showName ?? ""}
- onChange={(e) =>
+                onChange={(e) =>
                   setEditedShow((prev) =>
                     prev ? { ...prev, showName: e.target.value } : prev,
                   )

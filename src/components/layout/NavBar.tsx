@@ -39,9 +39,11 @@ export default function NavBar({ isLoggedIn }: Props) {
         <div className="collapse-title navbar justify-between py-0! min-h-auto! h-12">
           <div className="navbar-start h-full">
             <label
-              className="size-10 content-center justify-items-center lg:hidden
+              className="size-10 content-center justify-items-center rounded-box lg:hidden
                [@media(hover:hover)_and_(pointer:fine)]:hover:bg-gray-300
                active:bg-gray-300
+               [@media(hover:hover)_and_(pointer:fine)]:dark:hover:bg-gray-500
+               dark:active:bg-gray-500
               
               "
               onClick={() => setMobileOpen((v) => !v)}
@@ -60,9 +62,18 @@ export default function NavBar({ isLoggedIn }: Props) {
                 />
               </svg>
             </label>
-            <Link className="btn btn-ghost text-xl w-max" href="/" onClick={() => {
-                    setMobileOpen(false);
-                  }}>
+            <Link
+              className="cursor-pointer h-10 text-center content-center px-4 font-semibold               
+              [@media(hover:hover)_and_(pointer:fine)]:hover:bg-gray-300
+               active:bg-gray-300
+               [@media(hover:hover)_and_(pointer:fine)]:dark:hover:bg-gray-500
+               dark:active:bg-gray-500
+               text-xl w-max rounded-box"
+              href="/"
+              onClick={() => {
+                setMobileOpen(false);
+              }}
+            >
               EnBilet
             </Link>
             <div className="w-full hidden lg:flex h-full  px-2">
@@ -125,72 +136,71 @@ export default function NavBar({ isLoggedIn }: Props) {
           </div>
         </div>
       </div>
-      
-        <div
+
+      <div
         aria-hidden={!mobileOpen}
-          className={`absolute shadow-sm   dark:shadow-white collapse-content bg-base-200 w-full lg:hidden z-999 transition-all duration-300 ease-in-out
+        className={`absolute shadow-sm   dark:shadow-white collapse-content bg-base-200 w-full lg:hidden z-999 transition-all duration-300 ease-in-out
 ${
   mobileOpen
     ? "opacity-100 translate-y-0"
     : "opacity-0 translate-y-2 pointer-events-none"
 }             `}
-          style={{ contentVisibility: "visible" }}
-        >
-          <div className="menu w-full">
-            <li className="w-full">
-              <div>Menü</div>
+        style={{ contentVisibility: "visible" }}
+      >
+        <div className="menu w-full">
+          <li className="w-full">
+            <div>Menü</div>
+            <ul className="w-full">
+              <li
+                onClick={() => {
+                  setMobileOpen(false);
+                }}
+              >
+                <Link href="/account/">Giriş Yap</Link>
+              </li>
+            </ul>
+          </li>
+
+          {isLoggedIn && (
+            <li>
+              <div className="w-full">Yönetici</div>
               <ul className="w-full">
                 <li
                   onClick={() => {
                     setMobileOpen(false);
                   }}
                 >
-                  <Link href="/account/">Giriş Yap</Link>
+                  <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
+                </li>
+                <li
+                  onClick={() => {
+                    setMobileOpen(false);
+                  }}
+                >
+                  <Link href="/account/venues">Salonlar</Link>
+                </li>
+                <li
+                  onClick={() => {
+                    setMobileOpen(false);
+                  }}
+                >
+                  <Link href="/account/shows">Gösteriler</Link>
+                </li>
+                <li
+                  onClick={() => {
+                    {
+                      logout();
+                      setMobileOpen(false);
+                    }
+                  }}
+                >
+                  <a>Çıkış Yap</a>
                 </li>
               </ul>
             </li>
-
-            {isLoggedIn && (
-              <li>
-                <div className="w-full">Yönetici</div>
-                <ul className="w-full">
-                  <li
-                    onClick={() => {
-                      setMobileOpen(false);
-                    }}
-                  >
-                    <Link href="/account/events">Etkinlik Ekle/Düzenle</Link>
-                  </li>
-                  <li
-                    onClick={() => {
-                      setMobileOpen(false);
-                    }}
-                  >
-                    <Link href="/account/venues">Salonlar</Link>
-                  </li>
-                  <li
-                    onClick={() => {
-                      setMobileOpen(false);
-                    }}
-                  >
-                    <Link href="/account/shows">Gösteriler</Link>
-                  </li>
-                  <li
-                    onClick={() => {
-                      {
-                        logout();
-                        setMobileOpen(false);
-                      }
-                    }}
-                  >
-                    <a>Çıkış Yap</a>
-                  </li>
-                </ul>
-              </li>
-            )}
-          </div>
+          )}
         </div>
-      
+      </div>
     </>
   );
 }
