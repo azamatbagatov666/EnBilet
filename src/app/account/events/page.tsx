@@ -159,12 +159,12 @@ export default function List() {
       setEditedEvent(undefined);
       getEvents();
 
-          if (imagesToDelete.original != "") {
-      await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
+      if (imagesToDelete.original != "") {
+        await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
 
-      updatedEvent.imageKey = null;
-      updatedEvent.imageThumbKey = null;
-    }
+        updatedEvent.imageKey = null;
+        updatedEvent.imageThumbKey = null;
+      }
 
       setAlertText("Etkinlik başarıyla düzenlendi.");
       setAlertOpen(true);
@@ -185,8 +185,6 @@ export default function List() {
       setDialogueText(message);
       setDialogueOpen(true);
     }
-
-
   };
 
   const createEvent = async () => {
@@ -225,13 +223,12 @@ export default function List() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-
                 eventID,
-                                            venueID: selectedVenue,
-            showID: selectedShow,
-            date: time,
-            isPublic: false,
-            ticketSale: false,
+                venueID: selectedVenue,
+                showID: selectedShow,
+                date: time,
+                isPublic: false,
+                ticketSale: false,
                 imageKey,
                 imageThumbKey,
               }),
@@ -385,19 +382,7 @@ export default function List() {
 
   const eventColumns: Column<EventType>[] = [
     { key: "date", label: "Tarih", filterType: "date", sortable: true },
-     {
-      key: "imageKey",
-      label: "Kapak Resmi",
-      filterType: "none",
-      render: (row) =>
-        row.imageThumbKey ? (
-          <img
-            className="w-full sm:max-w-64 h-auto"
-            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageThumbKey}`}
-            alt="Gösteri Fotoğrafı"
-          />
-        ) : null,
-    },
+   
     {
       key: "showName",
       label: "Gösteri",
@@ -418,6 +403,19 @@ export default function List() {
       searchable: true,
       sortable: true,
       filterType: "multi",
+    },
+     {
+      key: "imageKey",
+      label: "Kapak Resmi",
+      filterType: "none",
+      render: (row) =>
+        row.imageThumbKey ? (
+          <img
+            className="w-full sm:max-w-64 h-auto"
+            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageThumbKey}`}
+            alt="Gösteri Fotoğrafı"
+          />
+        ) : null,
     },
     {
       key: "ticketSale",
@@ -712,7 +710,7 @@ export default function List() {
                         ✕
                       </button>
                       <img
-                        className="rounded-3xl max-w-[330px] "
+                        className="rounded-3xl sm:max-w-[330px] "
                         src={`https://cocukakli.blob.core.windows.net/public-images/${editedEvent?.imageKey}`}
                         alt="Gösteri Fotoğrafı"
                       />

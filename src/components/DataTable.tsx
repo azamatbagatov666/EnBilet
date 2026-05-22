@@ -87,6 +87,71 @@ export default function DataTable<T extends object>({
     right: false,
   });
 
+  const [columnSelector, setColumnSelector] = useState(false);
+
+  const storageKey = useMemo(() => {
+    const colKeys = columns.map((col) => String(col.reactKey ?? col.key)).join(",");
+    const cleanTitle = title ? title.replace(/\s+/g, "_").toLowerCase() : "default";
+    return `datatable_columns_${cleanTitle}_${colKeys}`;
+  }, [title, columns]);
+
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
+    return new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+  });
+
+  const [draftVisibleColumns, setDraftVisibleColumns] = useState<Set<string>>(() => {
+    return new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+  });
+
+  // Load from localStorage on mount/key change
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const currentKeys = new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+          const validKeys = parsed.filter((k) => currentKeys.has(k));
+          if (validKeys.length > 0) {
+            setVisibleColumns(new Set(validKeys));
+            setDraftVisibleColumns(new Set(validKeys));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error reading columns from localStorage:", e);
+    }
+  }, [storageKey, columns]);
+
+  const handleSaveColumns = () => {
+    setVisibleColumns(new Set(draftVisibleColumns));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(draftVisibleColumns)));
+    } catch (e) {
+      console.error("Error saving columns to localStorage:", e);
+    }
+    setColumnSelector(false);
+  };
+
+  const handleCancelColumns = () => {
+    setDraftVisibleColumns(new Set(visibleColumns));
+    setColumnSelector(false);
+  };
+
+  const handleSelectAllColumns = (checked: boolean) => {
+    if (checked) {
+      setDraftVisibleColumns(new Set(columns.map((c) => String(c.reactKey ?? c.key))));
+    } else {
+      setDraftVisibleColumns(new Set());
+    }
+  };
+
+  const isAllColumnsSelected = draftVisibleColumns.size === columns.length;
+
+  const renderedColumns = useMemo(() => {
+    return columns.filter((col) => visibleColumns.has(String(col.reactKey ?? col.key)));
+  }, [columns, visibleColumns]);
+
   const isColumnFiltered = (col: Column<T>) => {
     const key = col.key as string;
 
@@ -215,6 +280,8 @@ export default function DataTable<T extends object>({
   );
 
   const ref = useRef<HTMLDivElement | null>(null);
+  const columnPanel = useRef<HTMLDivElement | null>(null);
+  const columnButton = useRef<HTMLButtonElement>(null);
 
   const clearAllFilters = () => {
     setGlobalSearch("");
@@ -268,6 +335,7 @@ export default function DataTable<T extends object>({
     allDateKeys.length > 0 && draftDateValueFilters.size === allDateKeys.length;
 
   const handleFilter = (key: string) => {
+    setColumnSelector(false);
     setSelectedFilter((prev) => {
       if (prev === key) return "";
 
@@ -296,12 +364,36 @@ export default function DataTable<T extends object>({
     });
   };
 
-  // 📐 Reposition filter panel to fit the viewport and not overflow horizontally
-  useIsomorphicLayoutEffect(() => {
-    if (!selectedFilter) return;
+  const handleOpenColumnFilter = () => {
+    setSelectedFilter("");
+    setColumnSelector((prev) => {
+      const next = !prev;
+      if (next) {
+        setDraftVisibleColumns(new Set(visibleColumns));
+        const btn = columnButton.current;
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          setPanelPosition({
+            top: rect.bottom + window.scrollY,
+            left: -9999,
+          });
+        }
+      }
+      return next;
+    });
+  };
 
-    const btn = filterButtonRefs.current[selectedFilter];
-    const panelEl = ref.current?.firstElementChild as HTMLElement;
+  // 📐 Reposition filter panel or column selector panel to fit the viewport and not overflow horizontally
+  useIsomorphicLayoutEffect(() => {
+    if (!selectedFilter && !columnSelector) return;
+
+    const btn = selectedFilter
+      ? filterButtonRefs.current[selectedFilter]
+      : columnButton.current;
+
+    const panelEl = selectedFilter
+      ? (ref.current?.firstElementChild as HTMLElement)
+      : (columnPanel.current?.firstElementChild as HTMLElement);
 
     if (btn && panelEl) {
       const btnRect = btn.getBoundingClientRect();
@@ -330,24 +422,25 @@ export default function DataTable<T extends object>({
 
       setPanelPosition({ top, left });
     }
-  }, [selectedFilter]);
+  }, [selectedFilter, columnSelector]);
 
-  // 📜 Close filter panel when the table is scrolled
+  // 📜 Close filter panel or column selector when the table is scrolled
   useEffect(() => {
-    if (!selectedFilter) return;
+    if (!selectedFilter && !columnSelector) return;
 
     const tableEl = scrollRef.current;
     if (!tableEl) return;
 
     const handleScroll = () => {
       setSelectedFilter("");
+      setColumnSelector(false);
     };
 
     tableEl.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       tableEl.removeEventListener("scroll", handleScroll);
     };
-  }, [selectedFilter]);
+  }, [selectedFilter, columnSelector]);
 
   // 🔹 THROTTLED REFRESH (2000ms)
   const throttledRefresh = useMemo(
@@ -493,17 +586,23 @@ export default function DataTable<T extends object>({
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      // 1️⃣ Click inside panel → ignore
+      // 1️⃣ Click inside filter panel → ignore
       if (ref.current?.contains(target)) return;
 
-      // 2️⃣ Click on ANY filter button → ignore
+      // 2️⃣ Click inside column selector panel → ignore
+      if (columnPanel.current?.contains(target)) return;
+
+      // 3️⃣ Click on ANY filter button → ignore
       const clickedButton = Object.values(filterButtonRefs.current).some(
         (btn) => btn?.contains(target),
       );
 
       if (clickedButton) return;
 
-      // 3️⃣ Real outside click → reset drafts & close
+      // 4️⃣ Click on column selector button → ignore
+      if (columnButton.current?.contains(target)) return;
+
+      // 5️⃣ Real outside click → reset drafts & close
       setDraftValueFilters((prev) => {
         const reset: Record<string, Set<string>> = {};
         for (const key of Object.keys(prev)) {
@@ -512,12 +611,14 @@ export default function DataTable<T extends object>({
         return reset;
       });
       setDraftDateValueFilters(new Set(dateValueFilters));
+      setDraftVisibleColumns(new Set(visibleColumns));
       setSelectedFilter("");
+      setColumnSelector(false);
     };
 
     window.addEventListener("mousedown", handleOutsideClick);
     return () => window.removeEventListener("mousedown", handleOutsideClick);
-  }, [valueFilters, dateValueFilters]);
+  }, [valueFilters, dateValueFilters, visibleColumns]);
 
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
@@ -558,7 +659,7 @@ export default function DataTable<T extends object>({
       <div className="my-8 px-2 flex justify-center">
         <div className="border-2 border-black dark:border-white rounded-xl w-fit max-w-full">
           <div className=" ">
-            <div className="rounded-t-xl grid bg-gray-300  gap-4 p-2  text-black dark:text-white dark:bg-gray-700">
+            <div className="rounded-t-xl grid bg-gray-300 gap-2  p-2  text-black dark:text-white dark:bg-gray-700">
               <div className="flex justify-center text-xl sm:text-3xl font-bold ">
                 {" "}
                 <span className="   dark:text-white duration-150 break-all">
@@ -568,25 +669,127 @@ export default function DataTable<T extends object>({
               </div>
 
               <div
-                className={`flex justify-center  ${onRefresh ? "sm:justify-between" : "sm:justify-end"}  gap-1`}
+                className={`flex   justify-center sm:justify-between  gap-1`}
               >
-                {onRefresh && (
-                  <button
-                    className={`btn h-7 sm:h-9 outline-none! border-gray-300 ${isRefreshing ? "pointer-events-none" : ""}`}
-                    onClick={() => {
-                      handleRefresh();
-                    }}
-                  >
-                    {isRefreshing ? (
-                      <span className="loading loading-spinner loading-sm"></span>
-                    ) : (
-                      <RefreshSvg />
+                <div className="flex items-center gap-1">
+                  {onRefresh && (
+                    <button
+                      className={`btn h-7 sm:h-9 px-1 sm:px-4 outline-none! border-gray-300 ${isRefreshing ? "pointer-events-none" : ""}`}
+                      onClick={() => {
+                        handleRefresh();
+                      }}
+                    >
+                      {isRefreshing ? (
+                        <span className="loading loading-spinner loading-sm"></span>
+                      ) : (
+                        <RefreshSvg />
+                      )}
+                      Veriyi Yenile
+                    </button>
+                  )}
+                  <div className="tooltip" data-tip="Sütunları Gizle">
+                    <button
+                      className="btn btn-sm size-7 sm:size-9 outline-none! border-gray-300"
+                      ref={columnButton}
+                      onClick={handleOpenColumnFilter}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="size-6 sm:size-7 stroke-black dark:stroke-white shrink-0"
+                      >
+                        <path
+                          d="M20 7C20 9.20914 16.4183 11 12 11C7.58172 11 4 9.20914 4 7C4 4.79086 7.58172 3 12 3C16.4183 3 20 4.79086 20 7Z"
+                          strokeWidth="2"
+                        ></path>
+                        <path
+                          d="M20 12C20 14.2091 16.4183 16 12 16C7.58172 16 4 14.2091 4 12"
+                          strokeWidth="2"
+                        ></path>
+                        <path
+                          d="M4 7V17C4 19.2091 7.58172 21 12 21C16.4183 21 20 19.2091 20 17V7"
+                          strokeWidth="2"
+                        ></path>
+                      </svg>
+                    </button>
+                  </div>
+                  {columnSelector &&
+                    createPortal(
+                      <div
+                        className=""
+                        ref={columnPanel}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          className="absolute z-9999 bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
+                          style={{
+                            top: panelPosition.top,
+                            left: panelPosition.left,
+                          }}
+                        >
+                          <div>
+                            <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
+                              <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  className="checkbox checkbox-sm"
+                                  checked={isAllColumnsSelected}
+                                  onChange={(e) => handleSelectAllColumns(e.target.checked)}
+                                />
+                                <span className="font-bold">Hepsini Seç</span>
+                              </label>
+                              <div className="max-h-64 min-w-48 text-sm">
+                                {[...columns].sort((a, b) => a.label.localeCompare(b.label, "tr", { sensitivity: "base" })).map((col) =>  {
+                                  const colKey = String(col.reactKey ?? col.key);
+                                  return (
+                                    <label
+                                      className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0 cursor-pointer select-none"
+                                      key={colKey}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="checkbox checkbox-sm"
+                                        checked={draftVisibleColumns.has(colKey)}
+                                        onChange={(e) => {
+                                          setDraftVisibleColumns((prev) => {
+                                            const next = new Set(prev);
+                                            if (e.target.checked) {
+                                              next.add(colKey);
+                                            } else {
+                                              next.delete(colKey);
+                                            }
+                                            return next;
+                                          });
+                                        }}
+                                      />
+                                      <span>{col.label}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex justify-around my-2">
+                              <button
+                                className="btn btn-sm btn-success text-white"
+                                onClick={handleSaveColumns}
+                              >
+                                Kaydet
+                              </button>
+                              <button
+                                onClick={handleCancelColumns}
+                                className="btn btn-sm btn-error"
+                              >
+                                İptal
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>,
+                      document.body,
                     )}
-                    Veriyi Yenile
-                  </button>
-                )}
+                </div>
 
-                <label className="flex gap-1 input input-xs sm:input-sm h-7 sm:h-9 w-full sm:w-auto outline-none! ">
+                <label className="flex gap-1 input input-xs sm:input-sm h-7 sm:h-9  flex-1 sm:flex-none sm:w-auto outline-none! ">
                   <div className="flex justify-center items-center">
                     <SearchSvg />
                   </div>
@@ -613,13 +816,13 @@ export default function DataTable<T extends object>({
             >
               <div ref={scrollRef} className={styles.tablescroll}>
                 <table
-                  className={`${styles.table} table table-auto w-fit ${isRefreshing ? "opacity-55 blur-xs pointer-events-none " : ""}`}
+                  className={`${styles.table} table table-auto   ${isRefreshing ? "opacity-55 blur-xs pointer-events-none " : ""}`}
                 >
                   <thead className="text-black dark:text-white">
                     <tr
                       className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}
                     >
-                      {columns.map((col) => (
+                      {renderedColumns.map((col) => (
                         <th
                           className={`${styles.th} group ${col.sortable ? "cursor-pointer" : ""}  `}
                           key={col.reactKey ?? String(col.key)}
@@ -778,7 +981,7 @@ export default function DataTable<T extends object>({
                                                       }
                                                     }}
                                                   />
-                                                  <span>Hepsini Seç</span>
+                                                  <span className="font-bold">Hepsini Seç</span>
                                                 </label>
                                               )}
                                               {uniqueColumnValues[
@@ -903,7 +1106,7 @@ export default function DataTable<T extends object>({
                                                     );
                                                   }}
                                                 />
-                                                <span>Hepsini Seç</span>
+                                                <span className="font-bold">Hepsini Seç</span>
                                               </label>
                                               {col.filterType === "date" && (
                                                 <div className="max-h-64 min-w-48 text-sm">
@@ -1173,7 +1376,7 @@ export default function DataTable<T extends object>({
                     <tr
                       className={`${styles.tr} bg-gray-300! dark:bg-gray-700!`}
                     >
-                      {columns.map((col) => (
+                      {renderedColumns.map((col) => (
                         <th
                           className={styles.th}
                           key={col.reactKey ?? String(col.key)}
@@ -1215,7 +1418,7 @@ export default function DataTable<T extends object>({
                           {col.filterType === "boolean" && (
                             <label className="flex justify-between h-7 sm:h-9 cursor-default input input-xs sm:input-sm gap-0.5 sm:gap-2 max-w-18 sm:max-w-max outline-none! ">
                               <select
-                                className="outline-none! bg-transparent max-w-8 sm:max-w-max"
+                                className="outline-none! bg-transparent max-w-12 sm:max-w-max"
                                 value={
                                   boolFilters[col.key as string] === null ||
                                   boolFilters[col.key as string] === undefined
@@ -1300,7 +1503,7 @@ export default function DataTable<T extends object>({
                     {loading && !isRefreshing ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <tr key={i} className={`${styles.tr}`}>
-                          {columns.map((_, j) => (
+                          {renderedColumns.map((_, j) => (
                             <td key={j} className={`${styles.td} p-2`}>
                               <div
                                 className={`${styles.skeleton} h-6 border-dashed border`}
@@ -1316,7 +1519,7 @@ export default function DataTable<T extends object>({
                             key={i}
                             className={`${styles.tr}  text-xs sm:text-sm `}
                           >
-                            {columns.map((col) => (
+                            {renderedColumns.map((col) => (
                               <td
                                 className={`${styles.td} ${col.overflow ? "whitespace-nowrap overflow-hidden text-ellipsis max-w-50 sm:max-w-100" : ""}`}
                                 key={col.reactKey ?? String(col.key)}

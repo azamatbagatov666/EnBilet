@@ -282,7 +282,7 @@ export default function venues() {
   return (
     <>
       <FormContainer title="Yeni Salon Ekle">
-        <div>Şehir Seçiniz:</div>
+        <span>Şehir Seçiniz:</span>
         <select
           className="select select-accent w-full"
           value={selectedCity}
@@ -298,7 +298,7 @@ export default function venues() {
             </option>
           ))}
         </select>
-        <div>Salon İsmi:</div>
+        <span>Salon İsmi:</span>
 
         <input
           className="input input-accent w-full"
@@ -306,7 +306,7 @@ export default function venues() {
           onChange={(e) => setVenueName(e.target.value)}
           maxLength={200}
         ></input>
-        <div>Salonun Adresi:</div>
+        <span>Salonun Adresi:</span>
 
         <input
           className="input input-accent w-full"
@@ -340,7 +340,7 @@ export default function venues() {
         {editDialogueOpen && (
           <>
             <div className={`grid gap-2 w-[500px]`}>
-              <div>Şehir Seçiniz:</div>
+              <span>Şehir Seçiniz:</span>
               <select
                 className="select select-accent   "
                 value={editedVenue?.city ?? ""}
@@ -360,7 +360,7 @@ export default function venues() {
                   </option>
                 ))}
               </select>
-              <div>Salon İsmi:</div>
+              <span>Salon İsmi:</span>
 
               <input
           maxLength={200}
@@ -377,7 +377,7 @@ export default function venues() {
                   )
                 }
               ></input>
-              <div>Salonun Adresi:</div>
+              <span>Salonun Adresi:</span>
 
               <input
           maxLength={500}

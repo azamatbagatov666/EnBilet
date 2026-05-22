@@ -290,20 +290,20 @@ export default function shows() {
   return (
     <>
       <FormContainer title="Yeni Gösteri Ekle">
-        <div>Gösteri İsmi:</div>
+        <span>Gösteri İsmi:</span>
         <input
           maxLength={200}
           className="input input-accent  w-full"
           value={showName}
           onChange={(e) => setShowName(e.target.value)}
         ></input>
-        <div>Gösteri Açıklaması:</div>
+        <span>Gösteri Açıklaması:</span>
         <textarea
           className="input input-accent w-full h-28"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         ></textarea>
-        <div>Kapak Resmi:</div>
+        <span>Kapak Resmi:</span>
 
         <FileDropzone
           ref={dropzoneRef}
@@ -337,7 +337,7 @@ export default function shows() {
         >
           {editDialogueOpen && (
             <div className={`grid gap-2 w-[800px]`}>
-              <div>Gösteri İsmi:</div>
+              <span>Gösteri İsmi:</span>
               <input
                 maxLength={200}
                 className={`input input-accent w-full ${
@@ -352,7 +352,7 @@ export default function shows() {
                   )
                 }
               ></input>
-              <div>Gösteri Açıklaması:</div>
+              <span>Gösteri Açıklaması:</span>
               <textarea
                 className="input input-accent w-full h-56"
                 value={editedShow?.description ?? ""}
@@ -363,7 +363,7 @@ export default function shows() {
                 }
               ></textarea>
 
-              <div>Kapak Resmi</div>
+              <span>Kapak Resmi</span>
               {editedShow?.imageKey != null ? (
                 <div className="flex justify-center">
                   <div className=" bg-gray-500   relative p-1 rounded-3xl">
@@ -389,7 +389,7 @@ export default function shows() {
                         ✕
                       </button>
                       <img
-                        className="rounded-3xl max-w-[330px] "
+                        className="rounded-3xl sm:max-w-[330px] "
                         src={`https://cocukakli.blob.core.windows.net/public-images/${editedShow?.imageKey}`}
                         alt="Gösteri Fotoğrafı"
                       />
