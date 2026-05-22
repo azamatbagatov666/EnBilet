@@ -116,8 +116,6 @@ export default function venues() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertText, setAlertText] = useState("");
 
-  //Refs
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
   //Fetched
   const [venues, setVenues] = useState<VenueType[]>([]);
@@ -225,11 +223,7 @@ export default function venues() {
     getAllVenues();
   }, []);
 
-  useEffect(() => {
-    if (dialogueOpen) {
-      dialogRef.current?.focus();
-    }
-  }, [dialogueOpen]);
+
 
   const venueColumns: Column<VenueType>[] = [
     { key: "city", label: "Şehir", searchable: true, filterType: "multi", sortable: true},

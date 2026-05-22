@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DataTable from "@/src/components/DataTable";
-import { generateId } from "@/src/lib/generateId";
 import { useImageUpload } from "@/src/hooks/useImageUpload";
 
 import type { ShowType } from "@/src/models/ShowType";
@@ -34,7 +33,6 @@ export default function shows() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedShow, setEditedShow] = useState<ShowType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState("");
   const [imagesToDelete, setImagesToDelete] = useState({
     original: "",
     thumbnail: "",
@@ -50,7 +48,6 @@ export default function shows() {
 
   //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { uploadImage, deleteImages } = useImageUpload("show-covers");
 
@@ -74,7 +71,7 @@ export default function shows() {
     },
     {
       key: "imageKey",
-      label: "Kapak Fotoğrafı",
+      label: "Kapak Resmi",
       filterType: "none",
       render: (row) =>
         row.imageThumbKey ? (
@@ -232,7 +229,13 @@ export default function shows() {
     }
 
     setIsEditing(true);
-    let updatedShow = { ...editedShow };
+    const updatedShow = {
+      showID: editedShow.showID,
+      showName: editedShow.showName,
+      description: editedShow.description,
+      imageKey: editedShow.imageKey,
+      imageThumbKey: editedShow.imageThumbKey,
+    };
 
     if (newImageFiles?.original && editedShow.showID) {
       const { imageKey, imageThumbKey } = await uploadImage(
@@ -276,7 +279,6 @@ export default function shows() {
     setDialogueOpen(false);
     setEditDialogueOpen(false);
     setEditedShow(undefined);
-    setImageToDelete("");
     setImagesToDelete({ original: "", thumbnail: "" });
     setNewImageFiles(null);
     getShows();
@@ -284,12 +286,6 @@ export default function shows() {
     setAlertText("Gösteri başarıyla düzenlendi.");
     setAlertOpen(true);
   };
-
-  useEffect(() => {
-    if (dialogueOpen) {
-      dialogRef.current?.focus();
-    }
-  }, [dialogueOpen]);
 
   return (
     <>
@@ -367,7 +363,7 @@ export default function shows() {
                 }
               ></textarea>
 
-              <div>Kapak Fotoğrafı</div>
+              <div>Kapak Resmi</div>
               {editedShow?.imageKey != null ? (
                 <div className="flex justify-center">
                   <div className=" bg-gray-500   relative p-1 rounded-3xl">

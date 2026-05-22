@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, ReactNode } from "react";
+import styles from "./DialogModal.module.css";
+
 
 type DialogModalProps = {
   open: boolean;
@@ -92,13 +94,16 @@ export default function DialogModal({
         </button>
 
         <div
-          className={`mt-5 flex font-bold text-lg  justify-center text-center ${
+          className={`mt-5 flex   justify-center text-center  ${styles.label} ${
             disableClose
               ? "pointer-events-none blur-sm opacity-35 select-none"
               : ""
           }`}
         >
+          <div className="font-bold text-lg">
           {dialogueText}
+
+          </div>
           {children}
         </div>
       </div>

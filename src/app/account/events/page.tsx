@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { EventType } from "@/src/models/EventType";
 import type { Column } from "@/src/models/dataTable/Column";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
+import { useImageUpload } from "@/src/hooks/useImageUpload";
 import DataTable from "@/src/components/DataTable";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FormContainer from "@/src/components/forms/FormContainer";
+import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
+
 import { useRouter } from "next/navigation";
 
 export default function List() {
@@ -29,6 +32,16 @@ export default function List() {
     .toISOString()
     .slice(0, 16);
 
+  const [imageFiles, setImageFiles] = useState<{
+    original: File;
+    thumbnail: File;
+  } | null>(null);
+
+  const [newImageFiles, setNewImageFiles] = useState<{
+    original: File;
+    thumbnail: File;
+  } | null>(null);
+
   //alerts
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [dialogueText, setDialogueText] = useState("");
@@ -39,27 +52,71 @@ export default function List() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedEvent, setEditedEvent] = useState<EventType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
+  const [imagesToDelete, setImagesToDelete] = useState({
+    original: "",
+    thumbnail: "",
+  });
   const [originalEvent, setOriginalEvent] = useState<EventType | null>(null);
   const [editVenues, setEditVenues] = useState<Record<number, string>>({});
+
+  //Refs
+  const dropzoneRef = useRef<FileDropzoneRef>(null);
+
+  const { uploadImage, deleteImages } = useImageUpload("event-covers");
+
+  const resetForm = async () => {
+    dropzoneRef.current?.cleanUp();
+  };
 
   const handleOpenEdit = (eventInfo: EventType) => {
     setIsEditing(false);
     setEditedEvent({ ...eventInfo });
     setOriginalEvent({ ...eventInfo });
+    setImagesToDelete({ original: "", thumbnail: "" });
+    setNewImageFiles(null);
+
     setEditDialogueOpen(true);
     setDialogueOpen(true);
   };
 
-  const hasEventChanged = (original: EventType, updated: EventType) =>
-    Object.keys(original).some(
-      (key) =>
-        original[key as keyof EventType] !== updated[key as keyof EventType],
-    );
+  const hasEventChanged = (
+    original: EventType,
+    updated: EventType,
+    imagesToDelete: { original: string; thumbnail: string },
+    newImageFiles: { original: File; thumbnail: File } | null,
+  ) => {
+    const keysToCompare: (keyof EventType)[] = [
+      "venueID",
+      "showID",
+      "date",
+      "ticketSale",
+      "isPublic",
+    ];
+
+    if (keysToCompare.some((key) => original[key] !== updated[key])) {
+      return true;
+    }
+
+    if (newImageFiles !== null) return true;
+
+    if (imagesToDelete.original || imagesToDelete.thumbnail) {
+      return true;
+    }
+
+    return false;
+  };
 
   const editEvent = async () => {
     if (!editedEvent || isEditing || !originalEvent) return;
 
-    if (!hasEventChanged(originalEvent, editedEvent)) {
+    if (
+      !hasEventChanged(
+        originalEvent,
+        editedEvent,
+        imagesToDelete,
+        newImageFiles,
+      )
+    ) {
       setDialogueOpen(false);
       setEditDialogueOpen(false);
       setEditedEvent(undefined);
@@ -75,7 +132,19 @@ export default function List() {
       date: toDateTimeLocal(editedEvent.date),
       ticketSale: editedEvent.ticketSale,
       isPublic: editedEvent.isPublic,
+      imageKey: editedEvent.imageKey,
+      imageThumbKey: editedEvent.imageThumbKey,
     };
+
+    if (newImageFiles?.original && editedEvent.eventID) {
+      const { imageKey, imageThumbKey } = await uploadImage(
+        newImageFiles.original,
+        newImageFiles.thumbnail,
+        editedEvent.eventID,
+      );
+      updatedEvent.imageKey = imageKey;
+      updatedEvent.imageThumbKey = imageThumbKey;
+    }
 
     const res = await fetchWithAuth("/services/account/actions/editEvent", {
       method: "POST",
@@ -90,10 +159,24 @@ export default function List() {
       setEditedEvent(undefined);
       getEvents();
 
+          if (imagesToDelete.original != "") {
+      await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
+
+      updatedEvent.imageKey = null;
+      updatedEvent.imageThumbKey = null;
+    }
+
       setAlertText("Etkinlik başarıyla düzenlendi.");
       setAlertOpen(true);
     } else {
       const { message } = await res.json();
+
+      if (newImageFiles?.original) {
+        await deleteImages([
+          updatedEvent.imageKey!,
+          updatedEvent.imageThumbKey!,
+        ]);
+      }
 
       setIsEditing(false);
       setEditDialogueOpen(false);
@@ -102,6 +185,8 @@ export default function List() {
       setDialogueText(message);
       setDialogueOpen(true);
     }
+
+
   };
 
   const createEvent = async () => {
@@ -125,7 +210,37 @@ export default function List() {
           return;
         }
 
+        const { eventID } = await res.json();
+
+        if (imageFiles?.original) {
+          const { imageKey, imageThumbKey } = await uploadImage(
+            imageFiles.original,
+            imageFiles.thumbnail,
+            eventID,
+          );
+
+          const res = await fetchWithAuth(
+            "/services/account/actions/editEvent",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+
+                eventID,
+                                            venueID: selectedVenue,
+            showID: selectedShow,
+            date: time,
+            isPublic: false,
+            ticketSale: false,
+                imageKey,
+                imageThumbKey,
+              }),
+            },
+          );
+        }
+
         clearForm();
+        setImageFiles(null);
 
         setAlertText("Etkinlik başarıyla eklendi.");
         setAlertOpen(true);
@@ -270,6 +385,19 @@ export default function List() {
 
   const eventColumns: Column<EventType>[] = [
     { key: "date", label: "Tarih", filterType: "date", sortable: true },
+     {
+      key: "imageKey",
+      label: "Kapak Resmi",
+      filterType: "none",
+      render: (row) =>
+        row.imageThumbKey ? (
+          <img
+            className="w-full sm:max-w-64 h-auto"
+            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageThumbKey}`}
+            alt="Gösteri Fotoğrafı"
+          />
+        ) : null,
+    },
     {
       key: "showName",
       label: "Gösteri",
@@ -277,9 +405,26 @@ export default function List() {
       sortable: true,
       filterType: "multi",
     },
-    { key: "city", label: "Şehir", searchable: true, sortable: true, filterType: "multi" },
-    { key: "venueName", label: "Salon", searchable: true, sortable: true, filterType: "multi" },
-    { key: "ticketSale", label: "Satışa Açık", sortable: true, filterType: "boolean" },
+    {
+      key: "city",
+      label: "Şehir",
+      searchable: true,
+      sortable: true,
+      filterType: "multi",
+    },
+    {
+      key: "venueName",
+      label: "Salon",
+      searchable: true,
+      sortable: true,
+      filterType: "multi",
+    },
+    {
+      key: "ticketSale",
+      label: "Satışa Açık",
+      sortable: true,
+      filterType: "boolean",
+    },
     {
       key: "isPublic",
       label: "Görünür",
@@ -345,7 +490,7 @@ export default function List() {
   return (
     <>
       <FormContainer title="Yeni Etkinlik Ekle">
-        <div>Gösteri Seçiniz:</div>
+        <span>Gösteri Seçiniz:</span>
         <select
           className="select select-accent w-full "
           value={selectedShow}
@@ -361,7 +506,7 @@ export default function List() {
             </option>
           ))}
         </select>
-        <div>Şehir Seçiniz:</div>
+        <span>Şehir Seçiniz:</span>
 
         <select
           className="select select-accent w-full "
@@ -379,7 +524,7 @@ export default function List() {
           ))}
         </select>
 
-        <div>Salon Seçiniz:</div>
+        <span>Salon Seçiniz:</span>
 
         <select
           className="select select-accent w-full "
@@ -393,7 +538,7 @@ export default function List() {
             </option>
           ))}
         </select>
-        <div>Tarih ve Saat Seçiniz:</div>
+        <span>Tarih ve Saat Seçiniz:</span>
 
         <input
           className="select select-accent w-48"
@@ -402,6 +547,15 @@ export default function List() {
           min={today}
           onChange={(e) => setTime(e.target.value)}
         ></input>
+
+        <span>Etkinlik Resmi:</span>
+
+        <FileDropzone
+          ref={dropzoneRef}
+          file={imageFiles}
+          onChange={setImageFiles}
+          MAX_SIZE_MB={50}
+        />
 
         <div className="flex justify-center mt-6">
           <button
@@ -425,12 +579,13 @@ export default function List() {
         onClose={() => {
           setDialogueOpen(false);
           setDialogueText("");
+          setEditDialogueOpen(false);
         }}
       >
         {editDialogueOpen && (
           <>
             <div className={`grid gap-2 w-[500px]`}>
-              <div>Gösteri Seçiniz:</div>
+              <span>Gösteri Seçiniz:</span>
               <select
                 className="select select-accent w-full"
                 value={editedEvent?.showID ?? ""}
@@ -449,7 +604,7 @@ export default function List() {
                   </option>
                 ))}
               </select>
-              <div>Şehir Seçiniz:</div>
+              <span>Şehir Seçiniz:</span>
 
               <select
                 className="select select-accent w-full "
@@ -471,7 +626,7 @@ export default function List() {
                 ))}
               </select>
 
-              <div>Salon Seçiniz:</div>
+              <span>Salon Seçiniz:</span>
 
               <select
                 className="select select-accent w-full"
@@ -490,7 +645,7 @@ export default function List() {
               </select>
               <div className="flex justify-center gap-16">
                 <div>
-                  <div>Satışa Açık</div>
+                  <span className="block">Satışa Açık</span>
                   <input
                     type="checkbox"
                     className="checkbox checkbox-success"
@@ -503,7 +658,7 @@ export default function List() {
                   />
                 </div>
                 <div>
-                  <div>Görünür</div>
+                  <span className="block">Görünür</span>
                   <input
                     type="checkbox"
                     className="checkbox checkbox-success"
@@ -516,7 +671,7 @@ export default function List() {
                   />
                 </div>
               </div>
-              <div>Tarih ve Saat Seçiniz:</div>
+              <span>Tarih ve Saat Seçiniz:</span>
               <div className="flex justify-center">
                 <input
                   className="select select-accent w-52"
@@ -530,6 +685,50 @@ export default function List() {
                   }
                 ></input>
               </div>
+
+              <div>Kapak Resmi</div>
+              {editedEvent?.imageKey != null ? (
+                <div className="flex justify-center">
+                  <div className=" bg-gray-500   relative p-1 rounded-3xl">
+                    <div>
+                      <button
+                        onClick={() => {
+                          setImagesToDelete({
+                            original: editedEvent?.imageKey ?? "",
+                            thumbnail: editedEvent?.imageThumbKey ?? "",
+                          });
+                          setEditedEvent((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  imageKey: null,
+                                  imageThumbKey: null,
+                                }
+                              : prev,
+                          );
+                        }}
+                        className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
+                      >
+                        ✕
+                      </button>
+                      <img
+                        className="rounded-3xl max-w-[330px] "
+                        src={`https://cocukakli.blob.core.windows.net/public-images/${editedEvent?.imageKey}`}
+                        alt="Gösteri Fotoğrafı"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <FileDropzone
+                    ref={dropzoneRef}
+                    file={newImageFiles}
+                    onChange={setNewImageFiles}
+                    MAX_SIZE_MB={50}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-center w-full mt-6">
                 <button

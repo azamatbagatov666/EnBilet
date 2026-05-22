@@ -9,6 +9,8 @@ export interface EventType {
   isPublic: boolean;
   created_at?: Date;
   updated_at?: Date;
+  imageKey?: string | null;
+  imageThumbKey?: string | null;
 
   // display-only
   showName?: string;
