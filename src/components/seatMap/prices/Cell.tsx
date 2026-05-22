@@ -144,7 +144,7 @@ export function Cell({
   flex items-center justify-center 
   transition-colors duration-200  text-black dark:text-neutral-100 border-black
   
-${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
+${isAvailable || isBlocked ? "hover:border-black!  hover:bg-gray-400! " : ""}
 
   ${bgClass}
 `}
@@ -181,7 +181,7 @@ ${isAvailable || isBlocked ? "hover:!border-black  hover:!bg-gray-400 " : ""}
                 top: contextPos.y,
                 left: contextPos.x,
               }}
-              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black dark:border-gray-500"
+              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-9999 border-2 border-black dark:border-gray-500"
               ref={ref}
             >
               <li

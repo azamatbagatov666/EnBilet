@@ -117,9 +117,13 @@ export default function DialogModal({
       />
 
 
-      {disableClose && (     <span className="loading loading-spinner loading-lg absolute top-2/4"></span>
 
-          )}
+<div className="absolute inset-0 pointer-events-none">
+  <div className="relative w-full h-full">
+  {disableClose && (       <span className="loading loading-spinner loading-lg absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />   )}
+  </div>
+</div>
+
       
     </dialog>
   );

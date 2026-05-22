@@ -50,6 +50,8 @@ export default function List() {
 
   //ToEdit
   const [isEditing, setIsEditing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
   const [editedEvent, setEditedEvent] = useState<EventType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
   const [imagesToDelete, setImagesToDelete] = useState({
@@ -154,10 +156,10 @@ export default function List() {
 
     if (res.ok) {
       setIsEditing(false);
+
       setDialogueOpen(false);
       setEditDialogueOpen(false);
       setEditedEvent(undefined);
-      getEvents();
 
       if (imagesToDelete.original != "") {
         await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
@@ -165,6 +167,13 @@ export default function List() {
         updatedEvent.imageKey = null;
         updatedEvent.imageThumbKey = null;
       }
+
+
+
+      getEvents();
+
+
+
 
       setAlertText("Etkinlik başarıyla düzenlendi.");
       setAlertOpen(true);
@@ -188,7 +197,8 @@ export default function List() {
   };
 
   const createEvent = async () => {
-    if (selectedVenue != "" && time != "") {
+    if (selectedVenue != "" && time != "" && !isAdding) {
+      setIsAdding(true)
       try {
         const res = await fetchWithAuth("/services/account/actions/addEvent", {
           method: "POST",
@@ -205,6 +215,8 @@ export default function List() {
           const { message } = await res.json();
           setDialogueText(message);
           setDialogueOpen(true);
+      setIsAdding(false)
+
           return;
         }
 
@@ -243,14 +255,21 @@ export default function List() {
         setAlertOpen(true);
 
         getEvents();
+      setIsAdding(false)
+
+        
       } catch (err) {
         setDialogueText("Bağlantı sorunu.");
+      setIsAdding(false)
+
         setDialogueOpen(true);
       }
     } else {
       setDialogueText(
         "Lütfen salon ve tarih bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
+      setIsAdding(false)
+
       setDialogueOpen(true);
     }
   };
@@ -487,7 +506,7 @@ export default function List() {
   ];
   return (
     <>
-      <FormContainer title="Yeni Etkinlik Ekle">
+      <FormContainer title="Yeni Etkinlik Ekle" inProgress={isAdding}>
         <span>Gösteri Seçiniz:</span>
         <select
           className="select select-accent w-full "
@@ -574,10 +593,15 @@ export default function List() {
       <DialogModal
         open={dialogueOpen}
         dialogueText={dialogueText}
+          disableClose={isEditing}
+
+          
+
         onClose={() => {
           setDialogueOpen(false);
           setDialogueText("");
           setEditDialogueOpen(false);
+          
         }}
       >
         {editDialogueOpen && (
@@ -710,7 +734,7 @@ export default function List() {
                         ✕
                       </button>
                       <img
-                        className="rounded-3xl sm:max-w-[330px] "
+                        className="rounded-3xl sm:max-w-[300px] "
                         src={`https://cocukakli.blob.core.windows.net/public-images/${editedEvent?.imageKey}`}
                         alt="Gösteri Fotoğrafı"
                       />

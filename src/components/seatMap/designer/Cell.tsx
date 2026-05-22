@@ -186,7 +186,7 @@ onContextMenu={(e) => {
                 top: contextPos.y,
                 left: contextPos.x,
               }}
-              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-[9999] border-2 border-black dark:border-gray-500"
+              className="menu bg-base-200 rounded-box w-56 top-11  absolute z-9999 border-2 border-black dark:border-gray-500"
               ref={ref}
             >
               <li onClick={() => deleteTheCell(cell.id)}>

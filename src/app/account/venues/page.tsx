@@ -100,12 +100,15 @@ export default function venues() {
   ];
 
   //ToAdd
+  const [isAdding, setIsAdding] = useState(false);
+
   const [selectedCity, setSelectedCity] = useState("");
   const [venueName, setVenueName] = useState("");
   const [address, setAddress] = useState("");
 
   //ToEdit
   const [isEditing, setIsEditing] = useState(false);
+
   const [editedVenue, setEditedVenue] = useState<VenueType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
   const [originalVenue, setOriginalVenue] = useState<VenueType | null>(null);
@@ -115,7 +118,6 @@ export default function venues() {
   const [dialogueText, setDialogueText] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertText, setAlertText] = useState("");
-
 
   //Fetched
   const [venues, setVenues] = useState<VenueType[]>([]);
@@ -138,7 +140,9 @@ export default function venues() {
   };
 
   const createVenue = async () => {
-    if (selectedCity != "" && venueName != "" && address != "") {
+    if (selectedCity != "" && venueName != "" && address != "" && !isAdding) {
+      setIsAdding(true);
+
       try {
         const res = await fetchWithAuth("/services/account/actions/addVenue", {
           method: "POST",
@@ -155,12 +159,16 @@ export default function venues() {
           const { message } = await res.json();
           setDialogueText(message);
           setDialogueOpen(true);
+          setIsAdding(false);
+
           return;
         }
 
         setSelectedCity("");
         setVenueName("");
         setAddress("");
+        setIsAdding(false);
+
         setAlertText("Salon başarıyla eklendi.");
         setAlertOpen(true);
 
@@ -168,12 +176,15 @@ export default function venues() {
       } catch (err) {
         setDialogueText("Bağlantı sorunu.");
         setDialogueOpen(true);
+        setIsAdding(false);
       }
     } else {
       setDialogueText(
         "Lütfen şehir, salon ismi ve adres bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
+
       setDialogueOpen(true);
+      setIsAdding(false);
     }
   };
 
@@ -203,31 +214,59 @@ export default function venues() {
     setIsEditing(true);
     let updatedVenue = { ...editedVenue };
 
-    await fetchWithAuth("/services/account/actions/editVenue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedVenue),
-    });
+    try {
+      const res = await fetchWithAuth("/services/account/actions/editVenue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedVenue),
+      });
 
-    setIsEditing(false);
-    setDialogueOpen(false);
-    setEditDialogueOpen(false);
-    setEditedVenue(undefined);
-    getAllVenues();
+      if (res.ok) {
+        setIsEditing(false);
+        setDialogueOpen(false);
+        setEditDialogueOpen(false);
+        setEditedVenue(undefined);
+        getAllVenues();
 
-    setAlertText("Salon başarıyla düzenlendi.");
-    setAlertOpen(true);
+        setAlertText("Salon başarıyla düzenlendi.");
+        setAlertOpen(true);
+      } else {
+        const { message } = await res.json();
+        setDialogueText(message);
+        setEditDialogueOpen(false);
+
+        setIsEditing(false);
+
+        return;
+      }
+    } catch (err) {
+      setDialogueText("Bağlantı sorunu.");
+      setDialogueOpen(true);
+      setIsAdding(false);
+    }
+
+    
   };
 
   useEffect(() => {
     getAllVenues();
   }, []);
 
-
-
   const venueColumns: Column<VenueType>[] = [
-    { key: "city", label: "Şehir", searchable: true, filterType: "multi", sortable: true},
-    { key: "venueName", label: "Salon", searchable: true, filterType: "multi", sortable: true },
+    {
+      key: "city",
+      label: "Şehir",
+      searchable: true,
+      filterType: "multi",
+      sortable: true,
+    },
+    {
+      key: "venueName",
+      label: "Salon",
+      searchable: true,
+      filterType: "multi",
+      sortable: true,
+    },
 
     { key: "address", label: "Adres", searchable: true, filterType: "none" },
     {
@@ -281,7 +320,7 @@ export default function venues() {
 
   return (
     <>
-      <FormContainer title="Yeni Salon Ekle">
+      <FormContainer title="Yeni Salon Ekle" inProgress={isAdding}>
         <span>Şehir Seçiniz:</span>
         <select
           className="select select-accent w-full"
@@ -313,7 +352,6 @@ export default function venues() {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           maxLength={500}
-
         ></input>
         <div className="flex justify-center mt-4">
           <button
@@ -363,8 +401,7 @@ export default function venues() {
               <span>Salon İsmi:</span>
 
               <input
-          maxLength={200}
-
+                maxLength={200}
                 className={`input input-accent ${
                   editedVenue?.venueName == ""
                     ? "border-red-500! border-4 outline-red-500!"
@@ -380,8 +417,7 @@ export default function venues() {
               <span>Salonun Adresi:</span>
 
               <input
-          maxLength={500}
-
+                maxLength={500}
                 className="input input-accent  "
                 value={editedVenue?.address ?? ""}
                 onChange={(e) =>

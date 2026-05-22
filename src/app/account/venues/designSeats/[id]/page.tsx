@@ -387,7 +387,7 @@ if (editType === "create") {
                 value={newMapName}
                 onChange={(e) => setNewMapName(e.target.value)}
                 type="text"
-                placeholder="Planın İsni"
+                placeholder="Planın İsmi"
                 className="input input-info"
               />
               <span className="font-normal text-xs md:w-48 md:h-0">

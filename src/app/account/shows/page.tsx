@@ -31,6 +31,7 @@ export default function shows() {
 
   //EditShow
   const [isEditing, setIsEditing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [editedShow, setEditedShow] = useState<ShowType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
   const [imagesToDelete, setImagesToDelete] = useState({
@@ -131,11 +132,13 @@ export default function shows() {
   }, []);
 
   const createShow = async () => {
-    if (!showName) {
+    if (!showName && !isAdding) {
       setDialogueText("Lütfen gösteri ismini girin.");
       setDialogueOpen(true);
       return;
     }
+
+    setIsAdding(true);
 
     try {
       const res = await fetchWithAuth("/services/account/actions/addShow", {
@@ -153,6 +156,8 @@ export default function shows() {
         const { message } = await res.json();
         setDialogueText(message);
         setDialogueOpen(true);
+    setIsAdding(false);
+
         return;
       }
 
@@ -190,9 +195,13 @@ export default function shows() {
       setAlertText("Gösteri başarıyla eklendi.");
       setAlertOpen(true);
       getShows();
+    setIsAdding(false);
+
     } catch {
       setDialogueText("Bağlantı sorunu.");
       setDialogueOpen(true);
+    setIsAdding(false);
+
     }
   };
 
@@ -289,7 +298,7 @@ export default function shows() {
 
   return (
     <>
-      <FormContainer title="Yeni Gösteri Ekle">
+      <FormContainer title="Yeni Gösteri Ekle" inProgress={isAdding}>
         <span>Gösteri İsmi:</span>
         <input
           maxLength={200}
@@ -389,7 +398,7 @@ export default function shows() {
                         ✕
                       </button>
                       <img
-                        className="rounded-3xl sm:max-w-[330px] "
+                        className="rounded-3xl sm:max-w-[300px] "
                         src={`https://cocukakli.blob.core.windows.net/public-images/${editedShow?.imageKey}`}
                         alt="Gösteri Fotoğrafı"
                       />
