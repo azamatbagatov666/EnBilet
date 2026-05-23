@@ -9,6 +9,10 @@ import { useEventSeats } from "./useEventSeats";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import CellLegend from "@/src/components/seatMap/CellLegend";
 import { debounce } from "lodash";
+import RefreshSvg from "@/src/components/svg/RefreshSvg";
+import { throttle } from "lodash";
+
+
 
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import type { EventType } from "@/src/models/EventType";
@@ -17,7 +21,7 @@ import { useState, useEffect, useRef } from "react";
 import type { stageLocation } from "@/src/models/seatMap/SeatMap";
 import Row from "@/src/components/seatMap/prices/Row";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ticketPrices({
@@ -79,6 +83,8 @@ export default function ticketPrices({
 
   const maxSelectable = Math.max(0, mapCapacity - immutableCount);
 
+
+
   useEffect(() => {
     getEventInfo();
   }, []);
@@ -108,6 +114,8 @@ export default function ticketPrices({
       router.push(`/account/events/`);
     }
   };
+
+
 
   const handleChangeAllPrices = () => {
     const price = Number(desiredPrice.replace(",", "."));
@@ -427,6 +435,26 @@ export default function ticketPrices({
     }
   };
 
+const handleRefresh = useMemo(
+  () =>
+    throttle(async () => {
+      setIsEditing(true)
+
+      try {
+        if (isSeated) {
+          await loadEventSeats();
+        } else {
+          await loadNonSeated();
+        }
+      } finally {
+      setIsEditing(false)
+
+      }
+    }, 2000, { trailing: false }),
+  [isSeated]
+);
+  
+
   return (
     <>
       <div className="px-6">
@@ -485,6 +513,20 @@ export default function ticketPrices({
               <span>Şu Anda Düzenlenen Oturma Planı:</span>
               <span className="ml-4">{selectedMapName}</span>
             </div>
+
+            <button
+              className={`btn h-7 sm:h-9 px-1 sm:px-4 mt-2 outline-none! border-gray-300 ${isEditing ? "pointer-events-none" : ""}`}
+              onClick={() => {
+                handleRefresh();
+              }}
+            >
+              {isEditing ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <RefreshSvg />
+              )}
+              Veriyi Yenile
+            </button>
             {isSeated ? (
               <div>
                 <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./DataTable.module.css";
-import { debounce, throttle } from "lodash";
+import { throttle } from "lodash";
 
 import {
   useState,
