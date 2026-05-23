@@ -53,7 +53,7 @@ export default function SeatMapCreatorPage({
   //-------------FORM------------
   const [editType, setEditType] = useState<"create" | "edit" | null>(null);
   const [newMapName, setNewMapName] = useState("");
-  var maxNum = 50
+  var maxNum = 50;
   const [mapCapacity, setMapCapacity] = useState(maxNum);
   const [isSeated, setIsSeated] = useState(true);
 
@@ -114,15 +114,17 @@ export default function SeatMapCreatorPage({
   }, []);
 
   const getVenueInfo = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/get/getTheVenue?venueID=${id}`,
-    );
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/get/getTheVenue?venueID=${id}`,
+      );
+
+      const data = await res.json();
+
+      setTheVenue(data);
+    } catch (err: any) {
       router.push(`/account/venues/`);
     }
-    const data = await res.json();
-
-    setTheVenue(data);
   };
 
   const hasUnsavedChanges = (type: "create" | "edit"): boolean => {
@@ -151,8 +153,8 @@ export default function SeatMapCreatorPage({
         openEditDialogue();
       } else {
         setEditType(type);
-        setIsSeated(true)
-        setMapCapacity(maxNum)
+        setIsSeated(true);
+        setMapCapacity(maxNum);
         return;
       }
     }
@@ -160,8 +162,8 @@ export default function SeatMapCreatorPage({
     if (type === "create") {
       if (selectedMapId === "" || selectedMapId === null) {
         setEditType(type);
-        setIsSeated(true)
-        setMapCapacity(maxNum)
+        setIsSeated(true);
+        setMapCapacity(maxNum);
         return;
       }
 
@@ -173,8 +175,8 @@ export default function SeatMapCreatorPage({
           clearMap();
           setSelectedMapId("");
           setEditType(type);
-                  setIsSeated(true)
-        setMapCapacity(maxNum)
+          setIsSeated(true);
+          setMapCapacity(maxNum);
           return;
         }
       }
@@ -191,14 +193,15 @@ export default function SeatMapCreatorPage({
   };
 
   const getMaps = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/get/getMaps?venueID=${id}`,
-    );
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/get/getMaps?venueID=${id}`,
+      );
+      const data = await res.json();
+      setMaps(data);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setMaps(data);
   };
 
   const cleanUp = async () => {
@@ -237,45 +240,48 @@ export default function SeatMapCreatorPage({
     setDialogueOpen(false);
     setEditDialogueOpen(false);
 
-let layoutResult: any = null;
+    let layoutResult: any = null;
 
-if (isSeated) {
-  const result = saveMap();
+    if (isSeated) {
+      const result = saveMap();
 
-  if (typeof result === "string") {
-    setDialogueText(result);
-    setDialogueOpen(true);
-    return;
-  }
+      if (typeof result === "string") {
+        setDialogueText(result);
+        setDialogueOpen(true);
+        return;
+      }
 
-  layoutResult = result;
-}
-    
+      layoutResult = result;
+    }
 
-if (editType === "create") {
-  if (newMapName.trim() === "") {
-    setDialogueText("Lütfen yeni oturma planına bir isim giriniz.");
-    setDialogueOpen(true);
-    return;
-  }
-      const res = await fetchWithAuth("/services/account/actions/addMap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mapName: newMapName,
-          venueID: id,
-          isSeated: isSeated,
-          layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
-          maxCapacity: isSeated ? null : mapCapacity,
-        }),
-      });
+    if (editType === "create") {
+      if (newMapName.trim() === "") {
+        setDialogueText("Lütfen yeni oturma planına bir isim giriniz.");
+        setDialogueOpen(true);
+        return;
+      }
 
-      if (res.ok) {
+      try {
+        await fetchWithAuth("/services/account/actions/addMap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mapName: newMapName,
+            venueID: id,
+            isSeated: isSeated,
+            layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
+            maxCapacity: isSeated ? null : mapCapacity,
+          }),
+        });
+
         setAlertText("Oturma Planı başarıyla eklendi.");
         setAlertOpen(true);
 
         cleanUp();
         return true;
+      } catch (err: any) {
+        setDialogueText(err.message);
+        setDialogueOpen(true);
       }
     } else if (editType === "edit") {
       if (editingName.trim() == "") {
@@ -284,33 +290,28 @@ if (editType === "create") {
         return;
       }
 
-      const res = await fetchWithAuth("/services/account/actions/editMap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mapName: editingName,
-          mapID: selectedMapId,
-          isSeated: isSeated,
-          layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
-          maxCapacity: isSeated ? null : mapCapacity,
-        }),
-      });
+      try {
+        await fetchWithAuth("/services/account/actions/editMap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mapName: editingName,
+            mapID: selectedMapId,
+            isSeated: isSeated,
+            layoutJS: isSeated ? `${JSON.stringify(layoutResult)}` : null,
+            maxCapacity: isSeated ? null : mapCapacity,
+          }),
+        });
 
-      if (res.ok) {
         setAlertText("Oturma Planı başarıyla düzenlendi.");
         setAlertOpen(true);
-
         cleanUp();
 
         return true;
+      } catch (err: any) {
+        setDialogueText(err.message);
+        setDialogueOpen(true);
       }
-      else {
-  const { message } = await res.json();
-        cleanUp();
-
-  setDialogueText(message);
-  setDialogueOpen(true);
-}
     }
   };
 
@@ -381,8 +382,7 @@ if (editType === "create") {
           <div className=" bg-base-300 rounded-box  h-24 px-4 place-items-center flex justify-end">
             <div className="grid align-middle items-center gap-2 ">
               <input
-          maxLength={50}
-
+                maxLength={50}
                 disabled={editType !== "create"}
                 value={newMapName}
                 onChange={(e) => setNewMapName(e.target.value)}
@@ -413,7 +413,6 @@ if (editType === "create") {
                 checked={isSeated === true}
                 onChange={(e) => {
                   setIsSeated(e.target.checked ? true : false);
-
                 }}
                 className="toggle bg-primary border-primary text-white"
               />
@@ -424,17 +423,18 @@ if (editType === "create") {
 
         <div className="mt-2 sm:mt-0">
           <div className="font-bold text-3xl sm:h-12 sm:my-4 grid gap-2 sm:flex items-center ">
-            
-              <span className=""> {"Plan İsmi: "}</span>
+            <span className=""> {"Plan İsmi: "}</span>
 
             {editType === "create" ? (
-              <span className="font-semibold sm:px-2 sm:ml-2 max-w-full min-h-9 break-all"> {newMapName}</span>
+              <span className="font-semibold sm:px-2 sm:ml-2 max-w-full min-h-9 break-all">
+                {" "}
+                {newMapName}
+              </span>
             ) : editType === "edit" && selectedMapId ? (
               <>
                 <div className="flex items-center">
                   <input
-          maxLength={50}
-
+                    maxLength={50}
                     type="text"
                     className="input input-accent leading-[48px] text-3xl sm:px-2 w-64 sm:ml-2"
                     value={editingName}
@@ -461,13 +461,17 @@ if (editType === "create") {
               <></>
             )}
           </div>
-          <div className="font-bold mt-4 sm:mt-0">{isSeated ? "Numaralı Salon Düzeni" : "Numarasız Salon Düzeni"}</div>
+          <div className="font-bold mt-4 sm:mt-0">
+            {isSeated ? "Numaralı Salon Düzeni" : "Numarasız Salon Düzeni"}
+          </div>
         </div>
 
         {isSeated ? (
           <div className="">
             <div className="flex gap-4 align-middle my-2">
-              <span className="font-bold text-sm sm:text-lg">Sahne pozisyonu:</span>
+              <span className="font-bold text-sm sm:text-lg">
+                Sahne pozisyonu:
+              </span>
               <div className="flex justify-left align-middle self-center gap-2 ">
                 <span>Yukarıda</span>
                 <input
@@ -489,7 +493,6 @@ if (editType === "create") {
               className="flex flex-col  items-left mt-2  "
             >
               <div className="relative overflow-auto border-2 bg-transparent">
-                
                 <div data-theme="" className="px-5 bg-transparent">
                   <div className="min-w-max select-none">
                     <div className="h-16 my-4  flex justify-center">
@@ -563,7 +566,6 @@ if (editType === "create") {
                 </div>
               </div>
             </div>
-            
 
             <div className="font-semibold flex gap-4">
               <span>
@@ -606,20 +608,18 @@ if (editType === "create") {
                 </button>
               </div>
               <div>
-              <button onClick={addEmptyRow} className="btn btn-secondary">
-                + Boş Sıra
-              </button>
+                <button onClick={addEmptyRow} className="btn btn-secondary">
+                  + Boş Sıra
+                </button>
               </div>
               <div>
-
-              <button
-                onClick={handleSave}
-                className="btn btn-success text-white"
-              >
-                Kaydet
-              </button>
-
-            </div>
+                <button
+                  onClick={handleSave}
+                  className="btn btn-success text-white"
+                >
+                  Kaydet
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -632,27 +632,25 @@ if (editType === "create") {
               <input
                 type="number"
                 value={mapCapacity}
-                  onChange={(e) => {
-    const value = Number(e.target.value);
+                onChange={(e) => {
+                  const value = Number(e.target.value);
 
-    if (Number.isNaN(value)) return;
+                  if (Number.isNaN(value)) return;
 
-    setMapCapacity(
-      Math.min(10000, Math.max(1, value))
-    );
-  }}
+                  setMapCapacity(Math.min(10000, Math.max(1, value)));
+                }}
                 max={10000}
                 min={1}
                 className="input input-secondary w-24"
               />
             </div>
-<div className="flex justify-center sm:block">
-            <button
-              onClick={handleSave}
-              className="btn btn-success mt-4 text-white"
-            >
-              Kaydet
-            </button>
+            <div className="flex justify-center sm:block">
+              <button
+                onClick={handleSave}
+                className="btn btn-success mt-4 text-white"
+              >
+                Kaydet
+              </button>
             </div>
           </div>
         )}
@@ -662,7 +660,7 @@ if (editType === "create") {
         open={dialogueOpen}
         onClose={() => {
           setDialogueOpen(false);
-          setDialogueText("")
+          setDialogueText("");
         }}
       >
         <div className="text-left">

@@ -20,9 +20,6 @@ import Row from "@/src/components/seatMap/prices/Row";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 
-
-
-
 export default function ticketPrices({
   params,
 }: {
@@ -99,15 +96,17 @@ export default function ticketPrices({
   }, [theEvent]);
 
   const getEventInfo = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/get/getTheEvent?eventID=${id}`,
-    );
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/get/getTheEvent?eventID=${id}`,
+      );
+
+      const data = await res.json();
+
+      setTheEvent(data);
+    } catch (err: any) {
       router.push(`/account/events/`);
     }
-    const data = await res.json();
-
-    setTheEvent(data);
   };
 
   const handleChangeAllPrices = () => {
@@ -134,9 +133,8 @@ export default function ticketPrices({
         (seat) => seat.status === "available" || seat.status === "blocked",
       );
 
-      const res = await fetchWithAuth(
-        "/services/account/actions/eventSeats/saveSeats",
-        {
+      try {
+        await fetchWithAuth("/services/account/actions/eventSeats/saveSeats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -144,17 +142,16 @@ export default function ticketPrices({
             mapID: Number(selectedMapId),
             Seats: seatsToSave,
           }),
-        },
-      );
+        });
 
-      if (res.ok) {
         setAlertText("Koltuklar başarıyla güncellendi.");
         setAlertOpen(true);
-
-        getEventInfo();
-      } else {
-        setDialogueText("Koltuklar kaydedilirken bir hata oluştu.");
+      } catch (err: any) {
+        setDialogueText(err.message);
         setDialogueOpen(true);
+      } finally {
+        setIsEditing(false);
+        getEventInfo();
       }
     }
 
@@ -169,8 +166,6 @@ export default function ticketPrices({
       setIsEditing(false);
       return;
     }
-
-
 
     setNonSeatedError("");
 
@@ -242,9 +237,8 @@ export default function ticketPrices({
       ];
     }
 
-    const res = await fetchWithAuth(
-      "/services/account/actions/eventSeats/saveSeats",
-      {
+    try {
+      await fetchWithAuth("/services/account/actions/eventSeats/saveSeats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -252,35 +246,34 @@ export default function ticketPrices({
           mapID: Number(selectedMapId),
           Seats: seatsToSave,
         }),
-      },
-    );
+      });
 
-    if (res.ok) {
       setAlertText("Koltuklar başarıyla güncellendi.");
       setAlertOpen(true);
-
+    } catch (err: any) {
+      setDialogueText(err.message);
+      setDialogueOpen(true);
+    } finally {
       getEventInfo();
-    } else {
-  const { message } = await res.json();
-  setDialogueText(message);
-        setDialogueOpen(true)
-    }
 
-    setIsEditing(false);
+      setIsEditing(false);
+    }
   }, 2000);
 
   const getMaps = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/get/getMaps?venueID=${theEvent?.venueID}`,
-    );
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/get/getMaps?venueID=${theEvent?.venueID}`,
+      );
+
+      const data = await res.json();
+      if (data.length == 0) {
+        setNoMaps(true);
+      }
+      setMaps(data);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    if (data.length == 0) {
-      setNoMaps(true);
-    }
-    setMaps(data);
   };
 
   useEffect(() => {
@@ -292,12 +285,10 @@ export default function ticketPrices({
       setSelectedMapName(selected?.mapName);
     }
 
-
-
     if (selected?.isSeated == false && selected.maxCapacity) {
       setIsSeated(false);
-          setNumberOfTickets(0);
-    setNonSeatedPrices("0");
+      setNumberOfTickets(0);
+      setNonSeatedPrices("0");
       setMapCapacity(selected.maxCapacity);
       loadNonSeated();
       return;
@@ -344,105 +335,96 @@ export default function ticketPrices({
   }, [seatMap]);
 
   const loadEventSeats = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
-    );
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
+      );
 
-    if (!res.ok) return;
+      const data = await res.json();
+      if (data.length == 0) {
+        return;
+      }
 
-    const data = await res.json();
-    if (data.length == 0) {
-      return;
-    }
+      const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
+      setLockSeatMap(hasSoldSeat);
 
-    const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
-    setLockSeatMap(hasSoldSeat);
+      if (theEvent?.mapID != Number(selectedMapId)) {
+        return;
+      }
 
-    if (theEvent?.mapID != Number(selectedMapId)) {
-      return;
-    }
+      const savedSeats: seatState[] = data;
 
-    const savedSeats: seatState[] = data;
+      const savedMap = Object.fromEntries(savedSeats.map((s) => [s.cellID, s]));
 
-    const savedMap = Object.fromEntries(savedSeats.map((s) => [s.cellID, s]));
+      const normalized: Record<string, seatState> = {};
 
-    const normalized: Record<string, seatState> = {};
+      seatMap.rows.forEach((row: any) => {
+        row.cells.forEach((cell: any) => {
+          if (cell.type !== "seat") return;
 
-    seatMap.rows.forEach((row: any) => {
-      row.cells.forEach((cell: any) => {
-        if (cell.type !== "seat") return;
+          const saved = savedMap[cell.id];
 
-        const saved = savedMap[cell.id];
-
-        normalized[cell.id] = {
-          cellID: cell.id,
-          price: saved?.price ?? 0,
-          status: saved?.status ?? "available",
-        };
+          normalized[cell.id] = {
+            cellID: cell.id,
+            price: saved?.price ?? 0,
+            status: saved?.status ?? "available",
+          };
+        });
       });
-    });
 
-    setEventSeats(normalized);
+      setEventSeats(normalized);
+    } catch (err: any) {
+      return;
+    }
   };
 
   const loadNonSeated = async () => {
-    const res = await fetchWithAuth(
-      `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
-    );
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/actions/eventSeats/getEventSeats?eventID=${theEvent!.eventID}`,
+      );
 
-    if (!res.ok) return;
-
-    const data = await res.json();
-    if (data.length == 0) {
-      return;
-    }
-
-    const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
-    setLockSeatMap(hasSoldSeat);
-
-    if (theEvent?.mapID != Number(selectedMapId)) {
-      return;
-    }
-
-    setEventSeats(data);
-
-    if (data.length > 0) {
-      const firstAvailable = data.find((s: any) => s.status === "available");
-      const firstBlocked = data.find((s: any) => s.status === "blocked");
-      const firstReserved = data.find((s: any) => s.status === "reserved");
-      const firstSold = data.find((s: any) => s.status === "sold");
-
-      if (firstAvailable) {
-      const thePrice = firstAvailable.price.toString();
-      setNonSeatedPrices(formatPrice(thePrice));
-
-
-      } else if (firstBlocked) {
-
-      const thePrice = firstBlocked.price.toString();
-      setNonSeatedPrices(formatPrice(thePrice));
-
-
-      } else if (firstReserved) {
-
-              const thePrice = firstReserved.price.toString();
-      setNonSeatedPrices(formatPrice(thePrice));
-
-      }
-      else {
-
-                      const thePrice = firstSold.price.toString();
-      setNonSeatedPrices(formatPrice(thePrice));
-
-
+      const data = await res.json();
+      if (data.length == 0) {
+        return;
       }
 
+      const hasSoldSeat = data.some((seat: any) => seat.status === "sold");
+      setLockSeatMap(hasSoldSeat);
 
+      if (theEvent?.mapID != Number(selectedMapId)) {
+        return;
+      }
+
+      setEventSeats(data);
+
+      if (data.length > 0) {
+        const firstAvailable = data.find((s: any) => s.status === "available");
+        const firstBlocked = data.find((s: any) => s.status === "blocked");
+        const firstReserved = data.find((s: any) => s.status === "reserved");
+        const firstSold = data.find((s: any) => s.status === "sold");
+
+        if (firstAvailable) {
+          const thePrice = firstAvailable.price.toString();
+          setNonSeatedPrices(formatPrice(thePrice));
+        } else if (firstBlocked) {
+          const thePrice = firstBlocked.price.toString();
+          setNonSeatedPrices(formatPrice(thePrice));
+        } else if (firstReserved) {
+          const thePrice = firstReserved.price.toString();
+          setNonSeatedPrices(formatPrice(thePrice));
+        } else {
+          const thePrice = firstSold.price.toString();
+          setNonSeatedPrices(formatPrice(thePrice));
+        }
+      }
+
+      setNumberOfTickets(
+        data.filter((s: any) => s.status === "available").length,
+      );
+    } catch (err: any) {
+      return;
     }
-
-    setNumberOfTickets(
-      data.filter((s: any) => s.status === "available").length,
-    );
   };
 
   return (
@@ -451,10 +433,7 @@ export default function ticketPrices({
         <div className="">
           <div className="grid lg:flex gap-4 text-xl font-bold my-4">
             <span>
-              Tarih:{" "}
-              <span className="font-semibold">
-                {theEvent?.date}
-              </span>
+              Tarih: <span className="font-semibold">{theEvent?.date}</span>
             </span>
             <span>
               Gösteri:{" "}
@@ -497,7 +476,7 @@ export default function ticketPrices({
         )}
 
         {(seatMap || !isSeated) && (
-          <div>
+          <div className="relative">
             {isEditing && (
               <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner blur-0! opacity-100! text-accent"></span>
             )}
@@ -508,7 +487,7 @@ export default function ticketPrices({
             </div>
             {isSeated ? (
               <div>
-                         <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
+                <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
                   <CellLegend
                     variant="available"
                     label="Müsait"
@@ -549,105 +528,99 @@ export default function ticketPrices({
                   />
                 </div>
                 <div className="flex flex-col  items-left mt-2 ">
-              <div
-                className={`  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                <div className="relative overflow-auto border-2 bg-transparent select-none">
-
-                         <div data-theme="" className="px-5 bg-transparent">
-                  <div className="min-w-max select-none">
-       
-
-                <div className="h-16 my-4  flex justify-center">
-                  {stageLocation == "up" && (
-                    <div
-                      className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
+                  <div
+                    className={`  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    <div className="relative overflow-auto border-2 bg-transparent select-none">
+                      <div data-theme="" className="px-5 bg-transparent">
+                        <div className="min-w-max select-none">
+                          <div className="h-16 my-4  flex justify-center">
+                            {stageLocation == "up" && (
+                              <div
+                                className="w-96  h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(0%_0%,100%_0%,80%_100%,20%_100%)]"
-                    >
-                      SAHNE
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-center">
-                  <div className="mt-10 flex flex-col items-left gap-4">
-                    {seatMap.rows
-                      .sort((a: any, b: any) => a.order - b.order)
-                      .map((row: any) => (
-                        <Row
-                          key={row.id}
-                          row={row}
-                          eventSeats={eventSeats}
-                          onSeatClick={toggleSeat}
-                          toggleRow={toggleRow}
-                          setRowPrice={setRowPrice}
-                          setSeatPrice={setSeatPrice}
-                        />
-                      ))}
-                  </div>
-                </div>
+                              >
+                                SAHNE
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex justify-center">
+                            <div className="mt-10 flex flex-col items-left gap-4">
+                              {seatMap.rows
+                                .sort((a: any, b: any) => a.order - b.order)
+                                .map((row: any) => (
+                                  <Row
+                                    key={row.id}
+                                    row={row}
+                                    eventSeats={eventSeats}
+                                    onSeatClick={toggleSeat}
+                                    toggleRow={toggleRow}
+                                    setRowPrice={setRowPrice}
+                                    setSeatPrice={setSeatPrice}
+                                  />
+                                ))}
+                            </div>
+                          </div>
 
-                <div className="h-16 my-8 flex justify-center">
-                  {stageLocation == "down" && (
-                    <div
-                      className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
+                          <div className="h-16 my-8 flex justify-center">
+                            {stageLocation == "down" && (
+                              <div
+                                className="w-96 h-16 bg-red-800 text-white flex items-center justify-center
                 [clip-path:polygon(20%_0%,80%_0%,100%_100%,0%_100%)]"
-                    >
-                      SAHNE
+                              >
+                                SAHNE
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-              </div>
-</div>
-</div>
-              
-                <div className="mt-4 grid justify-center sm:justify-start text-center sm:flex gap-2">
-                  <div>
-                  <button
-                    onClick={() => {
-                      setDialogueOpen(true);
-                      setEditDialogueOpen(true);
-                    }}
-                    className="btn btn-primary "
-                  >
-                    Bütün Koltuklara Fiyat Gir
-                  </button>
-</div>
-                  <div>
-
-                  <button
-                    onClick={() => {
-                      toggleAll();
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    Bütün Koltukları Aç/Kapat
-                  </button>
-                  </div>
-                  <div>
-
-                  <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      handleSavePrices();
-                    }}
-                    className="btn btn-success text-white"
-                  >
-                    Kaydet
-                  </button>
+                    <div className="mt-4 grid justify-center sm:justify-start text-center sm:flex gap-2">
+                      <div>
+                        <button
+                          onClick={() => {
+                            setDialogueOpen(true);
+                            setEditDialogueOpen(true);
+                          }}
+                          className="btn btn-primary "
+                        >
+                          Bütün Koltuklara Fiyat Gir
+                        </button>
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => {
+                            toggleAll();
+                          }}
+                          className="btn btn-secondary"
+                        >
+                          Bütün Koltukları Aç/Kapat
+                        </button>
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            handleSavePrices();
+                          }}
+                          className="btn btn-success text-white"
+                        >
+                          Kaydet
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              </div>
               </div>
             ) : (
               <div
                 className={` my-4 ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
               >
-                         <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
+                <div className="md:flex flex-wrap gap-6 my-6 justify-center grid  grid-cols-2">
                   <CellLegend
                     variant="available"
                     label="Müsait"
@@ -661,7 +634,8 @@ export default function ticketPrices({
                       numberOfTickets -
                       Object.values(eventSeats).filter(
                         (seat) => seat.status === "reserved",
-                      ).length -                 Object.values(eventSeats).filter(
+                      ).length -
+                      Object.values(eventSeats).filter(
                         (seat) => seat.status === "sold",
                       ).length
                     }
@@ -767,7 +741,7 @@ export default function ticketPrices({
 
       <DialogModal
         open={dialogueOpen}
-        dialogueText = {dialogueText}
+        dialogueText={dialogueText}
         onClose={() => {
           setDialogueOpen(false);
           setEditDialogueOpen(false);
@@ -776,7 +750,6 @@ export default function ticketPrices({
           setDesiredPrice("");
         }}
       >
-
         {editDialogueOpen && (
           <div className="flex justify-center">
             <div>

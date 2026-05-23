@@ -148,17 +148,14 @@ export default function List() {
       updatedEvent.imageThumbKey = imageThumbKey;
     }
 
-    const res = await fetchWithAuth("/services/account/actions/editEvent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedEvent),
-    });
-
-    if (res.ok) {
-      setIsEditing(false);
+    try {
+      const res = await fetchWithAuth("/services/account/actions/editEvent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedEvent),
+      });
 
       setDialogueOpen(false);
-      setEditDialogueOpen(false);
       setEditedEvent(undefined);
 
       if (imagesToDelete.original != "") {
@@ -168,18 +165,11 @@ export default function List() {
         updatedEvent.imageThumbKey = null;
       }
 
-
-
       getEvents();
-
-
-
 
       setAlertText("Etkinlik başarıyla düzenlendi.");
       setAlertOpen(true);
-    } else {
-      const { message } = await res.json();
-
+    } catch (err: any) {
       if (newImageFiles?.original) {
         await deleteImages([
           updatedEvent.imageKey!,
@@ -187,18 +177,18 @@ export default function List() {
         ]);
       }
 
-      setIsEditing(false);
-      setEditDialogueOpen(false);
-      setEditedEvent(undefined);
-
-      setDialogueText(message);
+      setDialogueText(err.message);
       setDialogueOpen(true);
+    } finally {
+      setEditDialogueOpen(false);
+      setIsEditing(false);
     }
   };
 
   const createEvent = async () => {
     if (selectedVenue != "" && time != "" && !isAdding) {
-      setIsAdding(true)
+      setIsAdding(true);
+
       try {
         const res = await fetchWithAuth("/services/account/actions/addEvent", {
           method: "POST",
@@ -211,14 +201,6 @@ export default function List() {
             date: time,
           }),
         });
-        if (!res.ok) {
-          const { message } = await res.json();
-          setDialogueText(message);
-          setDialogueOpen(true);
-      setIsAdding(false)
-
-          return;
-        }
 
         const { eventID } = await res.json();
 
@@ -255,20 +237,16 @@ export default function List() {
         setAlertOpen(true);
 
         getEvents();
-      setIsAdding(false)
-
-        
-      } catch (err) {
-        setDialogueText("Bağlantı sorunu.");
-      setIsAdding(false)
-
+      } catch (err: any) {
+        setDialogueText(err.message);
         setDialogueOpen(true);
+      } finally {
+        setIsAdding(false);
       }
     } else {
       setDialogueText(
         "Lütfen salon ve tarih bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
-      setIsAdding(false)
 
       setDialogueOpen(true);
     }
@@ -278,22 +256,22 @@ export default function List() {
     city: string,
     setter: React.Dispatch<React.SetStateAction<Record<number, string>>>,
   ): Promise<Record<number, string>> => {
-    const res = await fetchWithAuth(
-      `/services/account/get/getVenues?city=${city}`,
-    );
+    try {
+      const res = await fetchWithAuth(
+        `/services/account/get/getVenues?city=${city}`,
+      );
 
-    if (!res.ok) {
+      const data: { venueID: number; venueName: string }[] = await res.json();
+
+      const venuesObject = Object.fromEntries(
+        data.map((v) => [v.venueID, v.venueName]),
+      );
+
+      setter(venuesObject);
+      return venuesObject; // ✅ ALWAYS returns
+    } catch (err: any) {
       throw new Error("Failed to fetch venues");
     }
-
-    const data: { venueID: number; venueName: string }[] = await res.json();
-
-    const venuesObject = Object.fromEntries(
-      data.map((v) => [v.venueID, v.venueName]),
-    );
-
-    setter(venuesObject);
-    return venuesObject; // ✅ ALWAYS returns
   };
 
   useEffect(() => {
@@ -334,39 +312,45 @@ export default function List() {
   }, []);
 
   const getShows = async () => {
-    const res = await fetchWithAuth("/services/account/get/getShows");
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth("/services/account/get/getShows");
+
+      const data = await res.json();
+      setShows(data);
+
+      const showsObject = Object.fromEntries(
+        data.map((v: { showID: number; showName: string }) => [
+          v.showID,
+          v.showName,
+        ]),
+      );
+      setShows(showsObject);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setShows(data);
-
-    const showsObject = Object.fromEntries(
-      data.map((v: { showID: number; showName: string }) => [
-        v.showID,
-        v.showName,
-      ]),
-    );
-    setShows(showsObject);
   };
 
   const getCities = async () => {
-    const res = await fetchWithAuth("/services/account/get/getCities");
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth("/services/account/get/getCities");
+
+      const data = await res.json();
+      setCities(data);
+      getEvents();
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setCities(data);
-    getEvents();
   };
 
   const getEvents = async () => {
-    const res = await fetchWithAuth("/services/account/get/getEvents");
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth("/services/account/get/getEvents");
+
+      const data = await res.json();
+      setEvents(data);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setEvents(data);
   };
 
   const clearForm = () => {
@@ -401,7 +385,7 @@ export default function List() {
 
   const eventColumns: Column<EventType>[] = [
     { key: "date", label: "Tarih", filterType: "date", sortable: true },
-   
+
     {
       key: "showName",
       label: "Gösteri",
@@ -423,7 +407,7 @@ export default function List() {
       sortable: true,
       filterType: "multi",
     },
-     {
+    {
       key: "imageKey",
       label: "Kapak Resmi",
       filterType: "none",
@@ -593,15 +577,11 @@ export default function List() {
       <DialogModal
         open={dialogueOpen}
         dialogueText={dialogueText}
-          disableClose={isEditing}
-
-          
-
+        disableClose={isEditing}
         onClose={() => {
           setDialogueOpen(false);
           setDialogueText("");
           setEditDialogueOpen(false);
-          
         }}
       >
         {editDialogueOpen && (

@@ -131,12 +131,14 @@ export default function venues() {
   };
 
   const getAllVenues = async () => {
-    const res = await fetchWithAuth("/services/account/get/getAllVenues");
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth("/services/account/get/getAllVenues");
+
+      const data = await res.json();
+      setVenues(data);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setVenues(data);
   };
 
   const createVenue = async () => {
@@ -144,7 +146,7 @@ export default function venues() {
       setIsAdding(true);
 
       try {
-        const res = await fetchWithAuth("/services/account/actions/addVenue", {
+        await fetchWithAuth("/services/account/actions/addVenue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -155,14 +157,6 @@ export default function venues() {
             address: address,
           }),
         });
-        if (!res.ok) {
-          const { message } = await res.json();
-          setDialogueText(message);
-          setDialogueOpen(true);
-          setIsAdding(false);
-
-          return;
-        }
 
         setSelectedCity("");
         setVenueName("");
@@ -173,9 +167,10 @@ export default function venues() {
         setAlertOpen(true);
 
         getAllVenues();
-      } catch (err) {
-        setDialogueText("Bağlantı sorunu.");
+      } catch (err: any) {
+        setDialogueText(err.message);
         setDialogueOpen(true);
+      } finally {
         setIsAdding(false);
       }
     } else {
@@ -212,40 +207,29 @@ export default function venues() {
     }
 
     setIsEditing(true);
-    let updatedVenue = { ...editedVenue };
 
     try {
-      const res = await fetchWithAuth("/services/account/actions/editVenue", {
+      await fetchWithAuth("/services/account/actions/editVenue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedVenue),
+        body: JSON.stringify(editedVenue),
       });
 
-      if (res.ok) {
-        setIsEditing(false);
-        setDialogueOpen(false);
-        setEditDialogueOpen(false);
-        setEditedVenue(undefined);
-        getAllVenues();
+      setDialogueOpen(false);
+      setEditDialogueOpen(false);
+      setEditedVenue(undefined);
 
-        setAlertText("Salon başarıyla düzenlendi.");
-        setAlertOpen(true);
-      } else {
-        const { message } = await res.json();
-        setDialogueText(message);
-        setEditDialogueOpen(false);
+      getAllVenues();
 
-        setIsEditing(false);
-
-        return;
-      }
-    } catch (err) {
-      setDialogueText("Bağlantı sorunu.");
+      setAlertText("Salon başarıyla düzenlendi.");
+      setAlertOpen(true);
+    } catch (err: any) {
+      setDialogueText(err.message);
       setDialogueOpen(true);
-      setIsAdding(false);
+    } finally {
+      setEditDialogueOpen(false);
+      setIsEditing(false);
     }
-
-    
   };
 
   useEffect(() => {

@@ -119,12 +119,14 @@ export default function shows() {
   };
 
   const getShows = async () => {
-    const res = await fetchWithAuth("/services/account/get/getShows");
-    if (!res.ok) {
+    try {
+      const res = await fetchWithAuth("/services/account/get/getShows");
+
+      const data = await res.json();
+      setShows(data);
+    } catch (err: any) {
       return;
     }
-    const data = await res.json();
-    setShows(data);
   };
 
   useEffect(() => {
@@ -152,19 +154,7 @@ export default function shows() {
         }),
       });
 
-      if (!res.ok) {
-        const { message } = await res.json();
-        setDialogueText(message);
-        setDialogueOpen(true);
-    setIsAdding(false);
-
-        return;
-      }
-
       const { showID } = await res.json();
-
-      // 2️⃣ Upload image (if exists)
-      let uploadedPath: string | null = null;
 
       if (imageFiles?.original) {
         const { imageKey, imageThumbKey } = await uploadImage(
@@ -186,7 +176,7 @@ export default function shows() {
         });
       }
 
-      // Reset UI
+      // success UI
       resetForm();
       setShowName("");
       setDescription("");
@@ -195,13 +185,11 @@ export default function shows() {
       setAlertText("Gösteri başarıyla eklendi.");
       setAlertOpen(true);
       getShows();
-    setIsAdding(false);
-
-    } catch {
-      setDialogueText("Bağlantı sorunu.");
+    } catch (err: any) {
+      setDialogueText(err.message || "Bağlantı sorunu.");
       setDialogueOpen(true);
-    setIsAdding(false);
-
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -257,15 +245,32 @@ export default function shows() {
       updatedShow.imageThumbKey = imageThumbKey;
     }
 
-    const res = await fetchWithAuth("/services/account/actions/editShow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedShow),
-    });
+    try {
+      await fetchWithAuth("/services/account/actions/editShow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedShow),
+      });
 
-    if (!res.ok) {
-      const { message } = await res.json();
-      setDialogueText(message);
+      if (imagesToDelete.original != "") {
+        await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
+
+        updatedShow.imageKey = null;
+        updatedShow.imageThumbKey = null;
+      }
+
+      setIsEditing(false);
+      setDialogueOpen(false);
+      setEditDialogueOpen(false);
+      setEditedShow(undefined);
+      setImagesToDelete({ original: "", thumbnail: "" });
+      setNewImageFiles(null);
+      getShows();
+
+      setAlertText("Gösteri başarıyla düzenlendi.");
+      setAlertOpen(true);
+    } catch (err: any) {
+      setDialogueText(err.message);
       setEditDialogueOpen(false);
       setIsEditing(false);
 
@@ -275,25 +280,8 @@ export default function shows() {
 
       setDialogueOpen(true);
       return;
+    } finally {
     }
-
-    if (imagesToDelete.original != "") {
-      await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
-
-      updatedShow.imageKey = null;
-      updatedShow.imageThumbKey = null;
-    }
-
-    setIsEditing(false);
-    setDialogueOpen(false);
-    setEditDialogueOpen(false);
-    setEditedShow(undefined);
-    setImagesToDelete({ original: "", thumbnail: "" });
-    setNewImageFiles(null);
-    getShows();
-
-    setAlertText("Gösteri başarıyla düzenlendi.");
-    setAlertOpen(true);
   };
 
   return (
