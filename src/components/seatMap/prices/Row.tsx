@@ -3,9 +3,9 @@ import { Cell } from "./Cell";
 import { useState, useEffect, useRef } from "react";
 
 import DialogModal from "@/src/components/alerts/DialogModal";
-import { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import PriceInput from "@/src/components/forms/PriceInput";
+
 
 interface Props {
   row: SeatRow;
@@ -25,7 +25,6 @@ export default function Row({
   setSeatPrice,
 }: Props) {
   const [dialogueOpen, setDialogueOpen] = useState(false);
-  const [dialogueText, setDialogueText] = useState("");
 
   const [desiredPrice, setDesiredPrice] = useState("");
 
@@ -54,7 +53,10 @@ export default function Row({
       {row.type != "empty" ? (
         <>
           {" "}
-          <div className="tooltip inline-flex" data-tip="Bütün Sırayı Aç/Kapat">
+          <div className="tooltip inline-flex">
+  <div className="tooltip-content">
+    <div className="">Bütün Sırayı Aç/Kapat</div>
+  </div>
             <button
               onClick={() => {
                 toggleRow(row);

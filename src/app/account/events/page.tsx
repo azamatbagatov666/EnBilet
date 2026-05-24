@@ -168,7 +168,6 @@ export default function List() {
       getEvents();
 
       setAlertText("Etkinlik başarıyla düzenlendi.");
-      setAlertOpen(true);
     } catch (err: any) {
       if (newImageFiles?.original) {
         await deleteImages([
@@ -178,7 +177,6 @@ export default function List() {
       }
 
       setDialogueText(err.message);
-      setDialogueOpen(true);
     } finally {
       setEditDialogueOpen(false);
       setIsEditing(false);
@@ -234,12 +232,10 @@ export default function List() {
         setImageFiles(null);
 
         setAlertText("Etkinlik başarıyla eklendi.");
-        setAlertOpen(true);
 
         getEvents();
       } catch (err: any) {
         setDialogueText(err.message);
-        setDialogueOpen(true);
       } finally {
         setIsAdding(false);
       }
@@ -248,7 +244,6 @@ export default function List() {
         "Lütfen salon ve tarih bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
 
-      setDialogueOpen(true);
     }
   };
 
@@ -745,8 +740,7 @@ export default function List() {
         )}
       </DialogModal>
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-        {alertText}
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
       </SuccessAlert>
     </>
   );

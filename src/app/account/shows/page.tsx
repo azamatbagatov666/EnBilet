@@ -136,7 +136,6 @@ export default function shows() {
   const createShow = async () => {
     if (!showName && !isAdding) {
       setDialogueText("Lütfen gösteri ismini girin.");
-      setDialogueOpen(true);
       return;
     }
 
@@ -183,11 +182,9 @@ export default function shows() {
       setImageFiles(null);
 
       setAlertText("Gösteri başarıyla eklendi.");
-      setAlertOpen(true);
       getShows();
     } catch (err: any) {
       setDialogueText(err.message || "Bağlantı sorunu.");
-      setDialogueOpen(true);
     } finally {
       setIsAdding(false);
     }
@@ -268,9 +265,7 @@ export default function shows() {
       getShows();
 
       setAlertText("Gösteri başarıyla düzenlendi.");
-      setAlertOpen(true);
     } catch (err: any) {
-      setDialogueText(err.message);
       setEditDialogueOpen(false);
       setIsEditing(false);
 
@@ -278,7 +273,8 @@ export default function shows() {
         await deleteImages([updatedShow.imageKey!, updatedShow.imageThumbKey!]);
       }
 
-      setDialogueOpen(true);
+      setDialogueText(err.message);
+
       return;
     } finally {
     }
@@ -320,7 +316,6 @@ export default function shows() {
 
       <DataTable data={shows} columns={showColumns} title="Gösteriler" />
 
-      {dialogueOpen && (
         <DialogModal
           open={dialogueOpen}
           dialogueText={dialogueText}
@@ -417,10 +412,8 @@ export default function shows() {
             </div>
           )}
         </DialogModal>
-      )}
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-        {alertText}
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
       </SuccessAlert>
     </>
   );

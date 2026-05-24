@@ -1,7 +1,12 @@
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-  import HandiSvg from "@/src/components/svg/HandiSvg";
+import HandiSvg from "@/src/components/svg/HandiSvg";
+import DialogModal from "@/src/components/alerts/DialogModal";
+
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 interface Props {
   cell: SeatCell;
@@ -35,17 +40,41 @@ export function Cell({
   const [steps, SetSteps] = useState<number>(1);
   const [renumerateError, setRenumerateError] = useState(false);
   const [formError, setFormError] = useState("");
-  const [selectedIncrement, setSelectedIncrement] = useState<"up" | "down">("up");
+  const [selectedIncrement, setSelectedIncrement] = useState<"up" | "down">(
+    "up",
+  );
 
   const [modalMode, setModalMode] = useState("");
 
   const [dialogueOpen, setDialogueOpen] = useState(false);
 
-  const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+  const [clickPos, setClickPos] = useState({ x: 0, y: 0 });
+  const [contextPos, setContextPos] = useState({ x: -9999, y: -9999 });
 
   const ref = useRef<HTMLUListElement | null>(null);
 
+  useIsomorphicLayoutEffect(() => {
+    if (!menuOpen || !ref.current) return;
+
+    const panelRect = ref.current.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+
+    let left = clickPos.x;
+
+    if (left - window.scrollX + panelRect.width > viewportWidth) {
+      left = viewportWidth + window.scrollX - panelRect.width - 12;
+    }
+
+    if (left < window.scrollX + 8) {
+      left = window.scrollX + 8;
+    }
+
+    setContextPos({ x: left, y: clickPos.y });
+  }, [menuOpen, clickPos]);
+
   useEffect(() => {
+    if (!menuOpen) return;
+
     const handleOutSideClick = (event: Event) => {
       if (
         event.target instanceof Node &&
@@ -55,30 +84,41 @@ export function Cell({
       }
     };
 
+    const handleScroll = (event: Event) => {
+      if (
+        event.target instanceof Node &&
+        ref.current?.contains(event.target)
+      ) {
+        return;
+      }
+      setMenuOpen(false);
+    };
+
     window.addEventListener("mousedown", handleOutSideClick);
+    window.addEventListener("touchstart", handleOutSideClick);
+    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
+      window.removeEventListener("touchstart", handleOutSideClick);
+      window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [ref]);
+  }, [menuOpen, ref]);
 
   const openDialogue = (menuName: string) => {
     setFormError("");
     setModalMode(menuName);
 
-
-
     setDialogueOpen(true);
     setMenuOpen(false);
-
   };
 
   useEffect(() => {
-  if (!dialogueOpen) return;
+    if (!dialogueOpen) return;
 
     inputRef.current?.focus();
     inputRef.current?.select();
-}, [dialogueOpen, modalMode]);
+  }, [dialogueOpen, modalMode]);
 
   const handleSave = () => {
     if (desiredLabel.trim() != "") {
@@ -119,8 +159,7 @@ export function Cell({
     }
   }, [cell.label]);
 
-     const inputRef = useRef<HTMLInputElement>(null);
-
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const bgClass = menuOpen
     ? isSeat
@@ -141,14 +180,18 @@ export function Cell({
               ? `Engelli koltuğu ${ID}${cell.label}`
               : `Koltuk ${ID}${cell.label}`
           }
-onContextMenu={(e) => {
-  e.preventDefault();
-  setContextPos({
-    x: e.pageX,
-    y: e.pageY,
-  });
-  setMenuOpen(true);
-}}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setClickPos({
+              x: e.pageX,
+              y: e.pageY,
+            });
+            setContextPos({
+              x: -9999,
+              y: e.pageY,
+            });
+            setMenuOpen(true);
+          }}
           onClick={onToggle}
           className={`
   w-10 h-10 text-xs rounded border-2
@@ -169,16 +212,9 @@ onContextMenu={(e) => {
             {isSeat ? ID + cell.label : ""}
           </span>
 
-          {isHandicapped && !menuOpen && (
-<HandiSvg></HandiSvg>
-          )}
+          {isHandicapped && !menuOpen && <HandiSvg></HandiSvg>}
         </button>
-        {menuOpen && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setMenuOpen(false)}
-          />
-        )}
+
         {menuOpen &&
           createPortal(
             <ul
@@ -241,117 +277,98 @@ onContextMenu={(e) => {
           )}
       </div>
 
-      {dialogueOpen && (
-        <dialog
-          open
-          className="modal modal-open outline-none"
-          onClose={() => setDialogueOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              setDialogueOpen(false);
-            }
-          }}
-        >
-          <div className="modal-box max-w-72 border">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setDialogueOpen(false)}
-            >
-              ✕
+      <DialogModal
+        open={dialogueOpen}
+        onClose={() => {
+          setDialogueOpen(false);
+        }}
+        width={340}
+      >
+        {modalMode === "rename" && (
+          <div className="grid gap-4 w-80">
+            <div className="flex justify-between gap-2 items-center">
+              <span>Yeni İsim:</span>
+              <input
+                value={desiredLabel}
+                onChange={(e) => setDesiredLabel(e.target.value)}
+                className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
+                ref={inputRef}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
+            <div className={" font-bold h-12 text-red-500 "}>{formError}</div>
+
+            <button className="btn btn-accent h-8" onClick={handleSave}>
+              Değiştir
             </button>
-
-            {modalMode === "rename" && (
-              <div className="grid gap-4 mt-9">
-                <div className="flex justify-between items-center">
-                  <span>Yeni İsim:</span>
-                  <input
-                    value={desiredLabel}
-                    onChange={(e) => setDesiredLabel(e.target.value)}
-                    className="w-16 h-6 rounded-md px-1 border border-gray-500 input"
-                    ref={inputRef}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSave();
-                    }}
-                  />
-                </div>
-
-                <button className="btn btn-accent h-8" onClick={handleSave}>
-                  Değiştir
-                </button>
-                <div className={" font-bold text-red-500 px-1"}>
-                  {formError}
-                </div>
-              </div>
-            )}
-
-            {modalMode === "renumerate" && (
-              <div className="grid gap-2 mt-5">
-                <div className="flex justify-between items-center">
-                  <span>Başlangıç:</span>
-                  <span
-                    className={`w-12 ${renumerateError ? "border-red-500 border-2 text-red-500 px-1" : ""}`}
-                  >
-                    {cell.label}
-                  </span>
-                </div>
-                {renumerateError && (
-                  <div className="text-red-500 font-bold text-xs">
-                    Numaralandırmaya başlayacağınız hücre, sadece rakamlardan
-                    oluşmalıdır.
-                  </div>
-                )}
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      value="up"
-                      checked={selectedIncrement === "up"}
-                      onChange={(e) => setSelectedIncrement("up")}
-                    />
-                    Artarak
-                  </label>
-                  <br />
-                  <label>
-                    <input
-                      type="radio"
-                      value="down"
-                      checked={selectedIncrement === "down"}
-                      onChange={(e) => setSelectedIncrement("down")}
-                    />
-                    Azalarak
-                  </label>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Basamak:</span>
-                  <input
-                    type="number"
-                    value={steps}
-                    onChange={(e) => SetSteps(+e.target.value)}
-                    max={50}
-                    min={1}
-                    ref={inputRef}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleNumarete();
-                    }}
-                    className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
-                  />
-                </div>
-                <button className="btn btn-accent h-8" onClick={handleNumarete}>
-                  Numaralandır
-                </button>
-                <div className={" font-bold text-red-500 px-1"}>
-                  {formError}
-                </div>
-              </div>
-            )}
           </div>
+        )}
 
-          <div
-            className="modal-backdrop"
-            onClick={() => setDialogueOpen(false)}
-          />
-        </dialog>
-      )}
+        {modalMode === "renumerate" && (
+          <div className="grid gap-2  w-80">
+            <div className="flex justify-between items-center">
+              <span>Başlangıç:</span>
+              <span
+                className={`w-12 ${renumerateError ? "border-red-500 border-2 text-red-500 px-1" : ""}`}
+              >
+                {cell.label}
+              </span>
+            </div>
+            {renumerateError && (
+              <div className="text-red-500 font-bold text-xs">
+                Numaralandırmaya başlayacağınız hücre, sadece rakamlardan
+                oluşmalıdır.
+              </div>
+            )}
+            <div className="text-start">
+              <label className="flex gap-2">
+                <input
+                  type="radio"
+                  value="up"
+                  checked={selectedIncrement === "up"}
+                  onChange={(e) => setSelectedIncrement("up")}
+                />
+                Artarak
+              </label>
+              <label className="flex gap-2">
+                <input
+                  type="radio"
+                  value="down"
+                  checked={selectedIncrement === "down"}
+                  onChange={(e) => setSelectedIncrement("down")}
+                />
+                Azalarak
+              </label>
+            </div>
+            <div className="flex justify-between items-center gap-2">
+              <span>Basamak:</span>
+              <input
+                type="number"
+                value={steps}
+                onChange={(e) => SetSteps(+e.target.value)}
+                max={50}
+                min={1}
+                ref={inputRef}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleNumarete();
+                }}
+                className="w-12 h-8 text-black dark:text-white rounded-md px-1 border-2"
+              />
+            </div>
+            <div className={" font-bold text-red-500 h-[72px]"}>
+              {formError}
+            </div>
+            <button
+              className="btn btn-accent h-8 text-white"
+              onClick={handleNumarete}
+            >
+              Numaralandır
+            </button>
+          </div>
+        )}
+      </DialogModal>
     </>
   );
 }

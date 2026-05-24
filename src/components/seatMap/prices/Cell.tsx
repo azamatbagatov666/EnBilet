@@ -1,9 +1,12 @@
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import PriceInput from "@/src/components/forms/PriceInput";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import { createPortal } from "react-dom";
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import type { seatState } from "@/src/models/seatMap/seatState";
 import HandiSvg from "@/src/components/svg/HandiSvg";
 import { formatPrice } from "@/src/lib/formatPrice";
@@ -33,9 +36,29 @@ export function Cell({
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [desiredPrice, setDesiredPrice] = useState("");
 
-  const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+  const [clickPos, setClickPos] = useState({ x: 0, y: 0 });
+  const [contextPos, setContextPos] = useState({ x: -9999, y: -9999 });
 
   const ref = useRef<HTMLUListElement | null>(null);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!menuOpen || !ref.current) return;
+
+    const panelRect = ref.current.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+
+    let left = clickPos.x;
+
+    if (left - window.scrollX + panelRect.width > viewportWidth) {
+      left = viewportWidth + window.scrollX - panelRect.width - 12;
+    }
+
+    if (left < window.scrollX + 8) {
+      left = window.scrollX + 8;
+    }
+
+    setContextPos({ x: left, y: clickPos.y });
+  }, [menuOpen, clickPos]);
 
   const status = seatState?.status;
 
@@ -70,6 +93,8 @@ export function Cell({
   };
 
   useEffect(() => {
+    if (!menuOpen) return;
+
     const handleOutSideClick = (event: Event) => {
       if (
         event.target instanceof Node &&
@@ -79,12 +104,26 @@ export function Cell({
       }
     };
 
+    const handleScroll = (event: Event) => {
+      if (
+        event.target instanceof Node &&
+        ref.current?.contains(event.target)
+      ) {
+        return;
+      }
+      setMenuOpen(false);
+    };
+
     window.addEventListener("mousedown", handleOutSideClick);
+    window.addEventListener("touchstart", handleOutSideClick);
+    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
       window.removeEventListener("mousedown", handleOutSideClick);
+      window.removeEventListener("touchstart", handleOutSideClick);
+      window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [ref]);
+  }, [menuOpen, ref]);
 
   const openDialogue = () => {
     setFormError("");
@@ -131,8 +170,12 @@ export function Cell({
               isAvailable || isBlocked
                 ? (e) => {
                     e.preventDefault();
-                    setContextPos({
+                    setClickPos({
                       x: e.pageX,
+                      y: e.pageY,
+                    });
+                    setContextPos({
+                      x: -9999,
                       y: e.pageY,
                     });
                     setMenuOpen(true);
@@ -168,12 +211,7 @@ ${isAvailable || isBlocked ? "hover:border-black!  hover:bg-gray-400! " : ""}
           </button>
         </div>
 
-        {menuOpen && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setMenuOpen(false)}
-          />
-        )}
+
         {menuOpen &&
           createPortal(
             <ul

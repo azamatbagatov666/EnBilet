@@ -164,12 +164,10 @@ export default function venues() {
         setIsAdding(false);
 
         setAlertText("Salon başarıyla eklendi.");
-        setAlertOpen(true);
 
         getAllVenues();
       } catch (err: any) {
         setDialogueText(err.message);
-        setDialogueOpen(true);
       } finally {
         setIsAdding(false);
       }
@@ -178,7 +176,6 @@ export default function venues() {
         "Lütfen şehir, salon ismi ve adres bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
 
-      setDialogueOpen(true);
       setIsAdding(false);
     }
   };
@@ -222,10 +219,8 @@ export default function venues() {
       getAllVenues();
 
       setAlertText("Salon başarıyla düzenlendi.");
-      setAlertOpen(true);
     } catch (err: any) {
       setDialogueText(err.message);
-      setDialogueOpen(true);
     } finally {
       setEditDialogueOpen(false);
       setIsEditing(false);
@@ -423,8 +418,7 @@ export default function venues() {
         )}
       </DialogModal>
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-        {alertText}
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
       </SuccessAlert>
     </>
   );

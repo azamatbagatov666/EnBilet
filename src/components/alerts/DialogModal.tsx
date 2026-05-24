@@ -23,35 +23,41 @@ export default function DialogModal({
 }: DialogModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const isModalOpen = open || (!!dialogueText && dialogueText.trim() !== "");
+
   // Autofocus + show dialog
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (open) {
-      dialog.showModal();
-
-  requestAnimationFrame(() => {
-      const target = dialog.querySelector<HTMLElement>(
-        "[data-focus-target]"
-      );
-
-      if (target instanceof HTMLElement) {
-        target.focus();
-
-        // optional: select text if it's an input
-        if (target instanceof HTMLInputElement) {
-          target.select();
-        }
+    if (isModalOpen) {
+      if (!dialog.open) {
+        dialog.showModal();
       }
-    });
+
+      requestAnimationFrame(() => {
+        const target = dialog.querySelector<HTMLElement>(
+          "[data-focus-target]"
+        );
+
+        if (target instanceof HTMLElement) {
+          target.focus();
+
+          // optional: select text if it's an input
+          if (target instanceof HTMLInputElement) {
+            target.select();
+          }
+        }
+      });
     } else {
-      dialog.close();
+      if (dialog.open) {
+        dialog.close();
+      }
     }
-  }, [open]);
+  }, [isModalOpen]);
 
   useEffect(() => {
-    if (!open || !disableClose) return;
+    if (!isModalOpen || !disableClose) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -62,7 +68,7 @@ export default function DialogModal({
 
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [open, disableClose]);
+  }, [isModalOpen, disableClose]);
 
   // ESC handling
   useEffect(() => {

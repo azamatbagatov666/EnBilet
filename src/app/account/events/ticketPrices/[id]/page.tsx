@@ -135,7 +135,6 @@ export default function ticketPrices({
     if (!valid) {
       setIsEditing(false);
       setDialogueText(errors.join("\n"));
-      setDialogueOpen(true);
     } else {
       const seatsToSave = Object.values(eventSeats).filter(
         (seat) => seat.status === "available" || seat.status === "blocked",
@@ -153,10 +152,8 @@ export default function ticketPrices({
         });
 
         setAlertText("Koltuklar başarıyla güncellendi.");
-        setAlertOpen(true);
       } catch (err: any) {
         setDialogueText(err.message);
-        setDialogueOpen(true);
       } finally {
         setIsEditing(false);
         getEventInfo();
@@ -257,10 +254,8 @@ export default function ticketPrices({
       });
 
       setAlertText("Koltuklar başarıyla güncellendi.");
-      setAlertOpen(true);
     } catch (err: any) {
       setDialogueText(err.message);
-      setDialogueOpen(true);
     } finally {
       getEventInfo();
 
@@ -457,7 +452,7 @@ const handleRefresh = useMemo(
 
   return (
     <>
-      <div className="px-6">
+      <div className="px-2 sm:px-6">
         <div className="">
           <div className="grid lg:flex gap-4 text-xl font-bold my-4">
             <span>
@@ -576,7 +571,7 @@ const handleRefresh = useMemo(
                       e.preventDefault();
                     }}
                   >
-                    <div className="relative overflow-auto border-2 bg-transparent select-none">
+                    <div className="relative pl-10 overflow-auto border-2 bg-transparent select-none">
                       <div data-theme="" className="px-5 bg-transparent">
                         <div className="min-w-max select-none">
                           <div className="h-16 my-4  flex justify-center">
@@ -822,8 +817,7 @@ const handleRefresh = useMemo(
         )}
       </DialogModal>
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-        {alertText}
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
       </SuccessAlert>
     </>
   );

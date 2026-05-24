@@ -231,9 +231,9 @@ export default function SeatMapCreatorPage({
   };
 
   const openEditDialogue = () => {
-    setDialogueText("Yaptığınız değişiklikleri kaydetmek istiyor musunuz?");
     setEditDialogueOpen(true);
     setDialogueOpen(true);
+
   };
 
   const handleSave = async () => {
@@ -247,7 +247,6 @@ export default function SeatMapCreatorPage({
 
       if (typeof result === "string") {
         setDialogueText(result);
-        setDialogueOpen(true);
         return;
       }
 
@@ -257,7 +256,6 @@ export default function SeatMapCreatorPage({
     if (editType === "create") {
       if (newMapName.trim() === "") {
         setDialogueText("Lütfen yeni oturma planına bir isim giriniz.");
-        setDialogueOpen(true);
         return;
       }
 
@@ -275,18 +273,15 @@ export default function SeatMapCreatorPage({
         });
 
         setAlertText("Oturma Planı başarıyla eklendi.");
-        setAlertOpen(true);
 
         cleanUp();
         return true;
       } catch (err: any) {
         setDialogueText(err.message);
-        setDialogueOpen(true);
       }
     } else if (editType === "edit") {
       if (editingName.trim() == "") {
         setDialogueText("Düzenlenen isim boş olamaz.");
-        setDialogueOpen(true);
         return;
       }
 
@@ -304,13 +299,11 @@ export default function SeatMapCreatorPage({
         });
 
         setAlertText("Oturma Planı başarıyla düzenlendi.");
-        setAlertOpen(true);
         cleanUp();
 
         return true;
       } catch (err: any) {
         setDialogueText(err.message);
-        setDialogueOpen(true);
       }
     }
   };
@@ -658,20 +651,22 @@ export default function SeatMapCreatorPage({
 
       <DialogModal
         open={dialogueOpen}
+        dialogueText={dialogueText}
         onClose={() => {
           setDialogueOpen(false);
           setDialogueText("");
         }}
       >
         <div className="text-left">
-          <span
-            className={`${editDialogueOpen ? "text-red-500" : "whitespace-break-spaces"} `}
-          >
-            {dialogueText}
-          </span>
+  
 
           {editDialogueOpen && (
             <>
+               <span
+            className={`${editDialogueOpen ? "text-red-500" : "whitespace-break-spaces"} `}
+          >
+            Yaptığınız değişiklikleri kaydetmek istiyor musunuz?
+          </span>
               <div className="flex justify-between mt-4">
                 <button
                   onClick={() => {
@@ -709,8 +704,7 @@ export default function SeatMapCreatorPage({
         </div>
       </DialogModal>
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)}>
-        {alertText}
+      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
       </SuccessAlert>
     </div>
   );
