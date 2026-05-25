@@ -95,10 +95,9 @@ export default function SeatMapCreatorPage({
       try {
         const parsed = JSON.parse(selected.layoutJS);
 
-        loadSeatMap(parsed); // 👈 BOOM
+        loadSeatMap(parsed); 
         setStageLocation(parsed.stageLocation ?? "up");
       } catch (err) {
-        console.error("Invalid seat map JSON", err);
       }
     } else if (selected.maxCapacity) {
       setIsSeated(false);

@@ -292,7 +292,7 @@ export default function shows() {
         ></input>
         <span>Gösteri Açıklaması:</span>
         <textarea
-          className="input input-accent w-full h-28"
+          className="textarea textarea-accent w-full h-28"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         ></textarea>
@@ -346,7 +346,7 @@ export default function shows() {
               ></input>
               <span>Gösteri Açıklaması:</span>
               <textarea
-                className="input input-accent w-full h-56"
+                className="textarea textarea-accent w-full h-56"
                 value={editedShow?.description ?? ""}
                 onChange={(e) =>
                   setEditedShow((prev) =>
