@@ -166,10 +166,10 @@ export function Cell({
       ? "!bg-red-600 !dark:bg-red-600 !border-red-400 !text-white !border-b-8"
       : "!bg-red-600 !dark:bg-red-600 !text-white !border-none"
     : isHandicapped
-      ? "bg-blue-500 border-blue-700  dark:bg-blue-500 dark:!border-blue-700 dark:hover:border-neutral-500 dark:hover:bg-neutral-400 dark:hover:!border-neutral-500 !border-b-8"
+      ? "bg-blue-500 border-blue-700  dark:bg-blue-500 dark:!border-blue-700 [@media(hover:hover)_and_(pointer:fine)]:dark:hover:border-neutral-500 [@media(hover:hover)_and_(pointer:fine)]:dark:hover:bg-neutral-400 [@media(hover:hover)_and_(pointer:fine)]:dark:hover:!border-neutral-500 !border-b-8"
       : isSeat
-        ? "bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-400 dark:border-neutral-500 border-b-8"
-        : "bg-transparent hover:bg-neutral-400 border-none";
+        ? "bg-gray-300 dark:bg-neutral-700 [@media(hover:hover)_and_(pointer:fine)]:dark:hover:bg-neutral-400 dark:border-neutral-500 border-b-8"
+        : "bg-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-400 border-none";
 
   return (
     <>
@@ -180,8 +180,8 @@ export function Cell({
               ? `Engelli koltuğu ${ID}${cell.label}`
               : `Koltuk ${ID}${cell.label}`
           }
-          onContextMenu={(e) => {
-            e.preventDefault();
+
+          onClick={(e) => {
             setClickPos({
               x: e.pageX,
               y: e.pageY,
@@ -192,12 +192,11 @@ export function Cell({
             });
             setMenuOpen(true);
           }}
-          onClick={onToggle}
           className={`
   w-10 h-10 text-xs rounded border-2
-  flex items-center justify-center hover:border-black
+  flex items-center justify-center [@media(hover:hover)_and_(pointer:fine)]:hover:border-black
   transition-colors duration-200 text-black dark:text-neutral-100 border-black
-  hover:bg-gray-500
+  [@media(hover:hover)_and_(pointer:fine)]:hover:bg-gray-500
 
 
   ${bgClass}
@@ -225,6 +224,10 @@ export function Cell({
               className="menu bg-base-200 rounded-box w-56 top-11  absolute z-9999 border-2 border-black dark:border-gray-500"
               ref={ref}
             >
+                      
+              <li onClick={() => {onToggle(); setMenuOpen(false);}  }>
+                <a>Hücreyi {isSeat ? "Boşluğa" : "Koltuğa"} Çevir</a>
+              </li>
               <li onClick={() => deleteTheCell(cell.id)}>
                 <a>Hücreyi Sil</a>
               </li>

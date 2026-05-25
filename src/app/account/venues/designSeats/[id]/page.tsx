@@ -479,9 +479,7 @@ export default function SeatMapCreatorPage({
             </div>
 
             <div
-              onContextMenu={(e) => {
-                e.preventDefault();
-              }}
+    
               className="flex flex-col  items-left mt-2  "
             >
               <div className="relative overflow-auto border-2 bg-transparent">

@@ -567,9 +567,7 @@ const handleRefresh = useMemo(
                 <div className="flex flex-col  items-left mt-2 ">
                   <div
                     className={`  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""}`}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                    }}
+         
                   >
                     <div className="relative pl-10 overflow-auto border-2 bg-transparent select-none">
                       <div data-theme="" className="px-5 bg-transparent">

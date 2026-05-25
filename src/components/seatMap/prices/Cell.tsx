@@ -105,10 +105,7 @@ export function Cell({
     };
 
     const handleScroll = (event: Event) => {
-      if (
-        event.target instanceof Node &&
-        ref.current?.contains(event.target)
-      ) {
+      if (event.target instanceof Node && ref.current?.contains(event.target)) {
         return;
       }
       setMenuOpen(false);
@@ -159,35 +156,30 @@ export function Cell({
             )}
           </div>
           <button
-            onClick={isAvailable || isBlocked ? onClick : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              setClickPos({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setContextPos({
+                x: -9999,
+                y: e.pageY,
+              });
+              setMenuOpen(true);
+            }}
             disabled={isSold || isReserved || !isSeat}
             aria-label={
               isHandicapped
                 ? `Engelli koltuğu ${rowLabel}${cell.label}`
                 : `Koltuk ${rowLabel}${cell.label}`
             }
-            onContextMenu={
-              isAvailable || isBlocked
-                ? (e) => {
-                    e.preventDefault();
-                    setClickPos({
-                      x: e.pageX,
-                      y: e.pageY,
-                    });
-                    setContextPos({
-                      x: -9999,
-                      y: e.pageY,
-                    });
-                    setMenuOpen(true);
-                  }
-                : undefined
-            }
             className={`
   w-10 h-10 text-xs rounded border-2 
   flex items-center justify-center 
   transition-colors duration-200  text-black dark:text-neutral-100 border-black
   
-${isAvailable || isBlocked ? "hover:border-black!  hover:bg-gray-400! " : ""}
+${isAvailable || isBlocked ? "[@media(hover:hover)_and_(pointer:fine)]:hover:border-black!  [@media(hover:hover)_and_(pointer:fine)]:hover:bg-gray-400! " : ""}
 
   ${bgClass}
 `}
@@ -211,7 +203,6 @@ ${isAvailable || isBlocked ? "hover:border-black!  hover:bg-gray-400! " : ""}
           </button>
         </div>
 
-
         {menuOpen &&
           createPortal(
             <ul
@@ -222,6 +213,14 @@ ${isAvailable || isBlocked ? "hover:border-black!  hover:bg-gray-400! " : ""}
               className="menu bg-base-200 rounded-box w-56 top-11  absolute z-9999 border-2 border-black dark:border-gray-500"
               ref={ref}
             >
+              <li
+                onClick={() => {
+                  onClick?.();
+                  setMenuOpen(false);
+                }}
+              >
+                <a>Koltuğu {isAvailable ? "Kapat" : "Aç"}</a>
+              </li>
               <li
                 onClick={() => {
                   openDialogue();
