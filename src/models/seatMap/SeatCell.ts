@@ -1,5 +1,5 @@
-export type CellType = "seat" | "space";
-export type SeatKind = "regular" | "handicapped";
+type CellType = "seat" | "space";
+type SeatKind = "regular" | "handicapped";
 
 
 export interface SeatCell {

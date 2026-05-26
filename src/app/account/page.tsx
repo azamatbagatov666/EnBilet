@@ -50,7 +50,7 @@ export default function List() {
               </svg>
               <input
           maxLength={128}
-
+                autoCapitalize="off"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => {

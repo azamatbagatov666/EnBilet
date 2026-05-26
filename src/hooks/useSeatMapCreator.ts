@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 import type { SeatRow } from "@/src/models/seatMap/SeatRow";
 import type { SeatMap, stageLocation } from "@/src/models/seatMap/SeatMap";
-import { count } from "console";
 import { generateId } from "@/src/lib/generateId";
 
 

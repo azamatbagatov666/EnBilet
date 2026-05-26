@@ -1,4 +1,4 @@
-export type SeatStatus =
+type SeatStatus =
   | "available"
   | "reserved"
   | "sold"

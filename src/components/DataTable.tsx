@@ -17,8 +17,8 @@ const useIsomorphicLayoutEffect =
 import type { Column } from "@/src/models/dataTable/Column";
 import SearchSvg from "@/src/components/svg/SearchSvg";
 import CancelSvg from "@/src/components/svg/CancelSvg";
-import RefreshSvg from "@/src/components/svg/RefreshSvg";
 import { createPortal } from "react-dom";
+import RefreshButton from "@/src/components/buttons/RefreshButton";
 
 type Props<T> = {
   data: T[];
@@ -90,8 +90,12 @@ export default function DataTable<T extends object>({
   const [columnSelector, setColumnSelector] = useState(false);
 
   const storageKey = useMemo(() => {
-    const colKeys = columns.map((col) => String(col.reactKey ?? col.key)).join(",");
-    const cleanTitle = title ? title.replace(/\s+/g, "_").toLowerCase() : "default";
+    const colKeys = columns
+      .map((col) => String(col.reactKey ?? col.key))
+      .join(",");
+    const cleanTitle = title
+      ? title.replace(/\s+/g, "_").toLowerCase()
+      : "default";
     return `datatable_columns_${cleanTitle}_${colKeys}`;
   }, [title, columns]);
 
@@ -99,9 +103,11 @@ export default function DataTable<T extends object>({
     return new Set(columns.map((c) => String(c.reactKey ?? c.key)));
   });
 
-  const [draftVisibleColumns, setDraftVisibleColumns] = useState<Set<string>>(() => {
-    return new Set(columns.map((c) => String(c.reactKey ?? c.key)));
-  });
+  const [draftVisibleColumns, setDraftVisibleColumns] = useState<Set<string>>(
+    () => {
+      return new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+    },
+  );
 
   // Load from localStorage on mount/key change
   useEffect(() => {
@@ -110,7 +116,9 @@ export default function DataTable<T extends object>({
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          const currentKeys = new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+          const currentKeys = new Set(
+            columns.map((c) => String(c.reactKey ?? c.key)),
+          );
           const validKeys = parsed.filter((k) => currentKeys.has(k));
           if (validKeys.length > 0) {
             setVisibleColumns(new Set(validKeys));
@@ -126,7 +134,10 @@ export default function DataTable<T extends object>({
   const handleSaveColumns = () => {
     setVisibleColumns(new Set(draftVisibleColumns));
     try {
-      localStorage.setItem(storageKey, JSON.stringify(Array.from(draftVisibleColumns)));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(Array.from(draftVisibleColumns)),
+      );
     } catch (e) {
       console.error("Error saving columns to localStorage:", e);
     }
@@ -140,7 +151,9 @@ export default function DataTable<T extends object>({
 
   const handleSelectAllColumns = (checked: boolean) => {
     if (checked) {
-      setDraftVisibleColumns(new Set(columns.map((c) => String(c.reactKey ?? c.key))));
+      setDraftVisibleColumns(
+        new Set(columns.map((c) => String(c.reactKey ?? c.key))),
+      );
     } else {
       setDraftVisibleColumns(new Set());
     }
@@ -149,7 +162,9 @@ export default function DataTable<T extends object>({
   const isAllColumnsSelected = draftVisibleColumns.size === columns.length;
 
   const renderedColumns = useMemo(() => {
-    return columns.filter((col) => visibleColumns.has(String(col.reactKey ?? col.key)));
+    return columns.filter((col) =>
+      visibleColumns.has(String(col.reactKey ?? col.key)),
+    );
   }, [columns, visibleColumns]);
 
   const isColumnFiltered = (col: Column<T>) => {
@@ -442,35 +457,21 @@ export default function DataTable<T extends object>({
     };
   }, [selectedFilter, columnSelector]);
 
-  // 🔹 THROTTLED REFRESH (2000ms)
-  const throttledRefresh = useMemo(
-    () =>
-      throttle(
-        async (cb: () => Promise<void> | void) => {
-          setIsRefreshing(true);
-          try {
-            await cb();
-          } finally {
-            setIsRefreshing(false);
-          }
-        },
-        2000,
-        { leading: true, trailing: false },
-      ),
-    [],
-  );
 
-  const handleRefresh = useCallback(async () => {
-    if (onRefresh) {
-      await throttledRefresh(onRefresh);
-    }
-  }, [onRefresh, throttledRefresh]);
 
-  useEffect(() => {
-    return () => {
-      throttledRefresh.cancel();
-    };
-  }, [throttledRefresh]);
+  const handleRefresh = async() => {
+
+    if(onRefresh) {
+
+      setIsRefreshing(true);
+      
+      await onRefresh();
+      setIsRefreshing(false);
+      }
+    
+  };
+
+
 
   const uniqueColumnValues = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -673,20 +674,13 @@ export default function DataTable<T extends object>({
               >
                 <div className="flex items-center gap-1">
                   {onRefresh && (
-                    <button
-                      className={`btn h-7 sm:h-9 px-1 sm:px-4 outline-none! border-gray-300 ${isRefreshing ? "pointer-events-none" : ""}`}
-                      onClick={() => {
-                        handleRefresh();
-                      }}
-                    >
-                      {isRefreshing ? (
-                        <span className="loading loading-spinner loading-sm"></span>
-                      ) : (
-                        <RefreshSvg />
-                      )}
-                      Veriyi Yenile
-                    </button>
+                    <RefreshButton
+                      onRefresh={handleRefresh}
+                      isRefreshing={isRefreshing}
+                    ></RefreshButton>
                   )}
+
+
                   <div className="tooltip" data-tip="Sütunları Gizle">
                     <button
                       className="btn btn-sm size-7 sm:size-9 outline-none! border-gray-300"
@@ -734,38 +728,50 @@ export default function DataTable<T extends object>({
                                   type="checkbox"
                                   className="checkbox checkbox-sm"
                                   checked={isAllColumnsSelected}
-                                  onChange={(e) => handleSelectAllColumns(e.target.checked)}
+                                  onChange={(e) =>
+                                    handleSelectAllColumns(e.target.checked)
+                                  }
                                 />
                                 <span className="font-bold">Hepsini Seç</span>
                               </label>
                               <div className="max-h-64 min-w-48 text-sm">
-                                {[...columns].sort((a, b) => a.label.localeCompare(b.label, "tr", { sensitivity: "base" })).map((col) =>  {
-                                  const colKey = String(col.reactKey ?? col.key);
-                                  return (
-                                    <label
-                                      className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0 cursor-pointer select-none"
-                                      key={colKey}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        className="checkbox checkbox-sm"
-                                        checked={draftVisibleColumns.has(colKey)}
-                                        onChange={(e) => {
-                                          setDraftVisibleColumns((prev) => {
-                                            const next = new Set(prev);
-                                            if (e.target.checked) {
-                                              next.add(colKey);
-                                            } else {
-                                              next.delete(colKey);
-                                            }
-                                            return next;
-                                          });
-                                        }}
-                                      />
-                                      <span>{col.label}</span>
-                                    </label>
-                                  );
-                                })}
+                                {[...columns]
+                                  .sort((a, b) =>
+                                    a.label.localeCompare(b.label, "tr", {
+                                      sensitivity: "base",
+                                    }),
+                                  )
+                                  .map((col) => {
+                                    const colKey = String(
+                                      col.reactKey ?? col.key,
+                                    );
+                                    return (
+                                      <label
+                                        className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0 cursor-pointer select-none"
+                                        key={colKey}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="checkbox checkbox-sm"
+                                          checked={draftVisibleColumns.has(
+                                            colKey,
+                                          )}
+                                          onChange={(e) => {
+                                            setDraftVisibleColumns((prev) => {
+                                              const next = new Set(prev);
+                                              if (e.target.checked) {
+                                                next.add(colKey);
+                                              } else {
+                                                next.delete(colKey);
+                                              }
+                                              return next;
+                                            });
+                                          }}
+                                        />
+                                        <span>{col.label}</span>
+                                      </label>
+                                    );
+                                  })}
                               </div>
                             </div>
                             <div className="flex justify-around my-2">
@@ -981,7 +987,9 @@ export default function DataTable<T extends object>({
                                                       }
                                                     }}
                                                   />
-                                                  <span className="font-bold">Hepsini Seç</span>
+                                                  <span className="font-bold">
+                                                    Hepsini Seç
+                                                  </span>
                                                 </label>
                                               )}
                                               {uniqueColumnValues[
@@ -1106,7 +1114,9 @@ export default function DataTable<T extends object>({
                                                     );
                                                   }}
                                                 />
-                                                <span className="font-bold">Hepsini Seç</span>
+                                                <span className="font-bold">
+                                                  Hepsini Seç
+                                                </span>
                                               </label>
                                               {col.filterType === "date" && (
                                                 <div className="max-h-64 min-w-48 text-sm">
@@ -1560,7 +1570,10 @@ export default function DataTable<T extends object>({
                 </div>
               </div>
             )}
-            <div className="rounded-b-xl flex justify-end bg-gray-300 dark:bg-gray-700 p-2 ">
+            <div className="rounded-b-xl flex justify-between bg-gray-300 dark:bg-gray-700 p-2 items-center ">
+              <div className="font-semibold text-sm sm:text-base">
+                Gösterilen Veri Sayısı: {filteredData.length}
+              </div>
               <button
                 className="btn btn-sm btn-error"
                 onClick={() => {

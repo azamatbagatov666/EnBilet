@@ -66,9 +66,7 @@ export default function List() {
 
   const { uploadImage, deleteImages } = useImageUpload("event-covers");
 
-  const resetForm = async () => {
-    dropzoneRef.current?.cleanUp();
-  };
+
 
   const handleOpenEdit = (eventInfo: EventType) => {
     setIsEditing(false);
@@ -149,7 +147,7 @@ export default function List() {
     }
 
     try {
-      const res = await fetchWithAuth("/services/account/actions/editEvent", {
+      await fetchWithAuth("/services/account/actions/editEvent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedEvent),
@@ -209,7 +207,7 @@ export default function List() {
             eventID,
           );
 
-          const res = await fetchWithAuth(
+          await fetchWithAuth(
             "/services/account/actions/editEvent",
             {
               method: "POST",

@@ -331,7 +331,7 @@ export function Cell({
                   type="radio"
                   value="up"
                   checked={selectedIncrement === "up"}
-                  onChange={(e) => setSelectedIncrement("up")}
+                  onChange={() => setSelectedIncrement("up")}
                 />
                 Artarak
               </label>
@@ -340,7 +340,7 @@ export function Cell({
                   type="radio"
                   value="down"
                   checked={selectedIncrement === "down"}
-                  onChange={(e) => setSelectedIncrement("down")}
+                  onChange={() => setSelectedIncrement("down")}
                 />
                 Azalarak
               </label>

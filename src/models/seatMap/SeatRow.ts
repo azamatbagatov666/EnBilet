@@ -1,6 +1,6 @@
 import type { SeatCell } from "@/src/models/seatMap/SeatCell";
 
-export type rowType = "seated" | "empty";
+type rowType = "seated" | "empty";
 
 
 export interface SeatRow {

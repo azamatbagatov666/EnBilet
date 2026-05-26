@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   open?: boolean;
@@ -35,7 +35,7 @@ export default function SuccessAlert({ open, onClose, alertText }: Props) {
   return (
     <div className="flex justify-center">
       <div
-        className={`fixed bottom-6 font-bold w-full sm:w-3/5 px-4 border-none bg-transparent transition-all duration-300 ease-out z-[9999] ${
+        className={`fixed bottom-6 font-bold w-full sm:w-3/5 px-4 border-none bg-transparent transition-all duration-300 ease-out z-9999 ${
           visible
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-2 pointer-events-none"

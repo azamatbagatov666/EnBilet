@@ -11,7 +11,6 @@ import type { seatState } from "@/src/models/seatMap/seatState";
 import HandiSvg from "@/src/components/svg/HandiSvg";
 import { formatPrice } from "@/src/lib/formatPrice";
 
-import { stat } from "fs";
 
 interface Props {
   cell: SeatCell;
