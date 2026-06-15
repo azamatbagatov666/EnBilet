@@ -14,9 +14,11 @@ import {
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 import type { Column } from "@/src/models/dataTable/Column";
 import SearchSvg from "@/src/components/svg/SearchSvg";
 import CancelSvg from "@/src/components/svg/CancelSvg";
+import Drag3Svg from "@/src/components/svg/Drag3Svg";
 import { createPortal } from "react-dom";
 import RefreshButton from "@/src/components/buttons/RefreshButton";
 
@@ -35,6 +37,30 @@ export default function DataTable<T extends object>({
 }: Props<T>) {
   const initialDataRef = useRef(data);
   const [hasLoaded, setHasLoaded] = useState(data.length > 0);
+
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    return columns.map((c) => String(c.reactKey ?? c.key));
+  });
+
+  const [draggingColKey, setDraggingColKey] = useState<string | null>(null);
+  const [dragOverColKey, setDragOverColKey] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<"left" | "right" | null>(null);
+  // Refs for pointer-based drag (survive re-renders without stale closures)
+  const draggingColKeyRef = useRef<string | null>(null);
+  const dropStateRef = useRef<{ colKey: string | null; position: "left" | "right" | null }>({ colKey: null, position: null });
+  const scrollRafRef = useRef<number | null>(null);   // rAF handle for edge-scroll loop
+  const pointerXRef = useRef<number>(0);              // latest pointer clientX for the rAF callback
+
+  useEffect(() => {
+    setColumnOrder((prevOrder) => {
+      const currentKeys = new Set(columns.map((c) => String(c.reactKey ?? c.key)));
+      const filteredPrev = prevOrder.filter((k) => currentKeys.has(k));
+      const missingKeys = columns
+        .map((c) => String(c.reactKey ?? c.key))
+        .filter((k) => !filteredPrev.includes(k));
+      return [...filteredPrev, ...missingKeys];
+    });
+  }, [columns]);
 
   useEffect(() => {
     if (!hasLoaded && data !== initialDataRef.current) {
@@ -126,6 +152,29 @@ export default function DataTable<T extends object>({
           }
         }
       }
+
+      const savedOrder = localStorage.getItem(storageKey + "_order");
+      if (savedOrder) {
+        const parsed = JSON.parse(savedOrder);
+        if (Array.isArray(parsed)) {
+          const currentKeys = new Set(
+            columns.map((c) => String(c.reactKey ?? c.key)),
+          );
+          const validOrder = parsed.filter((k) => currentKeys.has(k));
+          
+          // Add any new columns that are in columns but not in the saved order
+          const missingKeys = columns
+            .map((c) => String(c.reactKey ?? c.key))
+            .filter((k) => !validOrder.includes(k));
+          
+          const finalOrder = [...validOrder, ...missingKeys];
+          if (finalOrder.length > 0) {
+            setColumnOrder(finalOrder);
+          }
+        }
+      } else {
+        setColumnOrder(columns.map((c) => String(c.reactKey ?? c.key)));
+      }
     } catch (e) {
       console.error("Error reading columns from localStorage:", e);
     }
@@ -162,10 +211,20 @@ export default function DataTable<T extends object>({
   const isAllColumnsSelected = draftVisibleColumns.size === columns.length;
 
   const renderedColumns = useMemo(() => {
-    return columns.filter((col) =>
+    const keyToIndex = new Map(columnOrder.map((key, index) => [key, index]));
+    
+    const sorted = [...columns].sort((a, b) => {
+      const aKey = String(a.reactKey ?? a.key);
+      const bKey = String(b.reactKey ?? b.key);
+      const aIdx = keyToIndex.has(aKey) ? keyToIndex.get(aKey)! : 9999;
+      const bIdx = keyToIndex.has(bKey) ? keyToIndex.get(bKey)! : 9999;
+      return aIdx - bIdx;
+    });
+
+    return sorted.filter((col) =>
       visibleColumns.has(String(col.reactKey ?? col.key)),
     );
-  }, [columns, visibleColumns]);
+  }, [columns, visibleColumns, columnOrder]);
 
   const isColumnFiltered = (col: Column<T>) => {
     const key = col.key as string;
@@ -398,6 +457,28 @@ export default function DataTable<T extends object>({
     });
   };
 
+const handleSetDefaultColumns = () => {
+  const allKeys = columns.map((c) => String(c.reactKey ?? c.key));
+  const allSet = new Set(allKeys);
+
+  // update draft + live state
+  setDraftVisibleColumns(allSet);
+  setVisibleColumns(allSet);
+
+  // persist
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(allKeys));
+    localStorage.setItem(storageKey + "_order", JSON.stringify(allKeys));
+  } catch (e) {
+    console.error("Error saving defaults:", e);
+  }
+
+  // reset order
+  setColumnOrder(allKeys);
+
+  setColumnSelector(false);
+};
+
   // 📐 Reposition filter panel or column selector panel to fit the viewport and not overflow horizontally
   useIsomorphicLayoutEffect(() => {
     if (!selectedFilter && !columnSelector) return;
@@ -457,21 +538,14 @@ export default function DataTable<T extends object>({
     };
   }, [selectedFilter, columnSelector]);
 
-
-
-  const handleRefresh = async() => {
-
-    if(onRefresh) {
-
+  const handleRefresh = async () => {
+    if (onRefresh) {
       setIsRefreshing(true);
-      
+
       await onRefresh();
       setIsRefreshing(false);
-      }
-    
+    }
   };
-
-
 
   const uniqueColumnValues = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -654,6 +728,744 @@ export default function DataTable<T extends object>({
     });
   }, [filteredData, sortConfig, dateColumn]);
 
+  const commitColumnOrder = (sourceKey: string, targetKey: string, position: "left" | "right") => {
+    setColumnOrder((prevOrder) => {
+      const nextOrder = prevOrder.filter((key) => key !== sourceKey);
+      const targetIdx = nextOrder.indexOf(targetKey);
+      if (targetIdx !== -1) {
+        const insertIdx = position === "left" ? targetIdx : targetIdx + 1;
+        nextOrder.splice(insertIdx, 0, sourceKey);
+      }
+      try {
+        localStorage.setItem(storageKey + "_order", JSON.stringify(nextOrder));
+      } catch (err) {
+        console.error("Error saving column order to localStorage:", err);
+      }
+      return nextOrder;
+    });
+  };
+
+  const stopEdgeScroll = () => {
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
+  };
+
+  const resetDragState = () => {
+    stopEdgeScroll();
+    draggingColKeyRef.current = null;
+    dropStateRef.current = { colKey: null, position: null };
+    setDraggingColKey(null);
+    setDragOverColKey(null);
+    setDropPosition(null);
+  };
+
+  const handleDragHandlePointerDown = (e: React.PointerEvent<HTMLDivElement>, colKey: string) => {
+    // Only primary button (left click or first touch point)
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Capture the pointer so we keep receiving events even if the finger moves off the element
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    draggingColKeyRef.current = colKey;
+    setDraggingColKey(colKey);
+  };
+
+  const handleDragHandlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingColKeyRef.current) return;
+    e.preventDefault();
+
+    pointerXRef.current = e.clientX;
+
+    // ── Edge-scroll logic ────────────────────────────────────────────────────
+    const EDGE_ZONE = 80;   // px from edge that triggers scrolling
+    const MAX_SPEED = 18;   // max px scrolled per animation frame
+
+    const container = scrollRef.current;
+    if (container) {
+      const { left: cLeft, right: cRight } = container.getBoundingClientRect();
+      const distLeft  = e.clientX - cLeft;
+      const distRight = cRight - e.clientX;
+
+      let scrollDir = 0;
+      let speed     = 0;
+
+      if (distLeft < EDGE_ZONE && container.scrollLeft > 0) {
+        // Near left edge → scroll left
+        speed     = MAX_SPEED * (1 - distLeft / EDGE_ZONE);
+        scrollDir = -1;
+      } else if (distRight < EDGE_ZONE && container.scrollLeft < container.scrollWidth - container.clientWidth) {
+        // Near right edge → scroll right
+        speed     = MAX_SPEED * (1 - distRight / EDGE_ZONE);
+        scrollDir = 1;
+      }
+
+      if (scrollDir !== 0) {
+        // Start loop only if not already running
+        if (scrollRafRef.current === null) {
+          const loop = () => {
+            if (!draggingColKeyRef.current || !container) {
+              scrollRafRef.current = null;
+              return;
+            }
+            // Recalculate speed from latest pointer position each frame
+            const { left: l, right: r } = container.getBoundingClientRect();
+            const px = pointerXRef.current;
+            const dL = px - l;
+            const dR = r - px;
+            let spd = 0;
+            let dir = 0;
+            if (dL < EDGE_ZONE && container.scrollLeft > 0) {
+              spd = MAX_SPEED * (1 - dL / EDGE_ZONE);
+              dir = -1;
+            } else if (dR < EDGE_ZONE && container.scrollLeft < container.scrollWidth - container.clientWidth) {
+              spd = MAX_SPEED * (1 - dR / EDGE_ZONE);
+              dir = 1;
+            }
+            if (dir !== 0) {
+              container.scrollLeft += dir * spd;
+              scrollRafRef.current = requestAnimationFrame(loop);
+            } else {
+              scrollRafRef.current = null;
+            }
+          };
+          scrollRafRef.current = requestAnimationFrame(loop);
+        }
+      } else {
+        stopEdgeScroll();
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Find the <th> element under the current pointer position.
+    // Because the handle has pointer-capture, we need elementsFromPoint to pierce through.
+    const elements = document.elementsFromPoint(e.clientX, e.clientY);
+    const th = elements.find(
+      (el) => el.tagName === "TH" && (el as HTMLElement).dataset.colKey,
+    ) as HTMLElement | undefined;
+
+    if (!th) {
+      dropStateRef.current = { colKey: null, position: null };
+      setDragOverColKey(null);
+      setDropPosition(null);
+      return;
+    }
+
+    const targetKey = th.dataset.colKey!;
+    const rect = th.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    const position: "left" | "right" = relX < rect.width / 2 ? "left" : "right";
+
+    dropStateRef.current = { colKey: targetKey, position };
+    setDragOverColKey(targetKey);
+    setDropPosition(position);
+  };
+
+  const handleDragHandlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingColKeyRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { colKey: targetKey, position } = dropStateRef.current;
+    if (targetKey && position && targetKey !== draggingColKeyRef.current) {
+      commitColumnOrder(draggingColKeyRef.current, targetKey, position);
+    }
+
+    resetDragState();
+  };
+
+  const handleSortClick = (col: Column<T>) => {
+    if (!col.sortable) return;
+    setSortConfig((prev) => {
+      if (!prev || prev.key !== col.key) {
+        return {
+          key: col.key as string,
+          dir: "desc",
+        };
+      }
+      if (prev.dir === "desc") {
+        return {
+          key: col.key as string,
+          dir: "asc",
+        };
+      }
+      return null;
+    });
+  };
+
+  const renderHeaderContent = (col: Column<T>) => {
+    const colKey = String(col.reactKey ?? col.key);
+    return (
+      <div className="inline-flex items-center relative w-full h-full">
+        {dragOverColKey === colKey && dropPosition === "left" && (
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-black dark:bg-white z-50 pointer-events-none" />
+        )}
+        {dragOverColKey === colKey && dropPosition === "right" && (
+          <div className="absolute right-0 top-0 bottom-0 w-[3px] bg-black dark:bg-white z-50 pointer-events-none" />
+        )}
+
+        <div
+          onPointerDown={(e) => handleDragHandlePointerDown(e, colKey)}
+          onPointerMove={handleDragHandlePointerMove}
+          onPointerUp={handleDragHandlePointerUp}
+          onPointerCancel={resetDragState}
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-move size-6 flex justify-center items-center shrink-0 touch-none"
+        >
+          <Drag3Svg/>
+        </div>
+        <span className="select-none flex-1 truncate">{col.label}</span>
+        {col.filterType != "none" && (
+          <>
+            <button
+              className="ml-1 shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleFilter(col.key.toString());
+              }}
+              ref={(el) => {
+                filterButtonRefs.current[col.key as string] = el;
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className={`size-5 sm:size-6
+                  ${
+                    selectedFilter == col.key
+                      ? "fill-black dark:fill-green-500"
+                      : isColumnFiltered(col)
+                        ? "fill-red-600"
+                        : "fill-gray-400"
+                  }
+                `}
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M2 5C2 3.34315 3.34315 2 5 2H19C20.6569 2 22 3.34315 22 5V6.17157C22 6.96722 21.6839 7.73028 21.1213 8.29289L15.2929 14.1213C15.1054 14.3089 15 14.5632 15 14.8284V17.1716C15 17.9672 14.6839 18.7303 14.1213 19.2929L11.9193 21.4949C10.842 22.5722 9 21.8092 9 20.2857V14.8284C9 14.5632 8.89464 14.3089 8.70711 14.1213L2.87868 8.29289C2.31607 7.73028 2 6.96722 2 6.17157V5Z"
+                ></path>
+              </svg>
+            </button>
+
+            {selectedFilter == col.key &&
+              createPortal(
+                <div
+                  className=""
+                  ref={ref}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    className="absolute z-9999 bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
+                    style={{
+                      top: panelPosition.top,
+                      left: panelPosition.left,
+                    }}
+                  >
+                    {col.filterType != "date" ? (
+                      <div>
+                        {col.searchable && (
+                          <label className="flex gap-1 mb-2 input input-xs outline-none! ">
+                            <div className="flex justify-center items-center">
+                              <SearchSvg />
+                            </div>
+                            <input
+                              className=" outline-none!"
+                              placeholder="Ara"
+                              value={
+                                panelSearch[
+                                  col.key as string
+                                ] ?? ""
+                              }
+                              onChange={(e) =>
+                                setPanelSearch((prev) => ({
+                                  ...prev,
+                                  [col.key as string]:
+                                    e.target.value,
+                                }))
+                              }
+                            />
+                            <div className="size-5 self-center content-center">
+                              {panelSearch[
+                                col.key as string
+                              ] !== "" &&
+                                panelSearch[
+                                  col.key as string
+                                ] != null && (
+                                  <button
+                                    onClick={() =>
+                                      setPanelSearch(
+                                        (prev) => ({
+                                          ...prev,
+                                          [col.key as string]:
+                                            "",
+                                        }),
+                                      )
+                                    }
+                                  >
+                                    <CancelSvg className="size-5" />
+                                  </button>
+                                )}
+                            </div>
+                          </label>
+                        )}
+                        <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
+                          {!Boolean(
+                            panelSearch[col.key as string],
+                          ) && (
+                            <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                className="checkbox checkbox-sm"
+                                checked={
+                                  (uniqueColumnValues[
+                                    col.key as string
+                                  ]?.length ?? 0) > 0 &&
+                                  draftValueFilters[
+                                    col.key as string
+                                  ]?.size ===
+                                    uniqueColumnValues[
+                                      col.key as string
+                                    ]?.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    handleSelectAll(
+                                      col.key as string,
+                                      uniqueColumnValues[
+                                        col.key as string
+                                      ],
+                                    );
+                                  } else {
+                                    setDraftValueFilters(
+                                      (prev) => ({
+                                        ...prev,
+                                        [col.key as string]:
+                                          new Set<string>(),
+                                      }),
+                                    );
+                                  }
+                                }}
+                              />
+                              <span className="font-bold">
+                                Hepsini Seç
+                              </span>
+                            </label>
+                          )}
+                          {uniqueColumnValues[
+                            col.key as string
+                          ]
+                            ?.filter((value) =>
+                              value
+                                .toLowerCase()
+                                .includes(
+                                  (
+                                    panelSearch[
+                                      col.key as string
+                                    ] ?? ""
+                                  ).toLowerCase(),
+                                ),
+                            )
+                            .sort((a, b) =>
+                              a.localeCompare(b, "tr", {
+                                sensitivity: "base",
+                              }),
+                            )
+                            .map((value) => (
+                              <label
+                                className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0"
+                                key={value}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="checkbox checkbox-sm"
+                                  checked={
+                                    draftValueFilters[
+                                      col.key as string
+                                    ]?.has(value) ?? false
+                                  }
+                                  onChange={(e) =>
+                                    setDraftValueFilters(
+                                      (prev) => {
+                                        const next =
+                                          new Set(
+                                            prev[
+                                              col.key as string
+                                            ] ?? [],
+                                          );
+
+                                        e.target.checked
+                                          ? next.add(value)
+                                          : next.delete(
+                                              value,
+                                            );
+
+                                        return {
+                                          ...prev,
+                                          [col.key]: next,
+                                        };
+                                      },
+                                    )
+                                  }
+                                />
+                                <span>
+                                  {value == "false" &&
+                                  !col.searchable
+                                    ? "Hayır"
+                                    : value == "true" &&
+                                        !col.searchable
+                                      ? "Evet"
+                                      : value}
+                                </span>
+                              </label>
+                            ))}
+                        </div>
+                        <div className="flex justify-around my-2">
+                          <button
+                            className="btn btn-sm btn-success text-white"
+                            onClick={() => {
+                              setValueFilters((prev) => ({
+                                ...prev,
+                                [col.key as string]:
+                                  draftValueFilters[
+                                    col.key as string
+                                  ] ?? new Set(),
+                              }));
+                              setSelectedFilter("");
+                            }}
+                          >
+                            Kaydet
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Reset draft back to saved state
+                              setDraftValueFilters(
+                                (prev) => ({
+                                  ...prev,
+                                  [col.key as string]:
+                                    new Set(
+                                      valueFilters[
+                                        col.key as string
+                                      ] ?? [],
+                                    ),
+                                }),
+                              );
+                              setSelectedFilter("");
+                            }}
+                            className="btn btn-sm btn-error"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
+                          <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-sm"
+                              checked={isAllDatesSelected}
+                              onChange={(e) => {
+                                setDraftDateValueFilters(
+                                  e.target.checked
+                                    ? new Set(allDateKeys)
+                                    : new Set(),
+                                );
+                              }}
+                            />
+                            <span className="font-bold">
+                              Hepsini Seç
+                            </span>
+                          </label>
+                          {col.filterType === "date" && (
+                            <div className="max-h-64 min-w-48 text-sm">
+                              {Object.entries(dateTree).map(
+                                ([year, months]) => (
+                                  <details
+                                    key={year}
+                                    ref={(el) => {
+                                      dateAccordionRefs.current[
+                                        String(year)
+                                      ] = el;
+                                    }}
+                                    className="mb-1"
+                                  >
+                                    <summary className="cursor-pointer list-item list-inside pl-1">
+                                      <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
+                                        <input
+                                          type="checkbox"
+                                          className="checkbox checkbox-sm"
+                                          onClick={(e) =>
+                                            e.stopPropagation()
+                                          }
+                                          checked={isYearChecked(
+                                            year,
+                                          )}
+                                          onChange={(e) => {
+                                            setDraftDateValueFilters(
+                                              (prev) => {
+                                                const next =
+                                                  new Set(
+                                                    prev,
+                                                  );
+                                                const keys =
+                                                  getYearKeys(
+                                                    year,
+                                                  );
+
+                                                e.target
+                                                  .checked
+                                                  ? keys.forEach(
+                                                      (k) =>
+                                                        next.add(
+                                                          k,
+                                                        ),
+                                                    )
+                                                  : keys.forEach(
+                                                      (k) =>
+                                                        next.delete(
+                                                          k,
+                                                        ),
+                                                    );
+
+                                                return next;
+                                              },
+                                            );
+                                          }}
+                                        />
+                                        <span>{year}</span>
+                                      </div>
+                                    </summary>
+
+                                    <div className="ml-3">
+                                      {Object.entries(
+                                        months,
+                                      ).map(
+                                        ([month, days]) => (
+                                          <details
+                                            key={month}
+                                            ref={(el) => {
+                                              dateAccordionRefs.current[
+                                                `${year}-${month}`
+                                              ] = el;
+                                            }}
+                                            className="ml-3 mb-1"
+                                          >
+                                            <summary className="cursor-pointer list-item list-inside pl-1">
+                                              <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
+                                                <input
+                                                  type="checkbox"
+                                                  className="checkbox checkbox-sm"
+                                                  onClick={(
+                                                    e,
+                                                  ) =>
+                                                    e.stopPropagation()
+                                                  }
+                                                  checked={isMonthChecked(
+                                                    year,
+                                                    month,
+                                                    days,
+                                                  )}
+                                                  onChange={(
+                                                    e,
+                                                  ) => {
+                                                    setDraftDateValueFilters(
+                                                      (
+                                                        prev,
+                                                      ) => {
+                                                        const next =
+                                                          new Set(
+                                                            prev,
+                                                          );
+                                                        const keys =
+                                                          getMonthKeys(
+                                                            year,
+                                                            month,
+                                                            days,
+                                                          );
+
+                                                        e
+                                                          .target
+                                                          .checked
+                                                          ? keys.forEach(
+                                                              (
+                                                                k,
+                                                              ) =>
+                                                                next.add(
+                                                                  k,
+                                                                ),
+                                                            )
+                                                          : keys.forEach(
+                                                              (
+                                                                k,
+                                                              ) =>
+                                                                next.delete(
+                                                                  k,
+                                                                ),
+                                                            );
+
+                                                        return next;
+                                                      },
+                                                    );
+                                                  }}
+                                                />
+                                                <span>
+                                                  {new Date(
+                                                    +year,
+                                                    +month -
+                                                      1,
+                                                  ).toLocaleString(
+                                                    "tr",
+                                                    {
+                                                      month:
+                                                        "long",
+                                                    },
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </summary>
+
+                                            <div className="ml-10 mt-1 space-y-2">
+                                              {days.map(
+                                                (day) => {
+                                                  const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+                                                  return (
+                                                    <label
+                                                      key={
+                                                        key
+                                                      }
+                                                      className="flex items-center gap-2 translate-y-[5px]"
+                                                    >
+                                                      <input
+                                                        type="checkbox"
+                                                        className="checkbox checkbox-sm"
+                                                        checked={draftDateValueFilters.has(
+                                                          key,
+                                                        )}
+                                                        onChange={(
+                                                          e,
+                                                        ) => {
+                                                          setDraftDateValueFilters(
+                                                            (
+                                                              prev,
+                                                            ) => {
+                                                              const next =
+                                                                new Set(
+                                                                  prev,
+                                                                );
+                                                              e
+                                                                .target
+                                                                .checked
+                                                                ? next.add(
+                                                                    key,
+                                                                  )
+                                                                : next.delete(
+                                                                    key,
+                                                                  );
+                                                              return next;
+                                                            },
+                                                          );
+                                                        }}
+                                                      />
+                                                      <span>
+                                                        {
+                                                          day
+                                                        }
+                                                      </span>
+                                                    </label>
+                                                  );
+                                                },
+                                              )}
+                                            </div>
+                                          </details>
+                                        ),
+                                      )}
+                                    </div>
+                                  </details>
+                                ),
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-around my-2">
+                          <button
+                            className="btn btn-sm btn-success text-white"
+                            onClick={() => {
+                              setDateValueFilters(
+                                new Set(
+                                  draftDateValueFilters,
+                                ),
+                              );
+                              setSelectedFilter("");
+                            }}
+                          >
+                            Kaydet
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Reset draft back to saved state
+                              setDraftDateValueFilters(
+                                new Set(dateValueFilters),
+                              );
+                              setSelectedFilter("");
+                            }}
+                            className="btn btn-sm btn-error"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>,
+                document.body,
+              )}
+          </>
+        )}
+
+        {col.sortable && (
+          <div className="w-5 shrink-0">
+            {sortConfig?.key === col.key && (
+              <span className="ml-1 select-none group-hover:text-black text-gray-700">
+                {sortConfig.dir === "asc" ? "▲" : "▼"}
+              </span>
+            )}
+            {sortConfig?.key !== col.key && (
+              <span className="ml-1 hidden select-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:block text-gray-400">
+                {"▼"}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderHeaderRow = () => {
+    return (
+      <tr
+        className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}
+      >
+        {renderedColumns.map((col) => {
+          const colKey = String(col.reactKey ?? col.key);
+          return (
+            <th
+              className={`relative ${styles.th} pl-2! group ${col.sortable ? "cursor-pointer" : ""}  `}
+              key={colKey}
+              data-col-key={colKey}
+              onClick={() => handleSortClick(col)}
+            >
+              {renderHeaderContent(col)}
+            </th>
+          );
+        })}
+      </tr>
+    );
+  };
+
   return (
     <>
       {/* Search */}
@@ -680,8 +1492,7 @@ export default function DataTable<T extends object>({
                     ></RefreshButton>
                   )}
 
-
-                  <div className="tooltip" data-tip="Sütunları Gizle">
+                  <div className="tooltip" data-tip="Sütunları Düzenle">
                     <button
                       className="btn btn-sm size-7 sm:size-9 outline-none! border-gray-300"
                       ref={columnButton}
@@ -776,17 +1587,18 @@ export default function DataTable<T extends object>({
                             </div>
                             <div className="flex justify-around my-2">
                               <button
-                                className="btn btn-sm btn-success text-white"
+                                className="btn btn-xs sm:btn-sm btn-success text-white"
                                 onClick={handleSaveColumns}
                               >
                                 Kaydet
                               </button>
                               <button
                                 onClick={handleCancelColumns}
-                                className="btn btn-sm btn-error"
+                                className="btn btn-xs sm:btn-sm btn-error"
                               >
                                 İptal
                               </button>
+                              <button onClick={handleSetDefaultColumns} className="btn btn-warning btn-xs sm:btn-sm">Varsayılan</button>
                             </div>
                           </div>
                         </div>
@@ -825,564 +1637,7 @@ export default function DataTable<T extends object>({
                   className={`${styles.table} table table-auto   ${isRefreshing ? "opacity-55 blur-xs pointer-events-none " : ""}`}
                 >
                   <thead className="text-black dark:text-white">
-                    <tr
-                      className={`${styles.tr} bg-gray-300 font-bold  sm:text-lg text-black dark:text-white dark:bg-gray-700`}
-                    >
-                      {renderedColumns.map((col) => (
-                        <th
-                          className={`${styles.th} group ${col.sortable ? "cursor-pointer" : ""}  `}
-                          key={col.reactKey ?? String(col.key)}
-                          onClick={() => {
-                            col.sortable
-                              ? setSortConfig((prev) => {
-                                  if (!prev || prev.key !== col.key) {
-                                    return {
-                                      key: col.key as string,
-                                      dir: "desc",
-                                    };
-                                  }
-                                  if (prev.dir === "desc") {
-                                    return {
-                                      key: col.key as string,
-                                      dir: "asc",
-                                    };
-                                  }
-                                  return null; // third click = clear sort
-                                })
-                              : undefined;
-                          }}
-                        >
-                          <div className="inline-flex items-center relative">
-                            <span className="select-none">{col.label}</span>
-                            {col.filterType != "none" && (
-                              <>
-                                <button
-                                  className="ml-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleFilter(col.key.toString());
-                                  }}
-                                  ref={(el) => {
-                                    filterButtonRefs.current[
-                                      col.key as string
-                                    ] = el;
-                                  }}
-                                >
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    className={`size-5 sm:size-6
-    ${
-      selectedFilter == col.key
-        ? "fill-black dark:fill-green-500"
-        : isColumnFiltered(col)
-          ? "fill-red-600"
-          : "fill-gray-400"
-    }
-  `}
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      clipRule="evenodd"
-                                      d="M2 5C2 3.34315 3.34315 2 5 2H19C20.6569 2 22 3.34315 22 5V6.17157C22 6.96722 21.6839 7.73028 21.1213 8.29289L15.2929 14.1213C15.1054 14.3089 15 14.5632 15 14.8284V17.1716C15 17.9672 14.6839 18.7303 14.1213 19.2929L11.9193 21.4949C10.842 22.5722 9 21.8092 9 20.2857V14.8284C9 14.5632 8.89464 14.3089 8.70711 14.1213L2.87868 8.29289C2.31607 7.73028 2 6.96722 2 6.17157V5Z"
-                                    ></path>
-                                  </svg>
-                                </button>
-                                {selectedFilter == col.key &&
-                                  createPortal(
-                                    <div
-                                      className=""
-                                      ref={ref}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <div
-                                        className="absolute z-9999 bg-gray-200 dark:border-white dark:bg-black rounded-md pt-2 p-1 border-black border"
-                                        style={{
-                                          top: panelPosition.top,
-                                          left: panelPosition.left,
-                                        }}
-                                      >
-                                        {col.filterType != "date" ? (
-                                          <div>
-                                            {col.searchable && (
-                                              <label className="flex gap-1 mb-2 input input-xs outline-none! ">
-                                                <div className="flex justify-center items-center">
-                                                  <SearchSvg />
-                                                </div>
-                                                <input
-                                                  className=" outline-none!"
-                                                  placeholder="Ara"
-                                                  value={
-                                                    panelSearch[
-                                                      col.key as string
-                                                    ] ?? ""
-                                                  }
-                                                  onChange={(e) =>
-                                                    setPanelSearch((prev) => ({
-                                                      ...prev,
-                                                      [col.key as string]:
-                                                        e.target.value,
-                                                    }))
-                                                  }
-                                                />
-                                                <div className="size-5 self-center content-center">
-                                                  {panelSearch[
-                                                    col.key as string
-                                                  ] !== "" &&
-                                                    panelSearch[
-                                                      col.key as string
-                                                    ] != null && (
-                                                      <button
-                                                        onClick={() =>
-                                                          setPanelSearch(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [col.key as string]:
-                                                                "",
-                                                            }),
-                                                          )
-                                                        }
-                                                      >
-                                                        <CancelSvg className="size-5" />
-                                                      </button>
-                                                    )}
-                                                </div>
-                                              </label>
-                                            )}
-                                            <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
-                                              {!Boolean(
-                                                panelSearch[col.key as string],
-                                              ) && (
-                                                <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
-                                                  <input
-                                                    type="checkbox"
-                                                    className="checkbox checkbox-sm"
-                                                    checked={
-                                                      (uniqueColumnValues[
-                                                        col.key as string
-                                                      ]?.length ?? 0) > 0 &&
-                                                      draftValueFilters[
-                                                        col.key as string
-                                                      ]?.size ===
-                                                        uniqueColumnValues[
-                                                          col.key as string
-                                                        ]?.length
-                                                    }
-                                                    onChange={(e) => {
-                                                      if (e.target.checked) {
-                                                        handleSelectAll(
-                                                          col.key as string,
-                                                          uniqueColumnValues[
-                                                            col.key as string
-                                                          ],
-                                                        );
-                                                      } else {
-                                                        setDraftValueFilters(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            [col.key as string]:
-                                                              new Set<string>(),
-                                                          }),
-                                                        );
-                                                      }
-                                                    }}
-                                                  />
-                                                  <span className="font-bold">
-                                                    Hepsini Seç
-                                                  </span>
-                                                </label>
-                                              )}
-                                              {uniqueColumnValues[
-                                                col.key as string
-                                              ]
-                                                ?.filter((value) =>
-                                                  value
-                                                    .toLowerCase()
-                                                    .includes(
-                                                      (
-                                                        panelSearch[
-                                                          col.key as string
-                                                        ] ?? ""
-                                                      ).toLowerCase(),
-                                                    ),
-                                                )
-                                                .sort((a, b) =>
-                                                  a.localeCompare(b, "tr", {
-                                                    sensitivity: "base",
-                                                  }),
-                                                )
-                                                .map((value) => (
-                                                  <label
-                                                    className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm last:border-b-0"
-                                                    key={value}
-                                                  >
-                                                    <input
-                                                      type="checkbox"
-                                                      className="checkbox checkbox-sm"
-                                                      checked={
-                                                        draftValueFilters[
-                                                          col.key as string
-                                                        ]?.has(value) ?? false
-                                                      }
-                                                      onChange={(e) =>
-                                                        setDraftValueFilters(
-                                                          (prev) => {
-                                                            const next =
-                                                              new Set(
-                                                                prev[
-                                                                  col.key as string
-                                                                ] ?? [],
-                                                              );
-
-                                                            e.target.checked
-                                                              ? next.add(value)
-                                                              : next.delete(
-                                                                  value,
-                                                                );
-
-                                                            return {
-                                                              ...prev,
-                                                              [col.key]: next,
-                                                            };
-                                                          },
-                                                        )
-                                                      }
-                                                    />
-                                                    <span>
-                                                      {value == "false" &&
-                                                      !col.searchable
-                                                        ? "Hayır"
-                                                        : value == "true" &&
-                                                            !col.searchable
-                                                          ? "Evet"
-                                                          : value}
-                                                    </span>
-                                                  </label>
-                                                ))}
-                                            </div>
-                                            <div className="flex justify-around my-2">
-                                              <button
-                                                className="btn btn-sm btn-success text-white"
-                                                onClick={() => {
-                                                  setValueFilters((prev) => ({
-                                                    ...prev,
-                                                    [col.key as string]:
-                                                      draftValueFilters[
-                                                        col.key as string
-                                                      ] ?? new Set(),
-                                                  }));
-                                                  setSelectedFilter("");
-                                                }}
-                                              >
-                                                Kaydet
-                                              </button>
-                                              <button
-                                                onClick={() => {
-                                                  // Reset draft back to saved state
-                                                  setDraftValueFilters(
-                                                    (prev) => ({
-                                                      ...prev,
-                                                      [col.key as string]:
-                                                        new Set(
-                                                          valueFilters[
-                                                            col.key as string
-                                                          ] ?? [],
-                                                        ),
-                                                    }),
-                                                  );
-                                                  setSelectedFilter("");
-                                                }}
-                                                className="btn btn-sm btn-error"
-                                              >
-                                                İptal
-                                              </button>
-                                            </div>
-                                          </div>
-                                        ) : (
-                                          <div>
-                                            <div className="max-h-40 min-w-40 overflow-y-auto  pr-1  ">
-                                              <label className="flex items-center border-b border-gray-500 p-1 gap-2 text-sm">
-                                                <input
-                                                  type="checkbox"
-                                                  className="checkbox checkbox-sm"
-                                                  checked={isAllDatesSelected}
-                                                  onChange={(e) => {
-                                                    setDraftDateValueFilters(
-                                                      e.target.checked
-                                                        ? new Set(allDateKeys)
-                                                        : new Set(),
-                                                    );
-                                                  }}
-                                                />
-                                                <span className="font-bold">
-                                                  Hepsini Seç
-                                                </span>
-                                              </label>
-                                              {col.filterType === "date" && (
-                                                <div className="max-h-64 min-w-48 text-sm">
-                                                  {Object.entries(dateTree).map(
-                                                    ([year, months]) => (
-                                                      <details
-                                                        key={year}
-                                                        ref={(el) => {
-                                                          dateAccordionRefs.current[
-                                                            String(year)
-                                                          ] = el;
-                                                        }}
-                                                        className="mb-1"
-                                                      >
-                                                        <summary className="cursor-pointer list-item list-inside pl-1">
-                                                          <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
-                                                            <input
-                                                              type="checkbox"
-                                                              className="checkbox checkbox-sm"
-                                                              onClick={(e) =>
-                                                                e.stopPropagation()
-                                                              }
-                                                              checked={isYearChecked(
-                                                                year,
-                                                              )}
-                                                              onChange={(e) => {
-                                                                setDraftDateValueFilters(
-                                                                  (prev) => {
-                                                                    const next =
-                                                                      new Set(
-                                                                        prev,
-                                                                      );
-                                                                    const keys =
-                                                                      getYearKeys(
-                                                                        year,
-                                                                      );
-
-                                                                    e.target
-                                                                      .checked
-                                                                      ? keys.forEach(
-                                                                          (k) =>
-                                                                            next.add(
-                                                                              k,
-                                                                            ),
-                                                                        )
-                                                                      : keys.forEach(
-                                                                          (k) =>
-                                                                            next.delete(
-                                                                              k,
-                                                                            ),
-                                                                        );
-
-                                                                    return next;
-                                                                  },
-                                                                );
-                                                              }}
-                                                            />
-                                                            <span>{year}</span>
-                                                          </div>
-                                                        </summary>
-
-                                                        <div className="ml-3">
-                                                          {Object.entries(
-                                                            months,
-                                                          ).map(
-                                                            ([month, days]) => (
-                                                              <details
-                                                                key={month}
-                                                                ref={(el) => {
-                                                                  dateAccordionRefs.current[
-                                                                    `${year}-${month}`
-                                                                  ] = el;
-                                                                }}
-                                                                className="ml-3 mb-1"
-                                                              >
-                                                                <summary className="cursor-pointer list-item list-inside pl-1">
-                                                                  <div className="inline-flex items-center mt-1 gap-2 translate-y-[5px]">
-                                                                    <input
-                                                                      type="checkbox"
-                                                                      className="checkbox checkbox-sm"
-                                                                      onClick={(
-                                                                        e,
-                                                                      ) =>
-                                                                        e.stopPropagation()
-                                                                      }
-                                                                      checked={isMonthChecked(
-                                                                        year,
-                                                                        month,
-                                                                        days,
-                                                                      )}
-                                                                      onChange={(
-                                                                        e,
-                                                                      ) => {
-                                                                        setDraftDateValueFilters(
-                                                                          (
-                                                                            prev,
-                                                                          ) => {
-                                                                            const next =
-                                                                              new Set(
-                                                                                prev,
-                                                                              );
-                                                                            const keys =
-                                                                              getMonthKeys(
-                                                                                year,
-                                                                                month,
-                                                                                days,
-                                                                              );
-
-                                                                            e
-                                                                              .target
-                                                                              .checked
-                                                                              ? keys.forEach(
-                                                                                  (
-                                                                                    k,
-                                                                                  ) =>
-                                                                                    next.add(
-                                                                                      k,
-                                                                                    ),
-                                                                                )
-                                                                              : keys.forEach(
-                                                                                  (
-                                                                                    k,
-                                                                                  ) =>
-                                                                                    next.delete(
-                                                                                      k,
-                                                                                    ),
-                                                                                );
-
-                                                                            return next;
-                                                                          },
-                                                                        );
-                                                                      }}
-                                                                    />
-                                                                    <span>
-                                                                      {new Date(
-                                                                        +year,
-                                                                        +month -
-                                                                          1,
-                                                                      ).toLocaleString(
-                                                                        "tr",
-                                                                        {
-                                                                          month:
-                                                                            "long",
-                                                                        },
-                                                                      )}
-                                                                    </span>
-                                                                  </div>
-                                                                </summary>
-
-                                                                <div className="ml-10 mt-1 space-y-2">
-                                                                  {days.map(
-                                                                    (day) => {
-                                                                      const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-                                                                      return (
-                                                                        <label
-                                                                          key={
-                                                                            key
-                                                                          }
-                                                                          className="flex items-center gap-2 translate-y-[5px]"
-                                                                        >
-                                                                          <input
-                                                                            type="checkbox"
-                                                                            className="checkbox checkbox-sm"
-                                                                            checked={draftDateValueFilters.has(
-                                                                              key,
-                                                                            )}
-                                                                            onChange={(
-                                                                              e,
-                                                                            ) => {
-                                                                              setDraftDateValueFilters(
-                                                                                (
-                                                                                  prev,
-                                                                                ) => {
-                                                                                  const next =
-                                                                                    new Set(
-                                                                                      prev,
-                                                                                    );
-                                                                                  e
-                                                                                    .target
-                                                                                    .checked
-                                                                                    ? next.add(
-                                                                                        key,
-                                                                                      )
-                                                                                    : next.delete(
-                                                                                        key,
-                                                                                      );
-                                                                                  return next;
-                                                                                },
-                                                                              );
-                                                                            }}
-                                                                          />
-                                                                          <span>
-                                                                            {
-                                                                              day
-                                                                            }
-                                                                          </span>
-                                                                        </label>
-                                                                      );
-                                                                    },
-                                                                  )}
-                                                                </div>
-                                                              </details>
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </details>
-                                                    ),
-                                                  )}
-                                                </div>
-                                              )}
-                                            </div>
-                                            <div className="flex justify-around my-2">
-                                              <button
-                                                className="btn btn-sm btn-success text-white"
-                                                onClick={() => {
-                                                  setDateValueFilters(
-                                                    new Set(
-                                                      draftDateValueFilters,
-                                                    ),
-                                                  );
-                                                  setSelectedFilter("");
-                                                }}
-                                              >
-                                                Kaydet
-                                              </button>
-                                              <button
-                                                onClick={() => {
-                                                  // Reset draft back to saved state
-                                                  setDraftDateValueFilters(
-                                                    new Set(dateValueFilters),
-                                                  );
-                                                  setSelectedFilter("");
-                                                }}
-                                                className="btn btn-sm btn-error"
-                                              >
-                                                İptal
-                                              </button>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>,
-                                    document.body,
-                                  )}
-                              </>
-                            )}
-
-                            {col.sortable && (
-                              <div className="w-5">
-                                {sortConfig?.key === col.key && (
-                                  <span className="ml-1 select-none group-hover:text-black text-gray-700">
-                                    {sortConfig.dir === "asc" ? "▲" : "▼"}
-                                  </span>
-                                )}
-                                {sortConfig?.key !== col.key && (
-                                  <span className="ml-1 hidden select-none [@media(hover:hover)_and_(pointer:fine)]:group-hover:block text-gray-400">
-                                    {"▼"}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
+                    {renderHeaderRow()}
                     <tr
                       className={`${styles.tr} bg-gray-300! dark:bg-gray-700!`}
                     >
@@ -1571,9 +1826,10 @@ export default function DataTable<T extends object>({
               </div>
             )}
             <div className="rounded-b-xl flex justify-between bg-gray-300 dark:bg-gray-700 p-2 items-center ">
-              <div className="font-semibold text-sm sm:text-base">
+              {renderedColumns.length > 0 && <div className="font-semibold text-sm sm:text-base">
                 Gösterilen Veri Sayısı: {filteredData.length}
-              </div>
+              </div>}
+              
               <button
                 className="btn btn-sm btn-error"
                 onClick={() => {

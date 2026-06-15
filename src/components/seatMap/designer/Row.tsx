@@ -3,6 +3,7 @@ import { Cell } from "./Cell";
 import { useState, useEffect, useRef } from "react";
 
 import { createPortal } from "react-dom";
+import Drag2Svg from "@/src/components/svg/Drag2Svg";
 
 interface Props {
   row: SeatRow;
@@ -138,15 +139,13 @@ export default function Row({
       <div className="tooltip inline-flex" data-tip="Sırayı Taşı">
         <div
           {...dragHandleProps}
-          className="hover:bg-red-500 text-black bg-white duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md !px-4"
+          className="hover:bg-red-500 text-black bg-white duration-200 cursor-move font-bold w-20 h-10 flex justify-center items-center border-2 border-gray-500 rounded-md px-4!"
         >
-          <div className="!min-w-8">
+          <div className="min-w-8!">
             
             {row.type != "empty" && <span>{row.label}</span>}
           </div>
-          <svg className="!min-w-8" viewBox="0 0 512 512">
-            <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
-          </svg>
+   <Drag2Svg/>
         </div>
       </div>
 
