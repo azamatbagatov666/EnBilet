@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { EventType } from "@/src/models/EventType";
 import type { Column } from "@/src/models/dataTable/Column";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
-import { useImageUpload } from "@/src/hooks/useImageUpload";
+import { useImageUploadThumbs } from "@/src/hooks/useImageUpload";
 import DataTable from "@/src/components/DataTable";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
@@ -64,9 +64,7 @@ export default function List() {
   //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
 
-  const { uploadImage, deleteImages } = useImageUpload("event-covers");
-
-
+  const { uploadImage, deleteImages } = useImageUploadThumbs("event-covers");
 
   const handleOpenEdit = (eventInfo: EventType) => {
     setIsEditing(false);
@@ -207,23 +205,20 @@ export default function List() {
             eventID,
           );
 
-          await fetchWithAuth(
-            "/services/account/actions/editEvent",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                eventID,
-                venueID: selectedVenue,
-                showID: selectedShow,
-                date: time,
-                isPublic: false,
-                ticketSale: false,
-                imageKey,
-                imageThumbKey,
-              }),
-            },
-          );
+          await fetchWithAuth("/services/account/actions/editEvent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              eventID,
+              venueID: selectedVenue,
+              showID: selectedShow,
+              date: time,
+              isPublic: false,
+              ticketSale: false,
+              imageKey,
+              imageThumbKey,
+            }),
+          });
         }
 
         clearForm();
@@ -241,7 +236,6 @@ export default function List() {
       setDialogueText(
         "Lütfen salon ve tarih bilgilerini eksiksiz olarak doldurduğunuzdan emin olun.",
       );
-
     }
   };
 
@@ -547,6 +541,7 @@ export default function List() {
         <FileDropzone
           ref={dropzoneRef}
           file={imageFiles}
+          withThumbs={true}
           onChange={setImageFiles}
           MAX_SIZE_MB={50}
         />
@@ -718,6 +713,7 @@ export default function List() {
                 <div className="flex justify-center">
                   <FileDropzone
                     ref={dropzoneRef}
+                    withThumbs={true}
                     file={newImageFiles}
                     onChange={setNewImageFiles}
                     MAX_SIZE_MB={50}
@@ -738,8 +734,11 @@ export default function List() {
         )}
       </DialogModal>
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
-      </SuccessAlert>
+      <SuccessAlert
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        alertText={alertText}
+      ></SuccessAlert>
     </>
   );
 }

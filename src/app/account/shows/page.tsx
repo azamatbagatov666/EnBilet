@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 import DataTable from "@/src/components/DataTable";
-import { useImageUpload } from "@/src/hooks/useImageUpload";
+import { useImageUploadThumbs } from "@/src/hooks/useImageUpload";
 
 import type { ShowType } from "@/src/models/ShowType";
 import type { Column } from "@/src/models/dataTable/Column";
@@ -50,7 +50,7 @@ export default function shows() {
   //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
 
-  const { uploadImage, deleteImages } = useImageUpload("show-covers");
+  const { uploadImage, deleteImages } = useImageUploadThumbs("show-covers");
 
   const resetForm = async () => {
     dropzoneRef.current?.cleanUp();
@@ -301,6 +301,7 @@ export default function shows() {
         <FileDropzone
           ref={dropzoneRef}
           file={imageFiles}
+          withThumbs={true}
           onChange={setImageFiles}
           MAX_SIZE_MB={50}
         />
@@ -316,105 +317,109 @@ export default function shows() {
 
       <DataTable data={shows} columns={showColumns} title="Gösteriler" />
 
-        <DialogModal
-          open={dialogueOpen}
-          dialogueText={dialogueText}
-          onClose={() => {
-            setDialogueOpen(false);
-            setDialogueText("");
-            setEditDialogueOpen(false);
-          }}
-          width={700}
-          disableClose={isEditing}
-        >
-          {editDialogueOpen && (
-            <div className={`grid gap-2 w-[800px]`}>
-              <span>Gösteri İsmi:</span>
-              <input
-                maxLength={200}
-                className={`input input-accent w-full ${
-                  editedShow?.showName == ""
-                    ? "border-red-500! border-4 outline-red-500!"
-                    : ""
-                }`}
-                value={editedShow?.showName ?? ""}
-                onChange={(e) =>
-                  setEditedShow((prev) =>
-                    prev ? { ...prev, showName: e.target.value } : prev,
-                  )
-                }
-              ></input>
-              <span>Gösteri Açıklaması:</span>
-              <textarea
-                className="textarea textarea-accent w-full h-56"
-                value={editedShow?.description ?? ""}
-                onChange={(e) =>
-                  setEditedShow((prev) =>
-                    prev ? { ...prev, description: e.target.value } : prev,
-                  )
-                }
-              ></textarea>
+      <DialogModal
+        open={dialogueOpen}
+        dialogueText={dialogueText}
+        onClose={() => {
+          setDialogueOpen(false);
+          setDialogueText("");
+          setEditDialogueOpen(false);
+        }}
+        width={700}
+        disableClose={isEditing}
+      >
+        {editDialogueOpen && (
+          <div className={`grid gap-2 w-[800px]`}>
+            <span>Gösteri İsmi:</span>
+            <input
+              maxLength={200}
+              className={`input input-accent w-full ${
+                editedShow?.showName == ""
+                  ? "border-red-500! border-4 outline-red-500!"
+                  : ""
+              }`}
+              value={editedShow?.showName ?? ""}
+              onChange={(e) =>
+                setEditedShow((prev) =>
+                  prev ? { ...prev, showName: e.target.value } : prev,
+                )
+              }
+            ></input>
+            <span>Gösteri Açıklaması:</span>
+            <textarea
+              className="textarea textarea-accent w-full h-56"
+              value={editedShow?.description ?? ""}
+              onChange={(e) =>
+                setEditedShow((prev) =>
+                  prev ? { ...prev, description: e.target.value } : prev,
+                )
+              }
+            ></textarea>
 
-              <span>Kapak Resmi</span>
-              {editedShow?.imageKey != null ? (
-                <div className="flex justify-center">
-                  <div className=" bg-gray-500   relative p-1 rounded-3xl">
-                    <div>
-                      <button
-                        onClick={() => {
-                          setImagesToDelete({
-                            original: editedShow?.imageKey ?? "",
-                            thumbnail: editedShow?.imageThumbKey ?? "",
-                          });
-                          setEditedShow((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  imageKey: null,
-                                  imageThumbKey: null,
-                                }
-                              : prev,
-                          );
-                        }}
-                        className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
-                      >
-                        ✕
-                      </button>
-                      <img
-                        className="rounded-3xl sm:max-w-[300px] "
-                        src={`https://cocukakli.blob.core.windows.net/public-images/${editedShow?.imageKey}`}
-                        alt="Gösteri Fotoğrafı"
-                      />
-                    </div>
+            <span>Kapak Resmi</span>
+            {editedShow?.imageKey != null ? (
+              <div className="flex justify-center">
+                <div className=" bg-gray-500   relative p-1 rounded-3xl">
+                  <div>
+                    <button
+                      onClick={() => {
+                        setImagesToDelete({
+                          original: editedShow?.imageKey ?? "",
+                          thumbnail: editedShow?.imageThumbKey ?? "",
+                        });
+                        setEditedShow((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                imageKey: null,
+                                imageThumbKey: null,
+                              }
+                            : prev,
+                        );
+                      }}
+                      className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
+                    >
+                      ✕
+                    </button>
+                    <img
+                      className="rounded-3xl sm:max-w-[300px] "
+                      src={`https://cocukakli.blob.core.windows.net/public-images/${editedShow?.imageKey}`}
+                      alt="Gösteri Fotoğrafı"
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="flex justify-center">
-                  <FileDropzone
-                    ref={dropzoneRef}
-                    file={newImageFiles}
-                    onChange={setNewImageFiles}
-                    MAX_SIZE_MB={50}
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-center mt-2">
-                <button
-                  className="btn btn-success text-white"
-                  onClick={() => {
-                    editShow();
-                  }}
-                >
-                  Kaydet
-                </button>
               </div>
-            </div>
-          )}
-        </DialogModal>
+            ) : (
+              <div className="flex justify-center">
+                <FileDropzone
+                  ref={dropzoneRef}
+                  withThumbs={true}
+                  file={newImageFiles}
+                  onChange={setNewImageFiles}
+                  MAX_SIZE_MB={50}
+                />
+              </div>
+            )}
 
-      <SuccessAlert open={alertOpen} onClose={() => setAlertOpen(false)} alertText={alertText}>
-      </SuccessAlert>
+            <div className="flex justify-center mt-2">
+              <button
+                className="btn btn-success text-white"
+                onClick={() => {
+                  editShow();
+                }}
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        )}
+      </DialogModal>
+
+      <SuccessAlert
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        alertText={alertText}
+      ></SuccessAlert>
     </>
   );
 }

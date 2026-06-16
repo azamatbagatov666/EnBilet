@@ -12,23 +12,33 @@ export type FileDropzoneRef = {
   cleanUp: () => void;
 };
 
-const FileDropzone = forwardRef<
-  FileDropzoneRef,
-  {
-file: {
-  original: File | null;
-  thumbnail: File | null;
-} | null;
+type FileWithThumb = {
+  original: File;
+  thumbnail: File;
+};
 
-onChange: (
-  data: {
-    original: File;
-    thumbnail: File;
-  } | null
-) => void;
-    MAX_SIZE_MB?: number;
-  }
->(({ file, onChange, MAX_SIZE_MB }, ref) => {
+type FileWithoutThumb = {
+  original: File;
+};
+
+type WithThumbsProps = {
+  withThumbs: true;
+  file: FileWithThumb | null;
+  onChange: (data: FileWithThumb | null) => void;
+};
+
+type WithoutThumbsProps = {
+  withThumbs?: false;
+  file: FileWithoutThumb | null;
+  onChange: (data: FileWithoutThumb | null) => void;
+};
+
+type FileDropzoneProps = (WithThumbsProps | WithoutThumbsProps) & {
+  MAX_SIZE_MB?: number;
+};
+
+const FileDropzone = forwardRef<FileDropzoneRef, FileDropzoneProps>(
+  ({ file, onChange, withThumbs, MAX_SIZE_MB }, ref) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -81,15 +91,28 @@ onChange: (
       quality: 0.8,
     });
 
-    const thumb = await compressImage(file, {
+    if(withThumbs){
+        const thumb = await compressImage(file, {
       maxWidth: 400,
       quality: 0.6,
     });
 
-    onChange({
+        onChange({
       original: compressed,
       thumbnail: thumb,
     });
+      
+    }
+
+    else {
+      onChange({
+        original: compressed,
+      });
+    }
+
+  
+
+
 
     setPreview(URL.createObjectURL(compressed));
   };
@@ -107,15 +130,24 @@ onChange: (
       quality: 0.8,
     });
 
-    const thumb = await compressImage(file, {
+    if(withThumbs){
+        const thumb = await compressImage(file, {
       maxWidth: 400,
       quality: 0.6,
     });
 
-onChange({
-  original: compressed,
-  thumbnail: thumb,
-});
+        onChange({
+      original: compressed,
+      thumbnail: thumb,
+    });
+      
+    }
+
+    else {
+      onChange({
+        original: compressed,
+      });
+    }
 
     setPreview(URL.createObjectURL(compressed));
   };
