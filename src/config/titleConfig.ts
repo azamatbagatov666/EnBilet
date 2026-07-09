@@ -1,7 +1,4 @@
-export const titleConfig: Record<
-  string,
-  { label: string; title?: string }
-> = {
+export const titleConfig: Record<string, { label: string; title?: string }> = {
   account: {
     label: "Anasayfa",
     title: "Anasayfa",
@@ -10,25 +7,24 @@ export const titleConfig: Record<
     label: "Etkinlikler",
     title: "Etkinlikler",
   },
-    venues: {
+  venues: {
     label: "Salonlar",
     title: "Salonlar",
   },
-    shows: {
+  shows: {
     label: "Gösteriler",
     title: "Gösteriler",
   },
-    designSeats: {
+  designSeats: {
     label: "Oturma Planı Oluştur",
     title: "Oturma Planı Oluştur",
   },
-    ticketPrices: {
+  ticketPrices: {
     label: "Koltuk Fiyatı ve Durumu",
     title: "Koltuk Fiyatı ve Durumu",
   },
-
-
+  gallery: {
+    label: "Galeri",
+    title: "Galeri",
+  },
 };
-
-
-

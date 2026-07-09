@@ -33,7 +33,7 @@ export default function List() {
 
   return (
     <>
-      <div className="h-[60vh] flex items-center justify-center flex-wrap px-2">
+      <div className="h-[60vh] flex items-center justify-center flex-wrap">
         <div className="p-8 border-2 border-black rounded-3xl bg-base-300 w-auto max-w-full">
           <div className=" text-3xl flex font-bold justify-center mb-8">
             ÜYE GİRİŞİ

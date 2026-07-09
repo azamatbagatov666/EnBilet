@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import type { EventType } from "@/src/models/EventType";
 import type { Column } from "@/src/models/dataTable/Column";
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
-import { useImageUploadThumbs } from "@/src/hooks/useImageUpload";
 import DataTable from "@/src/components/DataTable";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
@@ -12,6 +11,7 @@ import FormContainer from "@/src/components/forms/FormContainer";
 import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
 
 import { useRouter } from "next/navigation";
+import EditSvg from "@/src/components/svg/EditSvg";
 
 export default function List() {
   const router = useRouter();
@@ -32,15 +32,7 @@ export default function List() {
     .toISOString()
     .slice(0, 16);
 
-  const [imageFiles, setImageFiles] = useState<{
-    original: File;
-    thumbnail: File;
-  } | null>(null);
 
-  const [newImageFiles, setNewImageFiles] = useState<{
-    original: File;
-    thumbnail: File;
-  } | null>(null);
 
   //alerts
   const [dialogueOpen, setDialogueOpen] = useState(false);
@@ -54,24 +46,19 @@ export default function List() {
 
   const [editedEvent, setEditedEvent] = useState<EventType>();
   const [editDialogueOpen, setEditDialogueOpen] = useState(false);
-  const [imagesToDelete, setImagesToDelete] = useState({
-    original: "",
-    thumbnail: "",
-  });
+
   const [originalEvent, setOriginalEvent] = useState<EventType | null>(null);
   const [editVenues, setEditVenues] = useState<Record<number, string>>({});
 
   //Refs
   const dropzoneRef = useRef<FileDropzoneRef>(null);
 
-  const { uploadImage, deleteImages } = useImageUploadThumbs("event-covers");
 
   const handleOpenEdit = (eventInfo: EventType) => {
     setIsEditing(false);
     setEditedEvent({ ...eventInfo });
     setOriginalEvent({ ...eventInfo });
-    setImagesToDelete({ original: "", thumbnail: "" });
-    setNewImageFiles(null);
+
 
     setEditDialogueOpen(true);
     setDialogueOpen(true);
@@ -80,8 +67,7 @@ export default function List() {
   const hasEventChanged = (
     original: EventType,
     updated: EventType,
-    imagesToDelete: { original: string; thumbnail: string },
-    newImageFiles: { original: File; thumbnail: File } | null,
+
   ) => {
     const keysToCompare: (keyof EventType)[] = [
       "venueID",
@@ -95,12 +81,6 @@ export default function List() {
       return true;
     }
 
-    if (newImageFiles !== null) return true;
-
-    if (imagesToDelete.original || imagesToDelete.thumbnail) {
-      return true;
-    }
-
     return false;
   };
 
@@ -111,8 +91,7 @@ export default function List() {
       !hasEventChanged(
         originalEvent,
         editedEvent,
-        imagesToDelete,
-        newImageFiles,
+
       )
     ) {
       setDialogueOpen(false);
@@ -130,19 +109,10 @@ export default function List() {
       date: toDateTimeLocal(editedEvent.date),
       ticketSale: editedEvent.ticketSale,
       isPublic: editedEvent.isPublic,
-      imageKey: editedEvent.imageKey,
-      imageThumbKey: editedEvent.imageThumbKey,
+
     };
 
-    if (newImageFiles?.original && editedEvent.eventID) {
-      const { imageKey, imageThumbKey } = await uploadImage(
-        newImageFiles.original,
-        newImageFiles.thumbnail,
-        editedEvent.eventID,
-      );
-      updatedEvent.imageKey = imageKey;
-      updatedEvent.imageThumbKey = imageThumbKey;
-    }
+
 
     try {
       await fetchWithAuth("/services/account/actions/editEvent", {
@@ -154,23 +124,13 @@ export default function List() {
       setDialogueOpen(false);
       setEditedEvent(undefined);
 
-      if (imagesToDelete.original != "") {
-        await deleteImages([imagesToDelete.original, imagesToDelete.thumbnail]);
 
-        updatedEvent.imageKey = null;
-        updatedEvent.imageThumbKey = null;
-      }
 
       getEvents();
 
       setAlertText("Etkinlik başarıyla düzenlendi.");
     } catch (err: any) {
-      if (newImageFiles?.original) {
-        await deleteImages([
-          updatedEvent.imageKey!,
-          updatedEvent.imageThumbKey!,
-        ]);
-      }
+
 
       setDialogueText(err.message);
     } finally {
@@ -196,33 +156,10 @@ export default function List() {
           }),
         });
 
-        const { eventID } = await res.json();
 
-        if (imageFiles?.original) {
-          const { imageKey, imageThumbKey } = await uploadImage(
-            imageFiles.original,
-            imageFiles.thumbnail,
-            eventID,
-          );
 
-          await fetchWithAuth("/services/account/actions/editEvent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              eventID,
-              venueID: selectedVenue,
-              showID: selectedShow,
-              date: time,
-              isPublic: false,
-              ticketSale: false,
-              imageKey,
-              imageThumbKey,
-            }),
-          });
-        }
 
         clearForm();
-        setImageFiles(null);
 
         setAlertText("Etkinlik başarıyla eklendi.");
 
@@ -394,19 +331,7 @@ export default function List() {
       sortable: true,
       filterType: "multi",
     },
-    {
-      key: "imageKey",
-      label: "Kapak Resmi",
-      filterType: "none",
-      render: (row) =>
-        row.imageThumbKey ? (
-          <img
-            className="w-full sm:max-w-64 h-auto"
-            src={`https://cocukakli.blob.core.windows.net/public-images/${row.imageThumbKey}`}
-            alt="Gösteri Fotoğrafı"
-          />
-        ) : null,
-    },
+
     {
       key: "ticketSale",
       label: "Satışa Açık",
@@ -460,17 +385,7 @@ export default function List() {
           }}
           className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
         >
-          <svg
-            viewBox="0 0 24 24"
-            className=" stroke-black dark:stroke-white  fill-transparent size-6 sm:size-8"
-          >
-            <path
-              d="M12 3.99997H6C4.89543 3.99997 4 4.8954 4 5.99997V18C4 19.1045 4.89543 20 6 20H18C19.1046 20 20 19.1045 20 18V12M18.4142 8.41417L19.5 7.32842C20.281 6.54737 20.281 5.28104 19.5 4.5C18.7189 3.71895 17.4526 3.71895 16.6715 4.50001L15.5858 5.58575M18.4142 8.41417L12.3779 14.4505C12.0987 14.7297 11.7431 14.9201 11.356 14.9975L8.41422 15.5858L9.00257 12.6441C9.08001 12.2569 9.27032 11.9013 9.54951 11.6221L15.5858 5.58575M18.4142 8.41417L15.5858 5.58575"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <EditSvg/>
         </button>
       ),
     },
@@ -536,15 +451,7 @@ export default function List() {
           onChange={(e) => setTime(e.target.value)}
         ></input>
 
-        <span>Etkinlik Resmi:</span>
 
-        <FileDropzone
-          ref={dropzoneRef}
-          file={imageFiles}
-          withThumbs={true}
-          onChange={setImageFiles}
-          MAX_SIZE_MB={50}
-        />
 
         <div className="flex justify-center mt-6">
           <button
@@ -676,50 +583,7 @@ export default function List() {
                 ></input>
               </div>
 
-              <div>Kapak Resmi</div>
-              {editedEvent?.imageKey != null ? (
-                <div className="flex justify-center">
-                  <div className=" bg-gray-500   relative p-1 rounded-3xl">
-                    <div>
-                      <button
-                        onClick={() => {
-                          setImagesToDelete({
-                            original: editedEvent?.imageKey ?? "",
-                            thumbnail: editedEvent?.imageThumbKey ?? "",
-                          });
-                          setEditedEvent((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  imageKey: null,
-                                  imageThumbKey: null,
-                                }
-                              : prev,
-                          );
-                        }}
-                        className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
-                      >
-                        ✕
-                      </button>
-                      <img
-                        className="rounded-3xl sm:max-w-[300px] "
-                        src={`https://cocukakli.blob.core.windows.net/public-images/${editedEvent?.imageKey}`}
-                        alt="Gösteri Fotoğrafı"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center">
-                  <FileDropzone
-                    ref={dropzoneRef}
-                    withThumbs={true}
-                    file={newImageFiles}
-                    onChange={setNewImageFiles}
-                    MAX_SIZE_MB={50}
-                  />
-                </div>
-              )}
+
 
               <div className="flex justify-center w-full mt-6">
                 <button

@@ -1469,7 +1469,7 @@ const handleSetDefaultColumns = () => {
   return (
     <>
       {/* Search */}
-      <div className="my-8 px-2 flex justify-center">
+      <div className="my-8 flex justify-center">
         <div className="border-2 border-black dark:border-white rounded-xl w-fit max-w-full">
           <div className=" ">
             <div className="rounded-t-xl grid bg-gray-300 gap-2  p-2  text-black dark:text-white dark:bg-gray-700">

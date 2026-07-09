@@ -12,7 +12,7 @@ type Props = {
 export default function FormContainer({ children, title, inProgress }: Props) {
   return (
     <div
-      className={`flex justify-center px-2 relative`}
+      className={`flex justify-center  relative`}
     >
       <div
         className={`${styles.label} grid gap-2 w-[500px] rounded-xl  px-2 py-4 bg-slate-200 dark:bg-slate-700  ${

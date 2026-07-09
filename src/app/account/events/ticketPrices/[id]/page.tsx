@@ -449,7 +449,7 @@ const handleRefresh = async ()=> {
 
   return (
     <>
-      <div className="px-2 sm:px-6">
+      <div className="">
         <div className="">
           <div className="grid lg:flex gap-4 text-xl font-bold my-4">
             <span>

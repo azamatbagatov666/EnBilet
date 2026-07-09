@@ -21,7 +21,7 @@ export default function RootLayout({
  <Breadcrumbs></Breadcrumbs>
  <PageTitle></PageTitle>
 
-<div className="my-8">
+<div className="my-8 px-2 md:px-6">
       <section className="admin-layout">
       {children}
     </section>
