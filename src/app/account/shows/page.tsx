@@ -8,7 +8,6 @@ import type { ShowType } from "@/src/models/ShowType";
 import type { Column } from "@/src/models/dataTable/Column";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
-import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
 import EditSvg from "@/src/components/svg/EditSvg";
 import GallerySvg from "@/src/components/svg/GallerySvg";
 import { useRouter } from "next/navigation";
@@ -44,13 +43,9 @@ export default function shows() {
   const [dialogueText, setDialogueText] = useState("");
   const [alertText, setAlertText] = useState("");
 
-  //Refs
-  const dropzoneRef = useRef<FileDropzoneRef>(null);
 
 
-  const resetForm = async () => {
-    dropzoneRef.current?.cleanUp();
-  };
+
 
   const showColumns: Column<ShowType>[] = [
     {
@@ -144,10 +139,9 @@ export default function shows() {
         }),
       });
 
-      const { showID } = await res.json();
 
      
-      resetForm();
+
       setShowName("");
       setDescription("");
 

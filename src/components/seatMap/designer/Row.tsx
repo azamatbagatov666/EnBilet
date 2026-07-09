@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Drag2Svg from "@/src/components/svg/Drag2Svg";
 import EditSvg from "@/src/components/svg/EditSvg";
+import DialogModal from "@/src/components/alerts/DialogModal";
+
 
 
 interface Props {
@@ -45,8 +47,10 @@ export default function Row({
   copyRow,
   toggleHandicappedSeat,
 }: Props) {
-  const [renameOpen, setRenameOpen] = useState(false);
   const [desiredLabel, setDesiredLabel] = useState("");
+
+  const [dialogueOpen, setDialogueOpen] = useState(false);
+
 
   const [formError, setFormError] = useState("");
 
@@ -54,7 +58,7 @@ export default function Row({
     if (desiredLabel.trim() != "") {
       const success = updateRowLabel(row.id, desiredLabel);
       if (!success) {
-        setRenameOpen(false);
+        setDialogueOpen(false);
       } else {
         setFormError("Bu isimde bir sıra zaten bulunmaktadır.");
       }
@@ -67,11 +71,11 @@ export default function Row({
 
 
     useEffect(() => {
-    if (!renameOpen) return;
+    if (!dialogueOpen) return;
   
       inputRef.current?.focus();
       inputRef.current?.select();
-  }, [renameOpen]);
+  }, [dialogueOpen]);
 
   return (
     <div className="flex items-center gap-2 mb-2 select-none">
@@ -95,7 +99,7 @@ export default function Row({
       {row.type != "empty" ? (<>      <div className="tooltip inline-flex" data-tip="Sıra İsmini Düzenle">
         <button
           onClick={() => {
-            setRenameOpen(true);
+            setDialogueOpen(true);
             setDesiredLabel(row.label);
           }}
           className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
@@ -171,29 +175,16 @@ export default function Row({
         )}
       </div>
 
-      {renameOpen &&
-        createPortal(
-          <dialog
-            open
-            className="modal modal-open"
-            onClose={() => setRenameOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setRenameOpen(false);
-              }
-            }}
-          >
-            {/* MODAL BOX */}
-            <div className="modal-box max-w-56 border">
-              <button
-                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                onClick={() => setRenameOpen(false)}
-              >
-                ✕
-              </button>
+            <DialogModal
+              open={dialogueOpen}
+              onClose={() => {
+                setDialogueOpen(false);
 
-              <div className="grid gap-4 mt-5">
-                <div className="flex justify-between items-center">
+                setDialogueOpen(false)
+              }}
+            >
+              <div className="grid gap-4 ">
+                <div className="flex justify-between items-center gap-4">
                   <span>Yeni İsim:</span>
                   <input
                     value={desiredLabel}
@@ -207,7 +198,7 @@ export default function Row({
                 </div>
 
                 <button
-                  className="btn btn-accent h-8"
+                  className="btn btn-accent text-white  h-8"
                   onClick={() => {
                     handleSave();
                   }}
@@ -218,16 +209,10 @@ export default function Row({
                   {formError}
                 </div>
               </div>
-            </div>
 
-            {/* DARK BACKDROP */}
-            <div
-              className="modal-backdrop"
-              onClick={() => setRenameOpen(false)}
-            />
-          </dialog>,
-          document.body,
-        )}
+            </DialogModal>
+
+
     </div>
   );
 }

@@ -8,7 +8,6 @@ import DataTable from "@/src/components/DataTable";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FormContainer from "@/src/components/forms/FormContainer";
-import FileDropzone, { FileDropzoneRef } from "@/src/components/FileDropzone";
 
 import { useRouter } from "next/navigation";
 import EditSvg from "@/src/components/svg/EditSvg";
@@ -50,8 +49,7 @@ export default function List() {
   const [originalEvent, setOriginalEvent] = useState<EventType | null>(null);
   const [editVenues, setEditVenues] = useState<Record<number, string>>({});
 
-  //Refs
-  const dropzoneRef = useRef<FileDropzoneRef>(null);
+
 
 
   const handleOpenEdit = (eventInfo: EventType) => {

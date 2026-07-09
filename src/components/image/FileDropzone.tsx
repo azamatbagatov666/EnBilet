@@ -7,6 +7,8 @@ import {
   useEffect,
 } from "react";
 import { compressImage } from "@/src/lib/compressImage";
+import ImagePreview from "@/src/components/image/ImagePreview";
+
 
 export type FileDropzoneRef = {
   cleanUp: () => void;
@@ -257,23 +259,9 @@ const FileDropzone = forwardRef<FileDropzoneRef, FileDropzoneProps>(
             </div>
           </div>
         ) : (
-          <div className="flex justify-center">
-            <div className=" bg-gray-500   relative p-1 rounded-3xl">
-              <div>
-                <button
-                  onClick={() => clearFile()}
-                  className="btn btn-sm btn-circle btn-error border-2 border-black absolute -top-3 -left-3"
-                >
-                  ✕
-                </button>
-                <img
-                  src={preview!}
-                  className="rounded-3xl  sm:max-w-[300px]"
-                  alt="Önizleme"
-                />
-              </div>
-            </div>
-          </div>
+          <ImagePreview preview={preview!} clearFile={clearFile}/>
+
+       
         )}
       </div>
     </>

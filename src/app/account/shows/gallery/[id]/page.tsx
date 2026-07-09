@@ -8,7 +8,7 @@ import { useImageUpload } from "@/src/hooks/useImageUpload";
 
 import { fetchWithAuth } from "@/src/lib/fetchWithAuth";
 
-import ImageCollection from "@/src/components/forms/ImageCollection";
+import ImageCollection from "@/src/components/image/ImageCollection";
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
@@ -24,27 +24,30 @@ export default function showGallery({
 }: {
   params: Promise<{ id: string }>;
 }) {
-
   const { uploadImage } = useImageUpload();
   const { id } = use(params);
   const router = useRouter();
 
-    const [theShow, setTheShow] = useState<ShowType>();
-  
+  const [theShow, setTheShow] = useState<ShowType>();
 
   const EVENT_IMAGE_CONFIG = [
     {
-      key: "galleryImages",
-      title: "Galeri",
-      uploadPath: "/cdn/events/gallery",
+      key: "horKey",
+      title: "Gösteri Fotoğrafı (Geniş Ekran)",
+      uploadPath: "/cdn/shows/horizantal",
+      maxSizeMB: 20,
+      description: "Lütfen 16:9 oranında bir fotoğraf yükleyiniz.",
+      currentPath: theShow?.horKey,
     },
     {
-      key: "poster",
-      title: "Poster",
-      uploadPath: "/cdn/events/poster",
+      key: "verKey",
+      title: "Gösteri Fotoğrafı (Dikey Ekran - Mobil)",
+      uploadPath: "/cdn/shows/vertical",
+      maxSizeMB: 20,
+      description: "Lütfen 3:4 oranında bir fotoğraf yükleyiniz.",
+      currentPath: theShow?.verKey,
     },
   ] as const;
-
 
   useEffect(() => {
     (async () => {
@@ -91,8 +94,11 @@ export default function showGallery({
     }
 
     const updatedShow = {
-      galleryImagesKey: uploaded.galleryImages,
-      posterKey: uploaded.poster,
+      showName:theShow?.showName,
+      showID:theShow?.showID,
+      description:theShow?.description,
+      horKey: uploaded.horKey,
+      verKey: uploaded.verKey,
     };
 
     await fetchWithAuth("/services/account/actions/editShow", {
@@ -102,10 +108,14 @@ export default function showGallery({
     });
   };
 
+  const clearFile = (imageKey: string) => {
+    console.log("imageKey");
+    console.log(imageKey);
+  };
+
   return (
     <>
-
-          <div className="">
+      <div className="">
         <div className="grid lg:flex gap-4 text-xl font-bold my-4">
           <span>
             Gösteri İsmi:{" "}
@@ -118,10 +128,11 @@ export default function showGallery({
         config={EVENT_IMAGE_CONFIG}
         onChange={setImages}
         entityId={id}
+        clearFile={clearFile}
       />
 
       <button
-        className="btn"
+        className="btn btn-success text-white"
         onClick={() => {
           submit();
         }}
