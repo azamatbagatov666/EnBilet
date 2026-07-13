@@ -235,11 +235,11 @@ const FileDropzone = forwardRef<FileDropzoneRef, FileDropzoneProps>(
                 ref={inputRef}
                 onChange={onFileChange}
               />
-              <div className="text-lg px-4 ">
+              <div className="text-lg px-4 hidden md:block">
                 {" "}
                 Fotoğrafınızı bu alana sürükleyip bırakabilirsiniz{" "}
               </div>
-              <div className="text-lg "> veya </div>
+              <div className="text-lg hidden md:block"> veya </div>
               <div className="grid gap-1">
                 <button
                   data-theme="light"

@@ -8,7 +8,7 @@ type DialogModalProps = {
   open: boolean;
   disableClose?: boolean;
   onClose: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   dialogueText?: string,
   width?: number,
 };

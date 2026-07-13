@@ -498,7 +498,7 @@ const handleRefresh = async ()=> {
         {(seatMap || !isSeated) && (
           <div className="relative">
             {isEditing && (
-              <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner blur-0! opacity-100! text-accent"></span>
+              <span className="loading loading-lg absolute left-1/2 top-1/2 z-50 loading-spinner blur-none! opacity-100! text-accent"></span>
             )}
 
             <div className="mt-4 font-bold">

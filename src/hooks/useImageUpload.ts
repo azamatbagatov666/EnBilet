@@ -15,59 +15,88 @@ type UploadResult = {
 };
 
 export function useImageUpload() {
-  const uploadImage = useCallback(
-    async ({
-      uploadPath,
-      entityId,
-      original,
-      thumbnail,
-    }: UploadParams): Promise<UploadResult> => {
-      const sasRes = await fetchWithAuth(
-        "/services/account/cdn/getImageUploadSas",
-        { method: "POST" },
-      );
+type UploadSession = {
+  uploadUrl: string;
+  sasToken: string;
+};
 
-      if (!sasRes.ok) {
-        throw new Error("Failed to get upload SAS");
-      }
+type UploadParams = {
+  session: UploadSession;
+  uploadPath: string;
+  entityId: number;
+  original: File;
+  thumbnail?: File;
+};
 
-      const { uploadUrl, sasToken } = await sasRes.json();
+type UploadResult = {
+  imageKey: string;
+  imageThumbKey?: string;
+};
 
-      const uuid = generateId();
+const getUploadSession = useCallback(async (): Promise<UploadSession> => {
+  const sasRes = await fetchWithAuth(
+    "/services/account/cdn/getImageUploadSas",
+    {
+      method: "POST",
+    },
+  );
 
-      const imageKey = `${uploadPath}/${entityId}/${uuid}.webp`;
-      const imageThumbKey = thumbnail
-        ? `${uploadPath}/${entityId}/${uuid}_thumb.webp`
-        : undefined;
+  if (!sasRes.ok) {
+    throw new Error("Failed to get upload SAS");
+  }
 
-      const upload = async (file: File, blobName: string) => {
-        const res = await fetch(`${uploadUrl}/${blobName}?${sasToken}`, {
+  return await sasRes.json();
+}, []);
+
+const uploadImage = useCallback(
+  async ({
+    session,
+    uploadPath,
+    entityId,
+    original,
+    thumbnail,
+  }: UploadParams): Promise<UploadResult> => {
+    const uuid = generateId();
+
+    const imageKey = `${uploadPath}/${entityId}/${uuid}.webp`;
+
+    const imageThumbKey = thumbnail
+      ? `${uploadPath}/${entityId}/${uuid}_thumb.webp`
+      : undefined;
+
+    const upload = async (file: File, blobName: string) => {
+      const res = await fetch(
+        `${session.uploadUrl}/${blobName}?${session.sasToken}`,
+        {
           method: "PUT",
           headers: {
             "x-ms-blob-type": "BlockBlob",
             "Content-Type": file.type,
           },
           body: file,
-        });
+        },
+      );
 
-        if (!res.ok) {
-          throw new Error("Upload failed");
-        }
-      };
-
-      await upload(original, imageKey);
-
-      if (thumbnail && imageThumbKey) {
-        await upload(thumbnail, imageThumbKey);
+      if (!res.ok) {
+        throw new Error("Upload failed");
       }
+    };
 
-      return {
-        imageKey,
-        imageThumbKey,
-      };
-    },
-    [],
-  );
+    const uploads = [upload(original, imageKey)];
+
+    if (thumbnail && imageThumbKey) {
+      uploads.push(upload(thumbnail, imageThumbKey));
+    }
+
+    await Promise.all(uploads);
+
+    return {
+      imageKey,
+      imageThumbKey,
+    };
+  },
+  [],
+);
 
   const deleteImages = useCallback(async (imageKeys: string[]) => {
     if (!imageKeys.length) return;
@@ -84,6 +113,7 @@ export function useImageUpload() {
   }, []);
 
   return {
+    getUploadSession,
     uploadImage,
     deleteImages,
   };

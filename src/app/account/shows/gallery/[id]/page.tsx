@@ -24,17 +24,28 @@ export default function showGallery({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { uploadImage } = useImageUpload();
+  //alerts
+  const [dialogueOpen, setDialogueOpen] = useState(false);
+  const [dialogueText, setDialogueText] = useState("");
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertText, setAlertText] = useState("");
+
+  const [resetCounter, setResetCounter] = useState(0);
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const { uploadImage, deleteImages, getUploadSession } = useImageUpload();
   const { id } = use(params);
   const router = useRouter();
 
   const [theShow, setTheShow] = useState<ShowType>();
+  const [originalShow, setOriginalShow] = useState<ShowType>();
 
   const EVENT_IMAGE_CONFIG = [
     {
       key: "horKey",
       title: "Gösteri Fotoğrafı (Geniş Ekran)",
-      uploadPath: "/cdn/shows/horizantal",
+      uploadPath: "show-covers/horizantal",
       maxSizeMB: 20,
       description: "Lütfen 16:9 oranında bir fotoğraf yükleyiniz.",
       currentPath: theShow?.horKey,
@@ -42,7 +53,7 @@ export default function showGallery({
     {
       key: "verKey",
       title: "Gösteri Fotoğrafı (Dikey Ekran - Mobil)",
-      uploadPath: "/cdn/shows/vertical",
+      uploadPath: "show-covers/vertical",
       maxSizeMB: 20,
       description: "Lütfen 3:4 oranında bir fotoğraf yükleyiniz.",
       currentPath: theShow?.verKey,
@@ -64,6 +75,7 @@ export default function showGallery({
       const data = await res.json();
 
       setTheShow(data);
+      setOriginalShow(data);
     } catch (err: any) {
       router.push(`/account/shows/`);
     }
@@ -76,41 +88,85 @@ export default function showGallery({
   );
 
   const submit = async () => {
+    setIsEditing(true);
+
+    const session = await getUploadSession();
+
+    const results = await Promise.all(
+      EVENT_IMAGE_CONFIG.map(async (category) => {
+        const image = images[category.key];
+
+        if (!image) {
+          return null;
+        }
+
+        const result = await uploadImage({
+          session,
+          uploadPath: category.uploadPath,
+          entityId: Number(id),
+          original: image.original,
+          thumbnail: "thumbnail" in image ? image.thumbnail : undefined,
+        });
+
+        return {
+          key: category.key,
+          imageKey: result.imageKey,
+        };
+      }),
+    );
+
     const uploaded: Record<string, string> = {};
 
-    for (const category of EVENT_IMAGE_CONFIG) {
-      const image = images[category.key];
+    results.forEach((result) => {
+      if (!result) return;
 
-      if (!image) continue;
-
-      const result = await uploadImage({
-        uploadPath: category.uploadPath,
-        entityId: Number(id),
-        original: image.original,
-        thumbnail: "thumbnail" in image ? image.thumbnail : undefined,
-      });
-
-      uploaded[category.key] = result.imageKey;
-    }
+      uploaded[result.key] = result.imageKey;
+    });
 
     const updatedShow = {
-      showName:theShow?.showName,
-      showID:theShow?.showID,
-      description:theShow?.description,
-      horKey: uploaded.horKey,
-      verKey: uploaded.verKey,
+      ...theShow,
+      horKey: uploaded.horKey ?? theShow?.horKey,
+      verKey: uploaded.verKey ?? theShow?.verKey,
     };
 
-    await fetchWithAuth("/services/account/actions/editShow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedShow),
-    });
+    try {
+      await fetchWithAuth("/services/account/actions/editShow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedShow),
+      });
+
+      let imagesToDelete: string[] = [];
+
+      if (
+        theShow?.horKey !== originalShow?.horKey &&
+        originalShow?.horKey != null
+      ) {
+        imagesToDelete.push(originalShow.horKey);
+      }
+
+      if (
+        theShow?.verKey !== originalShow?.verKey &&
+        originalShow?.verKey != null
+      ) {
+        imagesToDelete.push(originalShow.verKey);
+      }
+
+      await deleteImages(imagesToDelete);
+      getShowInfo();
+
+      setImages({});
+      setResetCounter(resetCounter + 1);
+      setAlertText("Galeri başarıyla kaydedildi.");
+    } catch (err: any) {
+      setDialogueText(err.message);
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const clearFile = (imageKey: string) => {
-    console.log("imageKey");
-    console.log(imageKey);
+    setTheShow((prev) => ({ ...prev, [imageKey]: null }));
   };
 
   return (
@@ -124,21 +180,50 @@ export default function showGallery({
         </div>
       </div>
 
-      <ImageCollection
-        config={EVENT_IMAGE_CONFIG}
-        onChange={setImages}
-        entityId={id}
-        clearFile={clearFile}
-      />
+      <div
+        className={`relative`}
+      >
+        {isEditing && (
+          <span className="loading loading-xl absolute left-1/2 top-1/2 z-50 loading-spinner blur-none! opacity-100! text-accent"></span>
+        )}
+
+      <div
+        className={`  ${isEditing ? "opacity-35 blur-sm pointer-events-none" : ""} relative`}
+      >
+        <ImageCollection
+          config={EVENT_IMAGE_CONFIG}
+          onChange={setImages}
+          entityId={id}
+          clearFile={clearFile}
+          key={resetCounter}
+        />
+      </div>
+      </div>
 
       <button
-        className="btn btn-success text-white"
+        disabled={isEditing}
+        className="btn btn-success text-white mt-2"
         onClick={() => {
           submit();
         }}
       >
-        Deneme
+        Kaydet
       </button>
+
+      <DialogModal
+        open={dialogueOpen}
+        dialogueText={dialogueText}
+        onClose={() => {
+          setDialogueOpen(false);
+          setDialogueText("");
+        }}
+      ></DialogModal>
+
+      <SuccessAlert
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        alertText={alertText}
+      ></SuccessAlert>
     </>
   );
 }

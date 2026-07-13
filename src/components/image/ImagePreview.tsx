@@ -7,7 +7,7 @@ outsource?:boolean
 
 export default function ImagePreview({ className = "", clearFile, preview,outsource=false }: Props) {
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-left px-2 my-4">
       <div className=" bg-gray-500   relative p-1 rounded-3xl">
         <div>
           <button

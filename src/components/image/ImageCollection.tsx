@@ -43,13 +43,15 @@ export default function ImageCollection<K extends string>({
     value ?? {},
   );
 
-  function updateImage(key: K, file: ImageFile) {
-    setImages((prev) => {
-      const next = { ...prev, [key]: file };
-      onChange?.(next);
-      return next;
-    });
-  }
+function updateImage(key: K, file: ImageFile) {
+  const next = {
+    ...images,
+    [key]: file,
+  };
+
+  setImages(next);
+  onChange?.(next);
+}
 
   return (
     <div className="space-y-6">
