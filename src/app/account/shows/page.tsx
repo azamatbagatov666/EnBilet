@@ -12,6 +12,9 @@ import EditSvg from "@/src/components/svg/EditSvg";
 import GallerySvg from "@/src/components/svg/GallerySvg";
 import { useRouter } from "next/navigation";
 
+import SvgButton from "@/src/components/buttons/SvgButton";
+
+
 
 import FormContainer from "@/src/components/forms/FormContainer";
 
@@ -67,14 +70,13 @@ export default function shows() {
       label: "Galeri",
       filterType: "none",
       render: (row) => (
-        <button
-            onClick={() =>
-            router.push(`/account/shows/gallery/${row.showID}`)
-          }
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
-        >
-         <GallerySvg/>
-        </button>
+                <SvgButton onClick={() =>
+                    router.push(`/account/shows/gallery/${row.showID}`)
+                  }>
+                  <GallerySvg/>
+                </SvgButton>
+      
+
       ),
     },
 
@@ -84,14 +86,11 @@ export default function shows() {
       filterType: "none",
       reactKey: "edit",
       render: (row) => (
-        <button
-          onClick={() => {
-            handleOpenEdit(row);
-          }}
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
-        >
-         <EditSvg/>
-        </button>
+        <SvgButton onClick={() =>
+            handleOpenEdit(row)
+          }>
+          <EditSvg/>
+        </SvgButton>
       ),
     },
   ];

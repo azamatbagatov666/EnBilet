@@ -10,6 +10,8 @@ import DialogModal from "@/src/components/alerts/DialogModal";
 import SuccessAlert from "@/src/components/alerts/SuccessAlert";
 import FormContainer from "@/src/components/forms/FormContainer";
 import EditSvg from "@/src/components/svg/EditSvg";
+import SvgButton from "@/src/components/buttons/SvgButton";
+
 
 
 export default function venues() {
@@ -256,19 +258,17 @@ export default function venues() {
       filterType: "none",
       reactKey: "venue-plan",
       render: (row) => (
-        <button
-          onClick={() =>
+        <SvgButton onClick={() =>
             router.push(`/account/venues/designSeats/${row.venueID}`)
-          }
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
-        >
+          }>
           <svg
             viewBox="0 0 512 512"
             className="fill-black dark:fill-white size-6 sm:size-8"
           >
             <path d="M490.667,170.667H448c-11.782,0-21.333,9.551-21.333,21.333s9.551,21.333,21.333,21.333h21.333V320h-21.74 c-2.857-22.522-21.029-40.261-43.757-42.436L389.148,78.092C386.637,34.284,349.242,0,304.256,0h-96.512 c-44.986,0-82.381,34.284-84.914,78.437l-14.667,199.127c-22.728,2.175-40.9,19.914-43.757,42.436h-21.74V213.333H64 c11.782,0,21.333-9.551,21.333-21.333S75.782,170.667,64,170.667H21.333C9.551,170.667,0,180.218,0,192v149.333 c0,11.782,9.551,21.333,21.333,21.333H64V384c0,11.782,9.551,21.333,21.333,21.333h21.333v85.333 c0,11.782,9.551,21.333,21.333,21.333h64c11.782,0,21.333-9.551,21.333-21.333v-85.333h85.333v85.333 c0,11.782,9.551,21.333,21.333,21.333h64c11.782,0,21.333-9.551,21.333-21.333v-85.333h21.333 c11.782,0,21.333-9.551,21.333-21.333v-21.333h42.667c11.782,0,21.333-9.551,21.333-21.333V192 C512,180.218,502.449,170.667,490.667,170.667z M165.404,81.225c1.244-21.64,19.698-38.559,42.34-38.559h96.512 c22.642,0,41.096,16.918,42.318,38.214l14.464,196.453H150.962L165.404,81.225z M170.667,469.333h-21.333v-64h21.333V469.333z M362.667,469.333h-21.333v-64h21.333V469.333z M405.333,362.667H384h-64H192h-64h-21.333v-36.459 c0-3.429,2.779-6.208,6.208-6.208H128h256h15.125c3.429,0,6.208,2.779,6.208,6.208V362.667z"></path>{" "}
           </svg>
-        </button>
+        </SvgButton>
+
       ),
     },
     {
@@ -277,14 +277,11 @@ export default function venues() {
       filterType: "none",
       reactKey: "venue-edit",
       render: (row) => (
-        <button
-          onClick={() => {
-            handleOpenEdit(row);
-          }}
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
-        >
+        <SvgButton onClick={() =>
+            handleOpenEdit(row)
+          }>
           <EditSvg/>
-        </button>
+        </SvgButton>
       ),
     },
   ];

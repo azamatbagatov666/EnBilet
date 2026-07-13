@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import DialogModal from "@/src/components/alerts/DialogModal";
 import type { seatState } from "@/src/models/seatMap/seatState";
 import PriceInput from "@/src/components/forms/PriceInput";
+import SvgButton from "@/src/components/buttons/SvgButton";
 
 
 interface Props {
@@ -57,11 +58,10 @@ export default function Row({
   <div className="tooltip-content">
     <div className="">Bütün Sırayı Aç/Kapat</div>
   </div>
-            <button
+            <SvgButton
               onClick={() => {
                 toggleRow(row);
               }}
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
             >
               <svg viewBox="0 0 24 24" fill="none" className="size-8 stroke-black dark:stroke-white">
                 <path
@@ -71,17 +71,16 @@ export default function Row({
                   strokeLinejoin="round"
                 ></path>
               </svg>
-            </button>
+            </SvgButton>
           </div>
           <div
             className="tooltip inline-flex"
             data-tip="Sıraya Toplu Fiyat Gir"
           >
-            <button
+            <SvgButton
               onClick={() => {
                 openDialogue();
               }}
-          className="bg-white  dark:bg-zinc-700 p-1 rounded-md hover:bg-red-500! duration-200 transition-colors border border-black"
             >
               <svg viewBox="0 0 24 24" className="size-8 stroke-black dark:stroke-white" fill="none">
                 <path
@@ -97,7 +96,7 @@ export default function Row({
                   d="M3 12v4c0 1.02 1.187 1.92 3 2.462 1.134.34 2.513.538 4 .538s2.866-.199 4-.538c1.813-.542 3-1.442 3-2.462v-1M3 12c0-1.197 1.635-2.23 4-2.711M3 12c0 1.02 1.187 1.92 3 2.462 1.134.34 2.513.538 4 .538.695 0 1.366-.043 2-.124"
                 ></path>
               </svg>
-            </button>
+            </SvgButton>
           </div>
         </>
       ) : (
@@ -107,11 +106,11 @@ export default function Row({
       )}
 
       <div className="tooltip inline-flex" data-tip="Sıra İsmi">
-        <div 
-        className=" font-bold h-10 flex w-10 text-2xl justify-center items-center  px-4! bg-white text-black dark:text-white  dark:bg-zinc-700 p-1 rounded-md  duration-200 transition-colors border border-black"
+        <SvgButton 
+        className=" font-bold h-10  w-10 text-2xl "
         >
           {row.type != "empty" && <span>{row.label}</span>}
-        </div>
+        </SvgButton>
       </div>
 
       <div className="grid grid-flow-col gap-1 shrink-0 auto-cols-max">
