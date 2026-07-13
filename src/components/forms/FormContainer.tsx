@@ -20,7 +20,7 @@ export default function FormContainer({ children, title, inProgress }: Props) {
       }`}
       >
         <div className="flex justify-center text-lg font-bold ">
-          <span className="bg-red-600 text-white rounded-xl p-2 dark:text-white duration-150">
+          <span className="bg-red-600 text-white rounded-xl p-2">
             {title}
           </span>
         </div>

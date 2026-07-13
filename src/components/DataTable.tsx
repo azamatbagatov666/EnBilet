@@ -1475,7 +1475,7 @@ const handleSetDefaultColumns = () => {
             <div className="rounded-t-xl grid bg-gray-300 gap-2  p-2  text-black dark:text-white dark:bg-gray-700">
               <div className="flex justify-center text-xl sm:text-3xl font-bold ">
                 {" "}
-                <span className="   dark:text-white duration-150 break-all">
+                <span className="   dark:text-white break-all">
                   {" "}
                   {title}
                 </span>

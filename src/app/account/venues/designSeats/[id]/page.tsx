@@ -576,7 +576,7 @@ export default function SeatMapCreatorPage({
             </div>
 
             <div className="mt-4 grid justify-center sm:justify-start text-center sm:flex gap-2">
-              <div className="flex group bg-primary duration-200 rounded-md">
+              <div className="flex group bg-primary rounded-md">
                 <div className=" px-2 rounded-l-md flex  items-center ">
                   <input
                     onKeyDown={(e) => {
